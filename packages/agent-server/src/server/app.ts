@@ -1,10 +1,10 @@
 import type { Request, Response } from 'express';
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { OpenAIAgent } from '../agent/openaiAgent';
 
-export const createApp = (agent: OpenAIAgent) => {
+export const createApp = (agent: OpenAIAgent): Express => {
   const app = express();
   
   // 日志中间件
