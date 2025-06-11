@@ -8,7 +8,7 @@ import { Button } from './components/ui/button'
 import { Window } from './components/window'
 import { useAgentChat } from './hooks/use-agent-chat'
 import type { ToolDefinition, ToolRenderer } from './types'
-// import './styles/globals.css'
+import './styles/globals.css'
 
 export const globalAgent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',
