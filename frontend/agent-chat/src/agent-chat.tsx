@@ -29,6 +29,7 @@ export function AgentChat({
 }: AgentChatProps) {
   const [input, setInput] = useState('')
   const [isMaximized, setIsMaximized] = useState(false)
+  const [isHeightMaximized, setIsHeightMaximized] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
 
   const { messages, isLoading, sendMessage, sendToolResult, reset }
@@ -55,6 +56,13 @@ export function AgentChat({
     setIsVisible(true)
   }
 
+  const handleHeightMaximize = () => {
+    setIsHeightMaximized(!isHeightMaximized)
+    if (isMaximized) {
+      setIsMaximized(false)
+    }
+  }
+
   if (!isVisible) {
     return (
       <Button
@@ -72,7 +80,14 @@ export function AgentChat({
     <Window
       title="AI Assistant"
       isMaximized={isMaximized}
-      onMaximize={() => setIsMaximized(!isMaximized)}
+      isHeightMaximized={isHeightMaximized}
+      onMaximize={() => {
+        setIsMaximized(!isMaximized)
+        if (isHeightMaximized) {
+          setIsHeightMaximized(false)
+        }
+      }}
+      onHeightMaximize={handleHeightMaximize}
       onClose={handleClose}
       actions={
         messages.length > 0 && (
