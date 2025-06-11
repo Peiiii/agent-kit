@@ -1,0 +1,2 @@
+- 这个package目标是作为可复用组件发包到npm
+- 现在需要引入shadcn和tailwindcss来替代antd

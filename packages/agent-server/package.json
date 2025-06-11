@@ -1,0 +1,62 @@
+{
+  "name": "ag-ui-server",
+  "version": "1.0.1",
+  "description": "AG-UI Node.js server with OpenAI integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/server/index.ts",
+    "build": "tsdown",
+    "start": "node dist/server/index.mjs",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepublishOnly": "npm run build",
+    "link": "npm link",
+    "unlink": "npm unlink",
+    "global-install": "npm install -g",
+    "global-uninstall": "npm uninstall -g"
+  },
+  "keywords": [
+    "ag-ui",
+    "openai",
+    "node",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@ag-ui/client": "^0.0.28",
+    "@types/cors": "^2.8.19",
+    "@types/morgan": "^1.9.10",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0",
+    "openai": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.2",
+    "@types/express": "^4.17.21",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.10.0",
+    "boxen": "^7.0.0",
+    "chai": "^5.2.0",
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "mocha": "^11.5.0",
+    "ora": "^7.0.0",
+    "tsdown": "^0.12.7",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.3.2"
+  },
+  "bin": {
+    "ag-ui-server": "./dist/cli.mjs"
+  },
+  "preferGlobal": true
+}
