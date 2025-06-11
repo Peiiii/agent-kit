@@ -1,0 +1,27 @@
+# 开发文件
+.github/
+.vscode/
+playground/
+tests/
+docs/
+
+# 配置文件
+.editorconfig
+.eslintrc
+.prettierrc
+tsconfig.json
+tsdown.config.ts
+vitest.config.ts
+postcss.config.js
+tailwind.config.js
+
+# 源代码和类型定义
+src/
+*.d.ts
+
+# 其他
+.git/
+.gitignore
+.gitattributes
+*.log
+.DS_Store 

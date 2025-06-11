@@ -15,4 +15,4 @@ export interface Theme {
   borderRadiusLG: string
 }
 
-export type ThemeContext = Theme 
+export type ThemeContext = Theme

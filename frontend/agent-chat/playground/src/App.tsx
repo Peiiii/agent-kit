@@ -1,5 +1,5 @@
 import { HttpAgent } from '@ag-ui/client'
-import { AgentChat, toolRenderers, tools } from '@agent-kit/agent-chat'
+import { AgentChat, toolRenderers, tools } from '@agent-labs/agent-chat'
 
 const agent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',

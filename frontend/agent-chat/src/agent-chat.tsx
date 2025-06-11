@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpAgent } from '@ag-ui/client'
 import { MessageSquare, Trash2 } from 'lucide-react'
 import * as React from 'react'
@@ -9,7 +8,7 @@ import { Button } from './components/ui/button'
 import { Window } from './components/window'
 import { useAgentChat } from './hooks/use-agent-chat'
 import type { ToolDefinition, ToolRenderer } from './types'
-import './styles/globals.css'
+// import './styles/globals.css'
 
 export const globalAgent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',

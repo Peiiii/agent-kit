@@ -1,9 +1,9 @@
-import type { Message } from '@ag-ui/client'
 import * as React from 'react'
-
 import type { ToolRenderer, ToolResult } from '../../types'
+
 import { MessageInput } from './message-input'
 import { MessageItem } from './message-item'
+import type { Message } from '@ag-ui/client'
 
 export interface ChatInterfaceProps {
   messages: Message[]

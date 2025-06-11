@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
 import * as React from 'react'
 import { CloseIcon, MinimizeIcon } from '../icons'
 import { Button } from '../ui/button'
+import type { ReactNode } from 'react'
 
 export interface WindowProps {
   title: string
@@ -38,7 +38,9 @@ export const Window: React.FC<WindowProps> = ({
         className="flex items-center justify-between border-b border-[hsl(var(--border))] px-4 py-3 cursor-pointer select-none"
         onClick={onMinimize}
       >
-        <span className="font-medium text-[hsl(var(--foreground))]">{title}</span>
+        <span className="font-medium text-[hsl(var(--foreground))]">
+          {title}
+        </span>
         <div className="flex items-center space-x-2">
           {actions}
           <Button
