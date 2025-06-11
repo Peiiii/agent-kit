@@ -1,19 +1,19 @@
 {
-  "name": "@agent-kit/agent-chat",
-  "version": "0.1.0",
+  "name": "@agent-labs/agent-chat",
+  "version": "1.0.0",
   "packageManager": "pnpm@10.10.0",
   "description": "A React component library for building AI agent chat interfaces.",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://github.com/agent-kit/agent-chat#readme",
+  "homepage": "https://github.com/agent-labs/agent-chat#readme",
   "bugs": {
-    "url": "https://github.com/agent-kit/agent-chat/issues"
+    "url": "https://github.com/agent-labs/agent-chat/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/agent-kit/agent-chat.git"
+    "url": "git+https://github.com/agent-labs/agent-chat.git"
   },
-  "author": "Agent Kit Team",
+  "author": "Agent Labs Team",
   "files": [
     "dist"
   ],
