@@ -310,6 +310,9 @@ importers:
       boxen:
         specifier: ^7.0.0
         version: 7.1.1
+      bumpp:
+        specifier: ^10.1.0
+        version: 10.1.1
       chai:
         specifier: ^5.2.0
         version: 5.2.0
