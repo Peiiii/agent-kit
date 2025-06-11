@@ -1,6 +1,6 @@
 {
   "name": "@agent-labs/ag-ui-server",
-  "version": "1.0.1", 
+  "version": "1.0.2",
   "private": false,
   "description": "AG-UI Node.js server with OpenAI integration",
   "main": "dist/index.js",
@@ -17,6 +17,7 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "prepublishOnly": "npm run build",
+    "release": "bumpp && pnpm publish",
     "link": "npm link",
     "unlink": "npm unlink",
     "global-install": "npm install -g",
@@ -46,6 +47,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.10.0",
     "boxen": "^7.0.0",
+    "bumpp": "^10.1.0",
     "chai": "^5.2.0",
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
