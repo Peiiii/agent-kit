@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@agent-labs/agent-chat': resolve(__dirname, '../src'),
+      '@': resolve(__dirname, '../src'),
     },
   },
 })

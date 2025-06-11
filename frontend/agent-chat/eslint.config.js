@@ -1,3 +1,42 @@
-import { sxzz } from '@sxzz/eslint-config'
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import unusedImports from 'eslint-plugin-unused-imports'
 
-export default sxzz()
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+      'unused-imports': unusedImports,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+      'unused-imports/no-unused-imports': 'error',
+      '@typescript-eslint/no-unused-vars': ['warn', { 
+        'vars': 'all',
+        'args': 'after-used',
+        'ignoreRestSiblings': true,
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_'
+      }],
+      '@typescript-eslint/no-empty-interface': ['warn', {
+        'allowSingleExtends': false
+      }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
+)

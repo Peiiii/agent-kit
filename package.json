@@ -1,1 +1,29 @@
-{}
+{
+  "name": "agent-kit",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A collection of AI agent tools and components",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean",
+    "dev:chat": "pnpm --filter @agent-labs/agent-chat dev",
+    "chat:playground": "pnpm --filter @agent-labs/agent-chat playground",
+    "dev:server": "pnpm --filter @agent-labs/ag-ui-server dev",
+    "dev:demo": "pnpm --filter agentic-app-demo dev",
+    "build:chat": "pnpm --filter @agent-labs/agent-chat build",
+    "build:server": "pnpm --filter @agent-labs/agent-server build",
+    "build:demo": "pnpm --filter agentic-app-demo build"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "chat",
+    "react",
+    "typescript"
+  ],
+  "author": "Agent Labs",
+  "license": "MIT"
+}

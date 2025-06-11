@@ -1,13 +1,13 @@
+import type { ToolDefinition, ToolRenderer } from './types'
 import { HttpAgent } from '@ag-ui/client'
 import { MessageSquare, Trash2 } from 'lucide-react'
 import * as React from 'react'
 import { useState } from 'react'
-import { ChatInterface } from './components/chat-interface'
 
+import { ChatInterface } from './components/chat-interface'
 import { Button } from './components/ui/button'
 import { Window } from './components/window'
 import { useAgentChat } from './hooks/use-agent-chat'
-import type { ToolDefinition, ToolRenderer } from './types'
 import './styles/globals.css'
 
 export const globalAgent = new HttpAgent({
@@ -18,7 +18,7 @@ interface AgentChatProps {
   agent: HttpAgent
   toolRenderers: Record<string, ToolRenderer>
   tools: ToolDefinition[]
-  staticContext?: Array<{ description: string; value: string }>
+  staticContext?: Array<{ description: string, value: string }>
 }
 
 export function AgentChat({
@@ -28,11 +28,11 @@ export function AgentChat({
   staticContext = [],
 }: AgentChatProps) {
   const [input, setInput] = useState('')
-  const [isMinimized, setIsMinimized] = useState(false)
+  const [isMaximized, setIsMaximized] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
 
-  const { messages, isLoading, sendMessage, sendToolResult, reset } =
-    useAgentChat({
+  const { messages, isLoading, sendMessage, sendToolResult, reset }
+    = useAgentChat({
       agent,
       tools: toolsList,
       staticContext,
@@ -71,13 +71,12 @@ export function AgentChat({
   return (
     <Window
       title="AI Assistant"
-      isMinimized={isMinimized}
-      onMinimize={() => setIsMinimized(!isMinimized)}
+      isMaximized={isMaximized}
+      onMaximize={() => setIsMaximized(!isMaximized)}
       onClose={handleClose}
       actions={
         messages.length > 0 && (
           <Button
-            variant="ghost"
             size="icon"
             onClick={handleClear}
             title="清空消息"
