@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'node:path'
 import dts from 'vite-plugin-dts'
+import { dependencies } from "./package.json"
 
 export default defineConfig({
   resolve: {
@@ -27,7 +28,20 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: [/node_modules/, 'react', 'react-dom'],
+      external: (id, parentId, isResolved) => {
+        console.log("[external] [id]", id)
+        console.log("[external] [parentId]", parentId)
+        console.log("[external] [isResolved]", isResolved)
+        if(isResolved && id.includes('node_modules')) {
+          return true
+        }
+        return [/node_modules/, 'react', 'react-dom', ...Object.keys(dependencies)].some(pattern => {
+          if (typeof pattern === 'string') {
+            return id.includes(pattern)
+          }
+          return pattern.test(id)
+        })
+      },
       output: {
         globals: {
           react: 'React',

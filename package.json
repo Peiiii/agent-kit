@@ -25,5 +25,8 @@
     "typescript"
   ],
   "author": "Agent Labs",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@agent-labs/agent-chat": "file:.yalc/@agent-labs/agent-chat"
+  }
 }
