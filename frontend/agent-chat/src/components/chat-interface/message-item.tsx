@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import type { ToolCall, ToolRenderer, ToolResult } from '../../types'
 import { ToolCallRenderer } from './tool-call-renderer'
 import type { Message } from '@ag-ui/client'
+import clsx from 'clsx'
 
 interface MessageItemProps {
   message: Message
@@ -35,7 +36,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   }, [toolRenderers, toolRendererManager])
 
   return (
-    <div className={`flex w-full justify-${isUser ? 'end' : 'start'} p-2`}>
+    <div className={clsx(`flex w-full  p-2`, isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={`flex max-w-[80%] w-fit items-start gap-2 ${
           isUser ? 'flex-row-reverse' : 'flex-row'
@@ -45,7 +46,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           <AvatarImage src="" alt={isUser ? 'User' : 'Assistant'} />
           <AvatarFallback
             className={`${
-              isUser ? 'bg-primary' : 'bg-success'
+              isUser ? 'bg-primary' : 'bg-primary'
             } text-primary-foreground`}
           >
             {isUser ? (
