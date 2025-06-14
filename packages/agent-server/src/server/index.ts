@@ -1,6 +1,6 @@
 import { getServerConfig } from '../config/index';
 import { createApp } from './app';
-import { OpenAIAgent } from '../agent/openaiAgent';
+import { OpenAIAgent } from '../agent/openai-agent';
 import { getAgentConfig } from '../config';
 
 const port = getServerConfig().port;

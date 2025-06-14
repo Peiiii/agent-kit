@@ -38,9 +38,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   return (
     <div className={clsx(`flex w-full  p-2`, isUser ? 'justify-end' : 'justify-start')}>
       <div
-        className={`flex max-w-[80%] w-fit items-start gap-2 ${
-          isUser ? 'flex-row-reverse' : 'flex-row'
-        }`}
+        className={clsx(
+          'flex max-w-[80%] w-fit items-start gap-2',
+          isUser ? 'flex-row-reverse' : 'flex-row',
+        )}
       >
         <Avatar className="h-10 w-10 shrink-0">
           <AvatarImage src="" alt={isUser ? 'User' : 'Assistant'} />

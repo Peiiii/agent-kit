@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,7 @@
   "packageManager": "pnpm@10.7.0",
   "dependencies": {
     "@agent-labs/agent-chat": "^1.0.8",
+    "@radix-ui/react-slot": "^1.2.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "clsx": "^2.1.1",
@@ -20,7 +22,9 @@
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.8",
     "@vitejs/plugin-react": "^4.5.2",
+    "tailwindcss": "^4.1.8",
     "vite": "^6.3.5"
   }
 }

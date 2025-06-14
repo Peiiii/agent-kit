@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import express, { Express } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { OpenAIAgent } from '../agent/openaiAgent';
+import { OpenAIAgent } from '../agent/openai-agent';
 
 export const createApp = (agent: OpenAIAgent): Express => {
   const app = express();
@@ -19,6 +19,7 @@ export const createApp = (agent: OpenAIAgent): Express => {
 
     try {
       for await (const chunk of agent.run(inputData, acceptHeader)) {
+        // console.log('[createApp] chunk', chunk)
         res.write(chunk);
       }
       res.end();

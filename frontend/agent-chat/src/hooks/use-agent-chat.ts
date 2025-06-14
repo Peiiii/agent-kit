@@ -73,6 +73,7 @@ export function useAgentChat({
     let currentToolCallName: string | undefined
 
     response.subscribe((event: BaseEvent) => {
+      // console.log('[useAgentChat] event', event)
       switch (event.type) {
         case EventType.RUN_STARTED:
           break

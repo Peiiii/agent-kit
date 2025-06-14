@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
 import { createApp } from './server/app';
-import { OpenAIAgent } from './agent/openaiAgent';
+import { OpenAIAgent } from './agent/openai-agent';
 import { getAgentConfig } from './config';
 
 const program = new Command();
