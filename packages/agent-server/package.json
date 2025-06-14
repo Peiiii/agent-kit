@@ -1,6 +1,6 @@
 {
   "name": "@agent-labs/ag-ui-server",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "private": false,
   "description": "AG-UI Node.js server with OpenAI integration",
   "main": "dist/index.js",
