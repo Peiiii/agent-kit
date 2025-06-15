@@ -1,5 +1,5 @@
 import { HttpAgent } from '@ag-ui/client'
-import { AgentChat, toolRenderers, tools } from '@agent-labs/agent-chat'
+import { AgentChatWindow, toolRenderers, tools } from '@agent-labs/agent-chat'
 import './App.css'
 
 const agent = new HttpAgent({
@@ -14,7 +14,7 @@ function App() {
           Agent Chat 示例
         </h1>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-          <AgentChat
+          <AgentChatWindow
             agent={agent}
             tools={tools}
             toolRenderers={toolRenderers}
