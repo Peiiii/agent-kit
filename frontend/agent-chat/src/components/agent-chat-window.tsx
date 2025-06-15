@@ -18,8 +18,8 @@ export const globalAgent = new HttpAgent({
 
 export const AgentChatWindow = ({
   agent,
-  toolRenderers: renderers,
-  tools: toolsList,
+  toolRenderers: renderers = {},
+  tools: toolsList = [],
   staticContext = [],
   className,
 }: AgentChatProps) => {

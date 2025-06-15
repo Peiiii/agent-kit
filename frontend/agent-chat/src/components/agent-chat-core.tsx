@@ -10,8 +10,8 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
   (
     {
       agent,
-      toolRenderers: renderers,
-      tools: toolsList,
+      toolRenderers: renderers = {},
+      tools: toolsList = [],
       staticContext = [],
       className,
     },

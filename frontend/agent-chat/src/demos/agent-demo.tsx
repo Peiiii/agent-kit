@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { useMemo } from 'react'
 
-import { AgentChatWindow, globalAgent } from './components/agent-chat-window'
-import type { ToolDefinition, ToolRenderer } from './types/agent'
+import { AgentChatWindow, globalAgent } from '../components/agent-chat-window'
+import type { ToolDefinition, ToolRenderer } from '../types/agent'
 import {
   toolRenderers as availableToolRenderers,
   tools as availableTools,
-} from './index'
+} from '..'
 
 export function AgentDemo(props: {
   customContext?: Array<{ description: string; value: string }>
