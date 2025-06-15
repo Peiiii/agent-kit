@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Badge } from './components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
-import type { ToolCall, ToolDefinition, ToolRenderer } from './types'
+import type { ToolCall, ToolDefinition, ToolRenderer } from './types/agent'
 
 export const codeTool: ToolDefinition = {
   name: 'generate_code',

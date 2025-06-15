@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from 'react'
 import { AgentResourceManager } from '../services/agent-resource-manager'
-import type { Context } from '../types'
+import type { Context } from '../types/agent'
 
 export class AgentContextManager extends AgentResourceManager<Context> {
   addContexts(contexts: Context[]): () => void {

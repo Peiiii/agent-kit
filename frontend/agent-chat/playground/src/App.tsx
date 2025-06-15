@@ -1,10 +1,10 @@
 import { HttpAgent } from '@ag-ui/client'
-import { AgentChat } from '@agent-labs/agent-chat'
+import { AgentChatCore } from '@agent-labs/agent-chat'
 import { ThemeSwitcher } from 'composite-kit'
-import { TodoProvider } from './features/todo/hooks/use-todo'
-import { todoTools } from './features/todo/tools'
-import { todoToolRenderers } from './features/todo/tool-renderers'
 import { TodoList } from './features/todo/components/todo-list'
+import { TodoProvider } from './features/todo/hooks/use-todo'
+import { todoToolRenderers } from './features/todo/tool-renderers'
+import { todoTools } from './features/todo/tools'
 
 const agent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',
@@ -75,7 +75,7 @@ export function App() {
                   你可以通过自然语言与 AI 助手交互，让它帮你管理待办事项
                 </p>
               </div>
-              <AgentChat
+              <AgentChatCore
                 agent={agent}
                 tools={todoTools}
                 toolRenderers={todoToolRenderers}

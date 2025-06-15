@@ -1,55 +1,34 @@
-import type { ToolDefinition, ToolRenderer } from './types'
 import { HttpAgent } from '@ag-ui/client'
 import { MessageSquare, Trash2 } from 'lucide-react'
 import * as React from 'react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import type {
+  AgentChatProps,
+  AgentChatRef,
+} from '../types/agent-chat-component'
 
-import { ChatInterface } from './components/chat-interface'
-import { Button } from './components/ui/button'
-import { Window } from './components/window'
-import { useAgentChat } from './hooks/use-agent-chat'
-import './styles/globals.css'
+import clsx from 'clsx'
+import { AgentChatCore } from './agent-chat-core'
+import { Button } from './ui/button'
+import { Window } from './window'
 
 export const globalAgent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',
 })
 
-interface AgentChatProps {
-  agent: HttpAgent
-  toolRenderers: Record<string, ToolRenderer>
-  tools: ToolDefinition[]
-  staticContext?: Array<{ description: string, value: string }>
-}
-
-export function AgentChat({
+export const AgentChatWindow = ({
   agent,
   toolRenderers: renderers,
   tools: toolsList,
   staticContext = [],
-}: AgentChatProps) {
-  const [input, setInput] = useState('')
+  className,
+}: AgentChatProps) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isHeightMaximized, setIsHeightMaximized] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
-
-  const { messages, isLoading, sendMessage, sendToolResult, reset }
-    = useAgentChat({
-      agent,
-      tools: toolsList,
-      staticContext,
-    })
-
-  const handleSend = async () => {
-    await sendMessage(input)
-    setInput('')
-  }
-
+  const chatCoreRef = useRef<AgentChatRef>(null)
   const handleClose = () => {
     setIsVisible(false)
-  }
-
-  const handleClear = () => {
-    reset()
   }
 
   const handleReopen = () => {
@@ -61,6 +40,10 @@ export function AgentChat({
     if (isMaximized) {
       setIsMaximized(false)
     }
+  }
+
+  const handleClear = () => {
+    chatCoreRef.current?.reset()
   }
 
   if (!isVisible) {
@@ -89,26 +72,19 @@ export function AgentChat({
       }}
       onHeightMaximize={handleHeightMaximize}
       onClose={handleClose}
-      actions={
-        messages.length > 0 && (
-          <Button
-            size="icon"
-            onClick={handleClear}
-            title="清空消息"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )
-      }
+      actions={[
+        <Button key="clear" variant="ghost" size="icon" onClick={handleClear}>
+          <Trash2 className="h-4 w-4" />
+        </Button>,
+      ]}
     >
-      <ChatInterface
-        messages={messages}
+      <AgentChatCore
+        ref={chatCoreRef}
+        agent={agent}
         toolRenderers={renderers}
-        onToolResult={sendToolResult}
-        input={input}
-        onInputChange={setInput}
-        onSend={handleSend}
-        isLoading={isLoading}
+        tools={toolsList}
+        staticContext={staticContext}
+        className={clsx('h-full', className)}
       />
     </Window>
   )

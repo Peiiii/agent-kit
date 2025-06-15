@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { useMemo } from 'react'
 
-import { AgentChat, globalAgent } from './agent-chat'
-import type { ToolDefinition, ToolRenderer } from './types'
+import { AgentChatWindow, globalAgent } from './components/agent-chat-window'
+import type { ToolDefinition, ToolRenderer } from './types/agent'
 import {
   toolRenderers as availableToolRenderers,
   tools as availableTools,
@@ -47,7 +47,7 @@ export function AgentDemo(props: {
 
   return (
     <div className="min-h-full w-full flex items-center justify-center">
-      <AgentChat
+      <AgentChatWindow
         agent={globalAgent}
         toolRenderers={toolRenderers}
         tools={tools}

@@ -12,7 +12,6 @@
   "license": "ISC",
   "packageManager": "pnpm@10.7.0",
   "dependencies": {
-    "@agent-labs/agent-chat": "^1.0.8",
     "@radix-ui/react-slot": "^1.2.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

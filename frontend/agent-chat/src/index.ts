@@ -1,11 +1,11 @@
+import { codeRenderer, codeTool } from './code'
 import type {
   Context,
   ToolCall,
   ToolDefinition,
   ToolRenderer,
   ToolResult,
-} from './types'
-import { codeRenderer, codeTool } from './code'
+} from './types/agent'
 import {
   userConfirmationRenderer,
   userConfirmationTool,
@@ -19,13 +19,14 @@ export const toolRenderers: Record<string, ToolRenderer> = {
   generate_code: codeRenderer,
 }
 
-// 导出主要组件
-export { AgentChat } from './agent-chat'
-
 // 导出 UI 组件
 export * from './components/chat-interface'
 
 export * from './components/markdown-renderer'
+
+export * from './components/agent-chat-core'
+
+export * from './components/agent-chat-window'
 
 // 导出类型
 export type { Context, ToolCall, ToolDefinition, ToolRenderer, ToolResult }

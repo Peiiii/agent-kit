@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { ToolRenderer, ToolResult } from '../../types'
+import type { ToolRenderer, ToolResult } from '../../types/agent'
 
 import { MessageInput } from './message-input'
 import { MessageItem } from './message-item'

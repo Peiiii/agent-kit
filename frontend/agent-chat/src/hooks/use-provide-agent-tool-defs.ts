@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect } from 'react'
 import { AgentResourceManager } from '../services/agent-resource-manager'
-import type { ToolDefinition } from '../types'
+import type { ToolDefinition } from '../types/agent'
 
 export class AgentToolDefManager extends AgentResourceManager<ToolDefinition> {
   addToolDefs(toolDefs: ToolDefinition[]): () => void {

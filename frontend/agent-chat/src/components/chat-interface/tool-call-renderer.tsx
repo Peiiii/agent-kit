@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import type { ToolCall, ToolRenderer, ToolResult } from '../../types'
+import type { ToolCall, ToolRenderer, ToolResult } from '../../types/agent'
 
 interface ToolCallRendererProps {
   tool: ToolCall

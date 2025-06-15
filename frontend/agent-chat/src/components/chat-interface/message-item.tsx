@@ -5,7 +5,7 @@ import { AgentToolRendererManagerContext } from '../../hooks/use-provide-agent-t
 
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import type { ToolCall, ToolRenderer, ToolResult } from '../../types'
+import type { ToolCall, ToolRenderer, ToolResult } from '../../types/agent'
 import { ToolCallRenderer } from './tool-call-renderer'
 import type { Message } from '@ag-ui/client'
 import clsx from 'clsx'

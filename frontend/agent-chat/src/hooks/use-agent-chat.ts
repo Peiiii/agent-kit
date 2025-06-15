@@ -12,7 +12,7 @@ import {
 } from '@ag-ui/client'
 import { useCallback, useContext, useState } from 'react'
 import { v4 } from 'uuid'
-import type { Context, ToolDefinition, ToolResult } from '../types'
+import type { Context, ToolDefinition, ToolResult } from '../types/agent'
 import { AgentContextManagerContext } from './use-provide-agent-contexts'
 import { AgentToolDefManagerContext } from './use-provide-agent-tool-defs'
 import type { Observable } from 'rxjs'

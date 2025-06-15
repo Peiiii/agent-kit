@@ -7,7 +7,7 @@ import type {
   ToolDefinition,
   ToolRenderer,
   ToolResult,
-} from './types'
+} from './types/agent'
 
 export const userConfirmationTool: ToolDefinition = {
   name: 'user_confirmation',
