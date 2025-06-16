@@ -38,6 +38,7 @@ export function useAgentChat({
   staticContext = [],
 }: UseAgentChatProps): UseAgentChatReturn {
   const [messages, setMessages] = useState<Message[]>([])
+  console.log("[useAgentChat] messages", JSON.parse(JSON.stringify(messages)))
   const [isLoading, setIsLoading] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
   const contextManager = useContext(AgentContextManagerContext)
@@ -73,7 +74,7 @@ export function useAgentChat({
     let currentToolCallName: string | undefined
 
     response.subscribe((event: BaseEvent) => {
-      // console.log('[useAgentChat] event', event)
+      console.log('[useAgentChat] event', event)
       switch (event.type) {
         case EventType.RUN_STARTED:
           break
@@ -138,16 +139,21 @@ export function useAgentChat({
                   arguments: currentToolCallArgs,
                 },
               }
+              console.log("[useAgentChat][toolCallEnd] toolCall", JSON.parse(JSON.stringify(toolCall)))
               setMessages((prev) => {
-                const newMessages = [...prev]
-                const lastMessage = newMessages.at(-1)
+                const lastMessage = prev[prev.length - 1]
                 if (lastMessage && lastMessage.role === 'assistant') {
-                  if (!lastMessage.toolCalls) {
-                    lastMessage.toolCalls = []
-                  }
-                  lastMessage.toolCalls.push(toolCall)
-                  return [...newMessages]
+                  return prev.map((msg, index) => {
+                    if (index === prev.length - 1 && msg.role === 'assistant') {
+                      return {
+                        ...msg,
+                        toolCalls: [...(msg.toolCalls || []), toolCall]
+                      }
+                    }
+                    return msg
+                  })
                 }
+                
                 return [
                   ...prev,
                   {

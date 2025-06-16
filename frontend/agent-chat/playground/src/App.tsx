@@ -5,101 +5,305 @@ import { TodoList } from './features/todo/components/todo-list'
 import { TodoProvider } from './features/todo/hooks/use-todo'
 import { todoToolRenderers } from './features/todo/tool-renderers'
 import { todoTools } from './features/todo/tools'
+import { useMemo, useState } from 'react'
+import { InstructionSettings } from './features/settings/components/instruction-settings'
+import { VSCodeLayout } from "composite-kit"
+import { Folder, Search, GitBranch, Play, LayoutGrid, FileText, ChevronDown, GitBranch as BranchIcon, CheckCircle, Wifi, Bell } from 'lucide-react'
+
+const { Activity,
+  Controls,
+  Editor,
+  Layout,
+  Panel,
+  Status,
+  Utils,
+  Workspace,
+} = VSCodeLayout
 
 const agent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',
 })
 
 export function App() {
+  // 使用 Hook 管理面板状态
+  const leftPanel = Utils.usePanelControls()
+  const rightPanel = Utils.usePanelControls()
+  const bottomPanel = Utils.usePanelControls()
+
+  const [activeActivityItem, setActiveActivityItem] = useState("explorer")
+  const [isActivityBarExpanded, setIsActivityBarExpanded] = useState(false)
+
+  // 定义系统指令和用户偏好
+  const defaultInstructions = useMemo(() => [
+    {
+      description: '系统设置',
+      value: JSON.stringify({
+        language: 'zh-CN',
+        responseStyle: 'professional',
+        maxResponseLength: 1000,
+        enableCodeHighlight: true,
+        enableMarkdown: true,
+      }),
+    },
+    {
+      description: '用户偏好',
+      value: JSON.stringify({
+        name: '张三',
+        role: 'developer',
+        preferences: {
+          conciseResponses: true,
+          technicalLevel: 'advanced',
+          preferredTopics: ['编程', '技术', '效率工具'],
+        },
+      }),
+    },
+    {
+      description: '系统环境',
+      value: JSON.stringify({
+        os: 'macOS',
+        version: '12.0',
+        environment: 'development',
+      }),
+    },
+    {
+      description: 'AI 助手行为指南',
+      value: JSON.stringify({
+        personality: '专业、友好、高效',
+        responseFormat: {
+          codeBlocks: true,
+          bulletPoints: true,
+          examples: true,
+        },
+        constraints: [
+          '保持回答简洁明了',
+          '优先使用中文回答',
+          '提供具体的代码示例',
+          '解释关键概念',
+        ],
+      }),
+    },
+  ], [])
+
+  const [customInstructions, setCustomInstructions] = useState<Array<{ description: string; value: string }>>([])
+
+  const allInstructions = useMemo(() => {
+    return [...defaultInstructions, ...customInstructions]
+  }, [defaultInstructions, customInstructions])
+
+  // 活动栏数据
+  const activityItems = [
+    {
+      id: "explorer",
+      icon: <Folder className="h-5 w-5" />,
+      title: "资源管理器",
+    },
+    { id: "search", icon: <Search className="h-5 w-5" />, title: "搜索" },
+    { id: "git", icon: <GitBranch className="h-5 w-5" />, title: "源代码管理" },
+    { id: "debug", icon: <Play className="h-5 w-5" />, title: "运行和调试" },
+    {
+      id: "extensions",
+      icon: <LayoutGrid className="h-5 w-5" />,
+      title: "扩展",
+    },
+  ]
+
   return (
     <TodoProvider>
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-foreground">
-              Todo App with AI Assistant
-            </h1>
-            <ThemeSwitcher
-              themes={[
-                'light',
-                'dark',
-                'material',
-                'nord',
-                'dracula',
-                'one-dark',
-                'tokyo-night',
-                'catppuccin',
-                'wechat',
-                'telegram',
-                'github',
-                'twitter',
-                'discord',
-                'notion',
-                'monokai-pro',
-                'gruvbox',
-                'solarized',
-                'aurora',
-                'forest',
-                'ocean',
-                'starlight',
-                'desert',
-                'neon',
-                'ink-wash',
-                'sakura',
-                'moonlight',
-                'bamboo',
-                'landscape',
-                'autumn',
-              ]}
-            >
-              <ThemeSwitcher.Dropdown />
-            </ThemeSwitcher>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Todo List Section */}
-            <div className="bg-card rounded-lg shadow-lg p-4">
-              <h2 className="text-xl font-semibold mb-4 text-foreground">
-                待办事项列表
-              </h2>
-              <TodoList />
-            </div>
-
-            {/* AI Assistant Section */}
-            <div className="bg-card rounded-lg shadow-lg">
-              <div className="p-4 border-b">
-                <h2 className="text-xl font-semibold text-foreground">
-                  AI 助手
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  你可以通过自然语言与 AI 助手交互，让它帮你管理待办事项
-                </p>
-              </div>
-              <AgentChatCore
-                agent={agent}
-                tools={todoTools}
-                toolRenderers={todoToolRenderers}
-                staticContext={[
-                  {
-                    description: '当前用户信息',
-                    value: JSON.stringify({
-                      name: '张三',
-                      role: 'developer',
-                    }),
-                  },
-                  {
-                    description: '系统环境',
-                    value: JSON.stringify({
-                      os: 'macOS',
-                      version: '12.0',
-                    }),
-                  },
-                ]}
+      <Workspace.Layout>
+        <Controls.Layout
+          onToggleLeftSidebar={leftPanel.toggle}
+          onToggleRightSidebar={rightPanel.toggle}
+          onToggleBottomPanel={bottomPanel.toggle}
+          isLeftSidebarCollapsed={leftPanel.isCollapsed}
+          isRightSidebarCollapsed={rightPanel.isCollapsed}
+          isBottomPanelCollapsed={bottomPanel.isCollapsed}
+        />
+        <Layout.Main>
+          <Activity.Bar
+            isExpanded={isActivityBarExpanded}
+            onToggle={() => setIsActivityBarExpanded(!isActivityBarExpanded)}
+            expandable={true}
+          >
+            {activityItems.map((item) => (
+              <Activity.Item
+                key={item.id}
+                icon={item.icon}
+                title={item.title}
+                isActive={activeActivityItem === item.id}
+                onClick={() => setActiveActivityItem(item.id)}
+                isExpanded={isActivityBarExpanded}
+                expandable={true}
               />
-            </div>
-          </div>
-        </div>
-      </div>
+            ))}
+          </Activity.Bar>
+
+          <Layout.MainContent>
+            <Layout.Horizontal>
+              <Layout.Sidebar
+                ref={leftPanel.ref}
+                onCollapse={leftPanel.collapse}
+                onExpand={leftPanel.expand}
+              >
+                <Workspace.Panel
+                  title="待办事项"
+                  isCollapsed={leftPanel.isCollapsed}
+                  onCollapse={leftPanel.collapse}
+                  onExpand={leftPanel.expand}
+                >
+                  <Panel.Content>
+                    <TodoList />
+                  </Panel.Content>
+                </Workspace.Panel>
+              </Layout.Sidebar>
+
+              <Layout.ResizeHandle />
+
+              <Panel.Resizable>
+                <Layout.Vertical>
+                  <Panel.Resizable>
+                    <Workspace.Panel>
+                      <Editor.Header>
+                        <Editor.Tab
+                          title="AI 助手"
+                          isActive={true}
+                        />
+                      </Editor.Header>
+                      <Editor.Content>
+                        <div className="relative h-full">
+                          <InstructionSettings
+                            instructions={customInstructions}
+                            onInstructionsChange={setCustomInstructions}
+                          />
+                          <AgentChatCore
+                            agent={agent}
+                            tools={todoTools}
+                            toolRenderers={todoToolRenderers}
+                            staticContext={allInstructions}
+                            className='h-full'
+                          />
+                        </div>
+                      </Editor.Content>
+                    </Workspace.Panel>
+                  </Panel.Resizable>
+
+                  <Layout.ResizeHandle orientation="horizontal" />
+
+                  <Layout.Sidebar
+                    ref={bottomPanel.ref}
+                    defaultSize={25}
+                    onCollapse={bottomPanel.collapse}
+                    onExpand={bottomPanel.expand}
+                  >
+                    <Workspace.Panel
+                      title="设置"
+                      isCollapsed={bottomPanel.isCollapsed}
+                      onCollapse={bottomPanel.collapse}
+                      onExpand={bottomPanel.expand}
+                    >
+                      <Panel.Content>
+                        <div className="p-4">
+                          <ThemeSwitcher
+                            themes={[
+                              'light',
+                              'dark',
+                              'material',
+                              'nord',
+                              'dracula',
+                              'one-dark',
+                              'tokyo-night',
+                              'catppuccin',
+                              'wechat',
+                              'telegram',
+                              'github',
+                              'twitter',
+                              'discord',
+                              'notion',
+                              'monokai-pro',
+                              'gruvbox',
+                              'solarized',
+                              'aurora',
+                              'forest',
+                              'ocean',
+                              'starlight',
+                              'desert',
+                              'neon',
+                              'ink-wash',
+                              'sakura',
+                              'moonlight',
+                              'bamboo',
+                              'landscape',
+                              'autumn',
+                            ]}
+                          >
+                            <ThemeSwitcher.Dropdown />
+                          </ThemeSwitcher>
+                        </div>
+                      </Panel.Content>
+                    </Workspace.Panel>
+                  </Layout.Sidebar>
+                </Layout.Vertical>
+              </Panel.Resizable>
+
+              <Layout.ResizeHandle />
+
+              <Layout.Sidebar
+                ref={rightPanel.ref}
+                onCollapse={rightPanel.collapse}
+                onExpand={rightPanel.expand}
+              >
+                <Workspace.Panel
+                  title="指令设置"
+                  isCollapsed={rightPanel.isCollapsed}
+                  onCollapse={rightPanel.collapse}
+                  onExpand={rightPanel.expand}
+                >
+                  <Panel.Content>
+                    <div className="p-4">
+                      <h3 className="text-sm font-medium mb-2">系统指令</h3>
+                      {defaultInstructions.map((instruction, index) => (
+                        <div key={index} className="mb-4">
+                          <div className="flex items-center mb-1">
+                            <ChevronDown className="h-3 w-3 mr-1" />
+                            <span className="text-sm font-medium">
+                              {instruction.description}
+                            </span>
+                          </div>
+                          <pre className="text-xs bg-muted p-2 rounded">
+                            {instruction.value}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel.Content>
+                </Workspace.Panel>
+              </Layout.Sidebar>
+            </Layout.Horizontal>
+          </Layout.MainContent>
+        </Layout.Main>
+
+        <Status.Bar>
+          <Status.Group>
+            <Status.IconItem
+              icon={<BranchIcon className="h-3.5 w-3.5" />}
+              label="main"
+            />
+            <Status.IconItem
+              icon={<CheckCircle className="h-3.5 w-3.5 text-green-500" />}
+              label="就绪"
+            />
+          </Status.Group>
+          <Status.Group>
+            <Status.Item>UTF-8</Status.Item>
+            <Status.Item>TSX</Status.Item>
+            <Status.Item>
+              <Wifi className="h-3.5 w-3.5 text-green-500" />
+            </Status.Item>
+            <Status.Item>
+              <Bell className="h-3.5 w-3.5" />
+            </Status.Item>
+          </Status.Group>
+        </Status.Bar>
+      </Workspace.Layout>
     </TodoProvider>
   )
 }
