@@ -169,7 +169,7 @@ export function App() {
                         />
                       </Editor.Header>
                       <Editor.Content>
-                        <div className="relative h-full">
+                        <div className="relative h-full flex flex-col">
                           <InstructionSettings
                             instructions={customInstructions}
                             onInstructionsChange={setCustomInstructions}
@@ -179,14 +179,14 @@ export function App() {
                             tools={todoTools}
                             toolRenderers={todoToolRenderers}
                             staticContext={allInstructions}
-                            className='h-full'
+                            className='flex-1 overflow-y-auto'
                           />
                         </div>
                       </Editor.Content>
                     </Workspace.Panel>
                   </Panel.Resizable>
 
-                  <Layout.ResizeHandle orientation="horizontal" />
+                  {/* <Layout.ResizeHandle orientation="horizontal" />
 
                   <Layout.Sidebar
                     ref={bottomPanel.ref}
@@ -240,7 +240,7 @@ export function App() {
                         </div>
                       </Panel.Content>
                     </Workspace.Panel>
-                  </Layout.Sidebar>
+                  </Layout.Sidebar> */}
                 </Layout.Vertical>
               </Panel.Resizable>
 
