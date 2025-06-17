@@ -3,25 +3,25 @@ import * as React from 'react'
 import { useContext, useMemo } from 'react'
 import { AgentToolRendererManagerContext } from '../../hooks/use-provide-agent-tool-renderers'
 
+import type { UIMessage } from '@ai-sdk/ui-utils'
+import clsx from 'clsx'
+import type { ToolRenderer, ToolResult } from '../../types/agent'
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import type { ToolCall, ToolRenderer, ToolResult } from '../../types/agent'
 import { ToolCallRenderer } from './tool-call-renderer'
-import type { Message } from '@ag-ui/client'
-import clsx from 'clsx'
 
 interface MessageItemProps {
-  message: Message
+  uiMessage: UIMessage
   toolRenderers: Record<string, ToolRenderer>
   onToolResult?: (result: ToolResult) => void
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
-  message,
+  uiMessage,
   toolRenderers,
   onToolResult,
 }) => {
-  const isUser = message.role === 'user'
+  const isUser = uiMessage.role === 'user'
 
   const toolRendererManager = useContext(AgentToolRendererManagerContext)
   const allToolRenderers = useMemo(() => {
@@ -36,7 +36,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   }, [toolRenderers, toolRendererManager])
 
   return (
-    <div className={clsx(`flex w-full  p-2`, isUser ? 'justify-end' : 'justify-start')}>
+    <div
+      className={clsx(
+        `flex w-full  p-2`,
+        isUser ? 'justify-end' : 'justify-start',
+      )}
+    >
       <div
         className={clsx(
           'flex max-w-[80%] w-fit items-start gap-2',
@@ -64,26 +69,27 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               : 'bg-muted text-foreground'
           }`}
         >
-          {message.content && (
-            <div className="break-words">
-              <MarkdownRenderer content={message.content} />
-            </div>
-          )}
-          {!isUser &&
-            'toolCalls' in message &&
-            message.toolCalls &&
-            message.toolCalls.length > 0 && (
-              <div className="mt-1">
-                {message.toolCalls.map((tool: ToolCall) => (
+          {uiMessage.parts.map((part, index) => {
+            if (part.type === 'text') {
+              return (
+                <div key={index} className="break-words">
+                  <MarkdownRenderer content={part.text} />
+                </div>
+              )
+            }
+            if (part.type === 'tool-invocation') {
+              return (
+                <div key={index} className="mt-1">
                   <ToolCallRenderer
-                    key={`${message.id}-${tool.id}`}
-                    tool={tool}
+                    toolInvocation={part.toolInvocation}
                     toolRenderers={allToolRenderers}
                     onToolResult={onToolResult}
                   />
-                ))}
-              </div>
-            )}
+                </div>
+              )
+            }
+            return null
+          })}
         </div>
       </div>
     </div>

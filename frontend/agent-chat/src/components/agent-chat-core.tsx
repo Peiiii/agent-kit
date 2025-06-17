@@ -5,7 +5,6 @@ import type { AgentChatProps, AgentChatRef } from '../types/agent-chat-component
 import { ChatInterface } from './chat-interface'
 import '../styles/globals.css'
 
-
 export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
   (
     {
@@ -18,7 +17,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     ref,
   ) => {
     const [input, setInput] = useState('')
-    const { messages, isLoading, sendMessage, addToolResult: sendToolResult, reset } =
+    const { uiMessages, isLoading, sendMessage, addToolResult: sendToolResult, reset } =
       useAgentChat({
         agent,
         tools: toolsList,
@@ -41,7 +40,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     return (
       <div className={className}>
         <ChatInterface
-          messages={messages}
+          uiMessages={uiMessages}
           toolRenderers={renderers}
           onToolResult={sendToolResult}
           input={input}

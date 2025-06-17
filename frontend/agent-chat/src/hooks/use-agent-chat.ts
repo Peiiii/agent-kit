@@ -1,10 +1,12 @@
+import { convertMessagesToUIMessages } from '../utils/ui-message'
 import {
   EventType,
   type BaseEvent,
   type HttpAgent,
   type Message,
 } from '@ag-ui/client'
-import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import type { UIMessage } from '@ai-sdk/ui-utils'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { Observable } from 'rxjs'
 import { v4 } from 'uuid'
 import type { Context, ToolDefinition, ToolResult } from '../types/agent'
@@ -20,6 +22,7 @@ interface UseAgentChatProps {
 
 interface UseAgentChatReturn {
   messages: Message[]
+  uiMessages: UIMessage[]
   isLoading: boolean
   threadId: string | null
   sendMessage: (content: string) => Promise<void>
@@ -158,8 +161,13 @@ export function useAgentChat({
     [agent, threadId, tools, handleAgentResponse, getContexts],
   )
 
+  const uiMessages = useMemo(() => {
+    return convertMessagesToUIMessages(messages)
+  }, [messages])
+
   return {
     messages,
+    uiMessages,
     isLoading,
     threadId,
     sendMessage,
