@@ -12,17 +12,17 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       agent,
       toolRenderers: renderers = {},
       tools: toolsList = [],
-      staticContext = [],
+      contexts = [],
       className,
     },
     ref,
   ) => {
     const [input, setInput] = useState('')
-    const { messages, isLoading, sendMessage, sendToolResult, reset } =
+    const { messages, isLoading, sendMessage, addToolResult: sendToolResult, reset } =
       useAgentChat({
         agent,
         tools: toolsList,
-        staticContext,
+        contexts: contexts,
       })
 
     const handleSend = async () => {

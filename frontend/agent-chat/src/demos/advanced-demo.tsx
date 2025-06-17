@@ -71,7 +71,7 @@ export function AdvancedDemo() {
       })}
       toolRenderers={{ ...availableToolRenderers, ...customToolRenderers }}
       tools={[...availableTools, ...customTools]}
-      staticContext={customContext}
+      contexts={customContext}
     />
   )
 } 

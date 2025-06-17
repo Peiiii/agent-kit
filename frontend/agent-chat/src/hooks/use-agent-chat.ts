@@ -3,24 +3,19 @@ import {
   type BaseEvent,
   type HttpAgent,
   type Message,
-  type MessagesSnapshotEvent,
-  type StateSnapshotEvent,
-  type TextMessageContentEvent,
-  type TextMessageStartEvent,
-  type ToolCallArgsEvent,
-  type ToolCallStartEvent,
 } from '@ag-ui/client'
-import { useCallback, useContext, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import type { Observable } from 'rxjs'
 import { v4 } from 'uuid'
 import type { Context, ToolDefinition, ToolResult } from '../types/agent'
+import { AgentSessionManager } from './agent-session-manager'
 import { AgentContextManagerContext } from './use-provide-agent-contexts'
 import { AgentToolDefManagerContext } from './use-provide-agent-tool-defs'
-import type { Observable } from 'rxjs'
 
 interface UseAgentChatProps {
   agent: HttpAgent
   tools: ToolDefinition[]
-  staticContext?: Context[]
+  contexts?: Context[]
 }
 
 interface UseAgentChatReturn {
@@ -28,32 +23,40 @@ interface UseAgentChatReturn {
   isLoading: boolean
   threadId: string | null
   sendMessage: (content: string) => Promise<void>
-  sendToolResult: (result: ToolResult) => Promise<void>
+  addToolResult: (
+    result: ToolResult,
+    options?: { triggerAgent?: boolean },
+  ) => Promise<void>
   reset: () => void
 }
 
 export function useAgentChat({
   agent,
   tools,
-  staticContext = [],
+  contexts = [],
 }: UseAgentChatProps): UseAgentChatReturn {
   const [messages, setMessages] = useState<Message[]>([])
-  console.log("[useAgentChat] messages", JSON.parse(JSON.stringify(messages)))
   const [isLoading, setIsLoading] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
   const contextManager = useContext(AgentContextManagerContext)
   const toolDefManager = useContext(AgentToolDefManagerContext)
+  const sessionManager = useRef(new AgentSessionManager())
+
+  useEffect(() => {
+    const subscription = sessionManager.current.subscribeMessages(setMessages)
+    return () => subscription.unsubscribe()
+  }, [])
 
   const reset = useCallback(() => {
-    setMessages([])
+    sessionManager.current.reset()
     setThreadId(null)
     setIsLoading(false)
   }, [])
 
   const getContexts = useCallback(() => {
     const dynamicContexts = contextManager.getContexts()
-    return [...staticContext, ...dynamicContexts]
-  }, [staticContext, contextManager])
+    return [...contexts, ...dynamicContexts]
+  }, [contexts, contextManager])
 
   const getToolDefs = useCallback(() => {
     const dynamicToolDefs = toolDefManager.getToolDefs()
@@ -61,135 +64,14 @@ export function useAgentChat({
   }, [tools, toolDefManager])
 
   const handleAgentResponse = useCallback((response: Observable<BaseEvent>) => {
-    let currentMessageId: string | undefined
-    let currentMessageContent = ''
-    let startEvent: TextMessageStartEvent
-    let contentEvent: TextMessageContentEvent
-    let stateEvent: StateSnapshotEvent
-    let messagesEvent: MessagesSnapshotEvent
-    let toolCallStartEvent: ToolCallStartEvent
-    let toolCallArgsEvent: ToolCallArgsEvent
-    let currentToolCallId: string | undefined
-    let currentToolCallArgs = ''
-    let currentToolCallName: string | undefined
-
     response.subscribe((event: BaseEvent) => {
-      console.log('[useAgentChat] event', event)
-      switch (event.type) {
-        case EventType.RUN_STARTED:
-          break
-        case EventType.TEXT_MESSAGE_START:
-          startEvent = event as TextMessageStartEvent
-          currentMessageId = startEvent.messageId
-          currentMessageContent = ''
-          break
-        case EventType.TEXT_MESSAGE_CONTENT:
-          contentEvent = event as TextMessageContentEvent
-          if (
-            contentEvent.delta &&
-            currentMessageId === contentEvent.messageId
-          ) {
-            currentMessageContent += contentEvent.delta
-            setMessages((prev) => {
-              const newMessages = [...prev]
-              const lastMessage = newMessages.at(-1)
-              if (
-                lastMessage &&
-                lastMessage.role === 'assistant' &&
-                lastMessage.id === currentMessageId
-              ) {
-                lastMessage.content = currentMessageContent
-                return newMessages
-              }
-              return [
-                ...prev,
-                {
-                  id: currentMessageId!,
-                  content: currentMessageContent,
-                  role: 'assistant',
-                },
-              ]
-            })
-          }
-          break
-        case EventType.TEXT_MESSAGE_END:
-          currentMessageId = undefined
-          currentMessageContent = ''
-          break
-        case EventType.TOOL_CALL_START:
-          toolCallStartEvent = event as ToolCallStartEvent
-          currentToolCallId = toolCallStartEvent.toolCallId
-          currentToolCallName = toolCallStartEvent.toolCallName
-          currentToolCallArgs = ''
-          break
-        case EventType.TOOL_CALL_ARGS:
-          toolCallArgsEvent = event as ToolCallArgsEvent
-          if (currentToolCallId === toolCallArgsEvent.toolCallId) {
-            currentToolCallArgs += toolCallArgsEvent.delta
-          }
-          break
-        case EventType.TOOL_CALL_END:
-          if (currentToolCallId && currentToolCallName) {
-            try {
-              const toolCall = {
-                id: currentToolCallId,
-                type: 'function' as const,
-                function: {
-                  name: currentToolCallName,
-                  arguments: currentToolCallArgs,
-                },
-              }
-              console.log("[useAgentChat][toolCallEnd] toolCall", JSON.parse(JSON.stringify(toolCall)))
-              setMessages((prev) => {
-                const lastMessage = prev[prev.length - 1]
-                if (lastMessage && lastMessage.role === 'assistant') {
-                  return prev.map((msg, index) => {
-                    if (index === prev.length - 1 && msg.role === 'assistant') {
-                      return {
-                        ...msg,
-                        toolCalls: [...(msg.toolCalls || []), toolCall]
-                      }
-                    }
-                    return msg
-                  })
-                }
-                
-                return [
-                  ...prev,
-                  {
-                    id: v4(),
-                    role: 'assistant',
-                    toolCalls: [toolCall],
-                  },
-                ]
-              })
-            } catch (error) {
-              console.error('Error parsing tool call args:', error)
-            }
-          }
-          currentToolCallId = undefined
-          currentToolCallName = undefined
-          currentToolCallArgs = ''
-          break
-        case EventType.RUN_FINISHED:
-        case EventType.RUN_ERROR:
-          setIsLoading(false)
-          break
-        case EventType.STATE_SNAPSHOT:
-          stateEvent = event as StateSnapshotEvent
-          if (stateEvent.snapshot?.messages) {
-            setMessages(stateEvent.snapshot.messages)
-          }
-          break
-        case EventType.MESSAGES_SNAPSHOT:
-          messagesEvent = event as MessagesSnapshotEvent
-          if (messagesEvent.messages) {
-            setMessages(messagesEvent.messages)
-          }
-          break
-        default:
-          console.info('Unknown event type:', event.type)
-          break
+      sessionManager.current.handleEvent(event)
+
+      if (
+        event.type === EventType.RUN_FINISHED ||
+        event.type === EventType.RUN_ERROR
+      ) {
+        setIsLoading(false)
       }
     })
   }, [])
@@ -206,7 +88,7 @@ export function useAgentChat({
           content,
         }
 
-        setMessages((prev) => [...prev, userMessage])
+        sessionManager.current.addMessages([userMessage])
 
         if (!threadId) {
           const newThreadId = v4()
@@ -214,7 +96,7 @@ export function useAgentChat({
           const response = await agent.run({
             threadId: newThreadId,
             runId: v4(),
-            messages: [...messages, userMessage],
+            messages: sessionManager.current.getMessages(),
             tools: getToolDefs(),
             context: getContexts(),
             state: {},
@@ -225,7 +107,7 @@ export function useAgentChat({
           const response = await agent.run({
             threadId,
             runId: v4(),
-            messages: [...messages, userMessage],
+            messages: sessionManager.current.getMessages(),
             tools,
             context: getContexts(),
             state: {},
@@ -235,23 +117,16 @@ export function useAgentChat({
         }
       } catch (error) {
         console.error('Error sending message:', error)
-      } finally {
         setIsLoading(false)
       }
     },
-    [
-      threadId,
-      agent,
-      messages,
-      getToolDefs,
-      getContexts,
-      handleAgentResponse,
-      tools,
-    ],
+    [threadId, agent, getToolDefs, getContexts, handleAgentResponse, tools],
   )
 
-  const sendToolResult = useCallback(
-    async (result: ToolResult) => {
+  const addToolResult = useCallback(
+    async (result: ToolResult, options?: { triggerAgent?: boolean }) => {
+      const { triggerAgent = true } = options || {}
+
       if (!threadId) return
 
       try {
@@ -262,23 +137,25 @@ export function useAgentChat({
           toolCallId: result.toolCallId,
         }
 
-        setMessages((prev) => [...prev, toolMessage])
+        sessionManager.current.addMessages([toolMessage])
 
-        const response = await agent.run({
-          threadId,
-          runId: v4(),
-          messages: [...messages, toolMessage],
-          tools,
-          context: getContexts(),
-          state: {},
-          forwardedProps: {},
-        })
-        handleAgentResponse(response as unknown as Observable<BaseEvent>)
+        if (triggerAgent) {
+          const response = await agent.run({
+            threadId,
+            runId: v4(),
+            messages: sessionManager.current.getMessages(),
+            tools,
+            context: getContexts(),
+            state: {},
+            forwardedProps: {},
+          })
+          handleAgentResponse(response as unknown as Observable<BaseEvent>)
+        }
       } catch (error) {
         console.error('Error handling tool result:', error)
       }
     },
-    [agent, threadId, tools, handleAgentResponse, messages, getContexts],
+    [agent, threadId, tools, handleAgentResponse, getContexts],
   )
 
   return {
@@ -286,7 +163,7 @@ export function useAgentChat({
     isLoading,
     threadId,
     sendMessage,
-    sendToolResult,
+    addToolResult,
     reset,
   }
 }

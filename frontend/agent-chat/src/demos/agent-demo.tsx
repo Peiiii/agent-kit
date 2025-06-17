@@ -51,7 +51,7 @@ export function AgentDemo(props: {
         agent={globalAgent}
         toolRenderers={toolRenderers}
         tools={tools}
-        staticContext={staticContext}
+        contexts={staticContext}
       />
     </div>
   )

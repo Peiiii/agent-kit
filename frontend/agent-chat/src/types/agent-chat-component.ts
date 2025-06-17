@@ -5,7 +5,7 @@ export interface AgentChatProps {
     agent: HttpAgent
     toolRenderers?: Record<string, ToolRenderer>
     tools?: ToolDefinition[]
-    staticContext?: Array<{ description: string; value: string }>
+    contexts?: Array<{ description: string; value: string }>
     className?: string
   }
   

@@ -20,7 +20,7 @@ export const AgentChatWindow = ({
   agent,
   toolRenderers: renderers = {},
   tools: toolsList = [],
-  staticContext = [],
+  contexts: staticContext = [],
   className,
 }: AgentChatProps) => {
   const [isMaximized, setIsMaximized] = useState(false)
@@ -83,7 +83,7 @@ export const AgentChatWindow = ({
         agent={agent}
         toolRenderers={renderers}
         tools={toolsList}
-        staticContext={staticContext}
+        contexts={staticContext}
         className={clsx('h-full', className)}
       />
     </Window>

@@ -1,14 +1,13 @@
 import { HttpAgent } from '@ag-ui/client'
 import { AgentChatCore } from '@agent-labs/agent-chat'
-import { ThemeSwitcher } from 'composite-kit'
+import { VSCodeLayout } from "composite-kit"
+import { Bell, GitBranch as BranchIcon, CheckCircle, ChevronDown, Folder, GitBranch, LayoutGrid, Play, Search, Wifi } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { InstructionSettings } from './features/settings/components/instruction-settings'
 import { TodoList } from './features/todo/components/todo-list'
 import { TodoProvider } from './features/todo/hooks/use-todo'
 import { todoToolRenderers } from './features/todo/tool-renderers'
 import { todoTools } from './features/todo/tools'
-import { useMemo, useState } from 'react'
-import { InstructionSettings } from './features/settings/components/instruction-settings'
-import { VSCodeLayout } from "composite-kit"
-import { Folder, Search, GitBranch, Play, LayoutGrid, FileText, ChevronDown, GitBranch as BranchIcon, CheckCircle, Wifi, Bell } from 'lucide-react'
 
 const { Activity,
   Controls,
@@ -178,7 +177,7 @@ export function App() {
                             agent={agent}
                             tools={todoTools}
                             toolRenderers={todoToolRenderers}
-                            staticContext={allInstructions}
+                            contexts={allInstructions}
                             className='flex-1 overflow-y-auto'
                           />
                         </div>
