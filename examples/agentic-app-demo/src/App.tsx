@@ -18,7 +18,7 @@ function App() {
             agent={agent}
             tools={tools}
             toolRenderers={toolRenderers}
-            staticContext={[
+            contexts={[
               {
                 description: '当前用户信息',
                 value: JSON.stringify({
