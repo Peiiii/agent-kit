@@ -1,12 +1,18 @@
 import * as React from 'react'
 import { useMemo } from 'react'
 
-import { AgentChatWindow, globalAgent } from '../components/agent-chat-window'
-import type { ToolDefinition, ToolRenderer } from '../types/agent'
+import { HttpAgent } from '@ag-ui/client'
 import {
   toolRenderers as availableToolRenderers,
   tools as availableTools,
 } from '..'
+import { AgentChatWindow } from '../components/agent-chat-window'
+import type { ToolDefinition, ToolRenderer } from '../types/agent'
+
+export const demoAgent = new HttpAgent({
+  url: 'http://localhost:8000/openai-agent',
+})
+
 
 export function AgentDemo(props: {
   customContext?: Array<{ description: string; value: string }>
@@ -48,7 +54,7 @@ export function AgentDemo(props: {
   return (
     <div className="min-h-full w-full flex items-center justify-center">
       <AgentChatWindow
-        agent={globalAgent}
+        agent={demoAgent}
         toolRenderers={toolRenderers}
         tools={tools}
         contexts={staticContext}

@@ -1,4 +1,3 @@
-import { HttpAgent } from '@ag-ui/client'
 import { MessageSquare, Trash2 } from 'lucide-react'
 import * as React from 'react'
 import { useRef, useState } from 'react'
@@ -12,16 +11,10 @@ import { AgentChatCore } from './agent-chat-core'
 import { Button } from './ui/button'
 import { Window } from './window'
 
-export const globalAgent = new HttpAgent({
-  url: 'http://localhost:8000/openai-agent',
-})
 
 export const AgentChatWindow = ({
-  agent,
-  toolRenderers: renderers = {},
-  tools: toolsList = [],
-  contexts = [],
   className,
+  ...agentChatProps
 }: AgentChatProps) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isHeightMaximized, setIsHeightMaximized] = useState(false)
@@ -80,10 +73,7 @@ export const AgentChatWindow = ({
     >
       <AgentChatCore
         ref={chatCoreRef}
-        agent={agent}
-        toolRenderers={renderers}
-        tools={toolsList}
-        contexts={contexts}
+        {...agentChatProps}
         className={clsx('h-full', className)}
       />
     </Window>

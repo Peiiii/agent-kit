@@ -18,6 +18,7 @@ interface UseAgentChatProps {
   agent: HttpAgent
   tools: ToolDefinition[]
   contexts?: Context[]
+  initialMessages?: Message[]
 }
 
 interface UseAgentChatReturn {
@@ -37,8 +38,9 @@ export function useAgentChat({
   agent,
   tools,
   contexts = [],
+  initialMessages = [],
 }: UseAgentChatProps): UseAgentChatReturn {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isLoading, setIsLoading] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
   const contextManager = useContext(AgentContextManagerContext)

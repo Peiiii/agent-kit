@@ -12,6 +12,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       toolRenderers: renderers = {},
       tools: toolsList = [],
       contexts = [],
+      initialMessages = [],
       className,
     },
     ref,
@@ -22,6 +23,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
         agent,
         tools: toolsList,
         contexts: contexts,
+        initialMessages,
       })
 
     const handleSend = async () => {
