@@ -36,6 +36,7 @@ interface UseAgentChatReturn {
     options?: { triggerAgent?: boolean },
   ) => Promise<void>
   reset: () => void
+  abortAgentRun: () => void
 }
 
 export function useAgentChat({
@@ -79,15 +80,20 @@ export function useAgentChat({
     return [...tools, ...dynamicToolDefs]
   }, [tools, toolDefManager])
 
+  // 记录当前订阅
+  const agentRunSubscriptionRef = useRef<any>(null)
   const handleAgentResponse = useCallback((response: Observable<BaseEvent>) => {
-    response.subscribe((event: BaseEvent) => {
+    if (agentRunSubscriptionRef.current) {
+      agentRunSubscriptionRef.current.unsubscribe()
+    }
+    agentRunSubscriptionRef.current = response.subscribe((event: BaseEvent) => {
       sessionManager.current.handleEvent(event)
-
       if (
         event.type === EventType.RUN_FINISHED ||
         event.type === EventType.RUN_ERROR
       ) {
         setIsAgentResponding(false)
+        agentRunSubscriptionRef.current = null
       }
     })
   }, [])
@@ -95,16 +101,13 @@ export function useAgentChat({
   const runAgent = useCallback(
     async (currentThreadId?: string) => {
       setIsAgentResponding(true)
-      
       try {
         let targetThreadId = currentThreadId
-        
         if (!targetThreadId) {
           // 如果没有 threadId，创建新的 thread
           targetThreadId = v4()
           setThreadId(targetThreadId)
         }
-        
         const response = await agent.run({
           threadId: targetThreadId,
           runId: v4(),
@@ -114,15 +117,28 @@ export function useAgentChat({
           state: {},
           forwardedProps: {},
         })
-        
         handleAgentResponse(response as unknown as Observable<BaseEvent>)
       } catch (error) {
-        console.error('Error running agent:', error)
+        if ((error as any)?.name === 'AbortError') {
+          // 用户主动终止
+          console.info('Agent run aborted')
+        } else {
+          console.error('Error running agent:', error)
+        }
         setIsAgentResponding(false)
       }
     },
     [agent, getToolDefs, getContexts, handleAgentResponse],
   )
+
+  // 终止 agent 响应
+  const abortAgentRun = useCallback(() => {
+    if (agentRunSubscriptionRef.current) {
+      agentRunSubscriptionRef.current.unsubscribe()
+      agentRunSubscriptionRef.current = null
+      setIsAgentResponding(false)
+    }
+  }, [])
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -200,5 +216,6 @@ export function useAgentChat({
     addToolResult,
     addMessages,
     reset,
+    abortAgentRun,
   }
 }

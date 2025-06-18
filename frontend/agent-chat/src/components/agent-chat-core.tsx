@@ -28,6 +28,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       addToolResult: sendToolResult,
       addMessages,
       reset,
+      abortAgentRun,
     } = useAgentChat({
       agent,
       tools: toolsList,
@@ -61,6 +62,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
           onInputChange={setInput}
           onSend={handleSend}
           isAgentResponding={isAgentResponding}
+          onAbort={abortAgentRun}
         />
       </div>
     )

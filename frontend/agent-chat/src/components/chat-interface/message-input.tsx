@@ -1,4 +1,4 @@
-import { Send } from 'lucide-react'
+import { Send, Square } from 'lucide-react'
 import * as React from 'react'
 
 import { Button } from '../ui/button'
@@ -9,6 +9,7 @@ interface MessageInputProps {
   onInputChange: (v: string) => void
   onSend: () => void
   isAgentResponding: boolean
+  onAbort?: () => void
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -16,6 +17,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onInputChange,
   onSend,
   isAgentResponding,
+  onAbort,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onInputChange(e.target.value)
@@ -44,14 +46,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         disabled={false}
         className="flex-1"
       />
-      <Button
-        variant="default"
-        size="icon"
-        onClick={onSend}
-        disabled={isAgentResponding || !input.trim()}
-      >
-        <Send className="h-4 w-4" />
-      </Button>
+      {!isAgentResponding ? (
+        <Button
+          variant="default"
+          size="icon"
+          onClick={onSend}
+          disabled={!input.trim()}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          variant="destructive"
+          size="icon"
+          onClick={onAbort}
+          title="终止AI响应"
+        >
+          <Square className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 }
