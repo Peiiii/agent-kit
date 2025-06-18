@@ -15,6 +15,7 @@
   - [插件式工具系统](#插件式工具系统)
   - [自定义工具界面](#自定义工具界面)
   - [组合使用场景](#组合使用场景)
+  - [预加载消息](#预加载消息)
 - [API 参考](#api-参考)
 - [Hooks 参考](#hooks-参考)
 
@@ -494,6 +495,45 @@ function AdvancedChat() {
 }
 ```
 
+### 预加载消息
+
+使用 `initialMessages` 属性可以在聊天界面初始化时预加载消息：
+
+```tsx
+import { AgentChatWindow } from '@agent-labs/agent-chat'
+import { agent } from './agent'
+import type { Message } from '@ag-ui/client'
+
+function PreloadedChat() {
+  // 预加载的消息
+  const initialMessages: Message[] = [
+    {
+      id: '1',
+      role: 'system',
+      content: '欢迎使用 AI 助手！',
+    },
+    {
+      id: '2',
+      role: 'assistant',
+      content: '你好！我是你的 AI 助手，有什么我可以帮助你的吗？',
+    },
+  ]
+
+  return (
+    <AgentChatWindow
+      agent={agent}
+      initialMessages={initialMessages}
+    />
+  )
+}
+```
+
+这个功能在以下场景特别有用：
+- 显示欢迎消息
+- 恢复之前的对话
+- 提供使用指南
+- 设置初始上下文
+
 ## API 参考
 
 ### AgentChatCore Props
@@ -505,6 +545,7 @@ function AdvancedChat() {
 | toolRenderers | Record<string, ToolRenderer> | 否 | 工具渲染器映射 |
 | staticContext | Array<{description: string, value: string}> | 否 | 静态上下文信息 |
 | className | string | 否 | 自定义 CSS 类名 |
+| initialMessages | Message[] | 否 | 初始化时预加载的消息数组 |
 
 ### AgentChatWindow Props
 
@@ -515,6 +556,7 @@ function AdvancedChat() {
 | toolRenderers | Record<string, ToolRenderer> | 否 | 工具渲染器映射 |
 | staticContext | Array<{description: string, value: string}> | 否 | 静态上下文信息 |
 | className | string | 否 | 自定义 CSS 类名 |
+| initialMessages | Message[] | 否 | 初始化时预加载的消息数组 |
 
 ### 工具定义
 

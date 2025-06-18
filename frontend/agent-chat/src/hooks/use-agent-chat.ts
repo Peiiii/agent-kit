@@ -52,6 +52,13 @@ export function useAgentChat({
     return () => subscription.unsubscribe()
   }, [])
 
+  // 初始化时添加预加载消息
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      sessionManager.current.addMessages(initialMessages)
+    }
+  }, [initialMessages])
+
   const reset = useCallback(() => {
     sessionManager.current.reset()
     setThreadId(null)
