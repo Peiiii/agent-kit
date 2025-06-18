@@ -13,6 +13,7 @@ import type { Context, ToolDefinition, ToolResult } from '../types/agent'
 import { AgentSessionManager } from './agent-session-manager'
 import { AgentContextManagerContext } from './use-provide-agent-contexts'
 import { AgentToolDefManagerContext } from './use-provide-agent-tool-defs'
+import { AgentToolExecutorManagerContext } from './use-provide-agent-tool-executors'
 
 interface UseAgentChatProps {
   agent: HttpAgent
@@ -50,6 +51,7 @@ export function useAgentChat({
   const [threadId, setThreadId] = useState<string | null>(null)
   const contextManager = useContext(AgentContextManagerContext)
   const toolDefManager = useContext(AgentToolDefManagerContext)
+  const toolExecutorManager = useContext(AgentToolExecutorManagerContext)
   const sessionManager = useRef(new AgentSessionManager())
 
   useEffect(() => {
@@ -159,24 +161,9 @@ export function useAgentChat({
   const addToolResult = useCallback(
     async (result: ToolResult, options?: { triggerAgent?: boolean }) => {
       const { triggerAgent = true } = options || {}
-
-      if (!threadId) return
-
-      try {
-        const toolMessage: Message = {
-          id: v4(),
-          role: 'tool',
-          content: JSON.stringify(result.result),
-          toolCallId: result.toolCallId,
-        }
-
-        sessionManager.current.addMessages([toolMessage])
-
-        if (triggerAgent) {
-          await runAgent(threadId)
-        }
-      } catch (error) {
-        console.error('Error handling tool result:', error)
+      await sessionManager.current.addToolResult(result, { triggerAgent })
+      if (triggerAgent && threadId) {
+        await runAgent(threadId)
       }
     },
     [threadId, runAgent],
@@ -202,6 +189,24 @@ export function useAgentChat({
     },
     [threadId, runAgent],
   )
+
+  // 自动工具执行与 agent 触发
+  useEffect(() => {
+    const sub = sessionManager.current.toolCall$.subscribe(async ({ toolCall }) => {
+      const executor = toolExecutorManager.getToolExecutor(toolCall.function.name)
+      if (executor) {
+        try {
+          const result = await executor(toolCall)
+          sessionManager.current.addToolResult({ toolCallId: toolCall.id, result, status: 'success' })
+          if (threadId) await runAgent(threadId)
+        } catch (err) {
+          sessionManager.current.addToolResult({ toolCallId: toolCall.id, result: { error: err instanceof Error ? err.message : String(err) }, status: 'error' })
+          if (threadId) await runAgent(threadId)
+        }
+      }
+    })
+    return () => sub.unsubscribe()
+  }, [toolExecutorManager, runAgent, threadId])
 
   const uiMessages = useMemo(() => {
     return convertMessagesToUIMessages(messages)

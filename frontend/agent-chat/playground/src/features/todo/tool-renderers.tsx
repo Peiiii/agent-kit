@@ -1,6 +1,7 @@
 import { ToolRenderer, ToolCall, ToolResult } from '@agent-labs/agent-chat'
 import { useTodo } from './hooks/use-todo'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useEffect } from 'react'
 
 export const todoToolRenderers: Record<string, ToolRenderer> = {
   addTodo: {
@@ -282,7 +283,6 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
   listTodos: {
     render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
       const { state } = useTodo()
-
       return (
         <div className="p-4 border rounded-lg">
           <h3 className="font-bold mb-2">待办事项列表</h3>
@@ -305,20 +305,6 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
                 </span>
               </div>
             ))}
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              className="px-4 py-2 bg-primary text-primary-foreground rounded"
-              onClick={() => {
-                onResult({
-                  toolCallId: toolCall.id,
-                  result: { todos: state.todos },
-                  status: 'success',
-                })
-              }}
-            >
-              确认
-            </button>
           </div>
         </div>
       )

@@ -13,6 +13,7 @@
   - [基础聊天界面](#基础聊天界面)
   - [动态上下文管理](#动态上下文管理)
   - [插件式工具系统](#插件式工具系统)
+  - [动态注册工具执行器](#动态注册工具执行器)
   - [自定义工具界面](#自定义工具界面)
   - [组合使用场景](#组合使用场景)
   - [预加载消息](#预加载消息)
@@ -273,6 +274,58 @@ function PluginSystemChat() {
   )
 }
 ```
+
+### 动态注册工具执行器
+
+`useProvideAgentToolExecutors` 用于在组件中动态注册工具执行器（ToolExecutor），实现自动工具调用和结果推送。支持同步和异步函数，配合 `useAgentChat` 可实现自动工具链路。
+
+#### 典型用法
+
+```tsx
+import { useProvideAgentToolExecutors } from '@agent-labs/agent-chat'
+import type { ToolCall, ToolResult } from '@agent-labs/agent-chat'
+
+function ToolExecutorProvider() {
+  // 注册工具执行器
+  useProvideAgentToolExecutors({
+    search: async (toolCall: ToolCall) => {
+      const args = JSON.parse(toolCall.function.arguments)
+      // 这里可以调用实际的搜索 API
+      return {
+        title: '搜索结果',
+        content: `你搜索了：${args.query}`,
+      }
+    },
+    getTime: () => {
+      // 同步返回
+      return { now: new Date().toISOString() }
+    },
+  })
+  return null
+}
+```
+
+#### ToolExecutor 类型签名
+
+```typescript
+export type ToolExecutor = (
+  toolCall: ToolCall,
+  context?: any
+) => ToolResult | Promise<ToolResult>
+```
+- `toolCall`：工具调用的详细信息
+- `context`：可选上下文参数
+- 返回值：可以是同步 ToolResult，也可以是 Promise<ToolResult>
+
+#### 自动工具执行链路
+
+- 只需注册 ToolExecutor，`useAgentChat` 会自动监听工具调用事件，自动查找并执行对应的 executor，执行结果自动推送到消息流并可自动触发 agent。
+- 你无需手动管理工具调用和结果推送，极大简化业务代码。
+
+#### 场景说明
+
+- 适用于插件式工具、动态扩展工具、自动化工具链等场景。
+- 支持在任意组件中动态注册/移除工具执行器，适合微前端、插件化架构。
 
 ### 自定义工具界面
 
@@ -940,6 +993,19 @@ function useProvideAgentToolRenderers(toolRenderers: ToolRenderer[]): void
 ```
 
 这个 hook 允许你在组件中动态提供工具渲染器。当 toolRenderers 数组发生变化时，工具渲染器会自动更新。
+
+### useProvideAgentToolExecutors
+
+用于动态注册工具执行器：
+
+```typescript
+function useProvideAgentToolExecutors(toolExecutors: Record<string, ToolExecutor>): void
+```
+- `toolExecutors`：工具名到执行器的映射
+- 支持同步和异步函数
+- 组件卸载时自动移除
+
+详见[动态注册工具执行器](#动态注册工具执行器)小节。
 
 ## 故障排除
 

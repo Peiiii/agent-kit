@@ -33,9 +33,7 @@ export type {
 }
 
 // 导出 hooks
-export { useProvideAgentContexts } from './hooks/use-provide-agent-contexts'
-export { useProvideAgentToolDefs } from './hooks/use-provide-agent-tool-defs'
-export { useProvideAgentToolRenderers } from './hooks/use-provide-agent-tool-renderers'
+export * from './hooks'
 
 // 导出 UI 组件
 export * from './components/chat-interface'

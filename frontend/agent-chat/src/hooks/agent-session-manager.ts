@@ -1,16 +1,17 @@
-import { BehaviorSubject } from 'rxjs'
-import { v4 } from 'uuid'
 import {
   EventType,
   type BaseEvent,
   type Message,
-  type TextMessageStartEvent,
-  type TextMessageContentEvent,
-  type ToolCallStartEvent,
-  type ToolCallArgsEvent,
-  type StateSnapshotEvent,
   type MessagesSnapshotEvent,
+  type StateSnapshotEvent,
+  type TextMessageContentEvent,
+  type TextMessageStartEvent,
+  type ToolCallArgsEvent,
+  type ToolCallStartEvent,
 } from '@ag-ui/client'
+import { BehaviorSubject, Subject } from 'rxjs'
+import { v4 } from 'uuid'
+import type { ToolCall } from '../types/agent'
 
 export class AgentSessionManager {
   private messages$ = new BehaviorSubject<Message[]>([])
@@ -19,6 +20,8 @@ export class AgentSessionManager {
   private currentToolCallId?: string
   private currentToolCallName?: string
   private currentToolCallArgs: string = ''
+  // 工具调用事件流
+  public toolCall$ = new Subject<{ toolCall: ToolCall}>()
 
   constructor() {
     this.messages$.next([])
@@ -33,6 +36,7 @@ export class AgentSessionManager {
   getMessages() {
     return this.messages$.getValue()
   }
+
 
   // 处理事件
   handleEvent(event: BaseEvent) {
@@ -58,6 +62,8 @@ export class AgentSessionManager {
         break
       case EventType.TOOL_CALL_END:
         this.handleToolCallEnd()
+        // 检查是否有 tool call 需要自动执行，推送事件到 toolCall$
+        this.emitToolCallEvents()
         break
       case EventType.STATE_SNAPSHOT:
         this.handleStateSnapshot(event as StateSnapshotEvent)
@@ -68,6 +74,16 @@ export class AgentSessionManager {
       default:
         console.info('Unknown event type:', event.type)
         break
+    }
+  }
+
+  // 推送工具调用事件到 toolCall$
+  private emitToolCallEvents() {
+    const currentMessages = this.getMessages()
+    const lastMsg = currentMessages[currentMessages.length - 1]
+    if (!lastMsg || lastMsg.role !== 'assistant' || !lastMsg.toolCalls) return
+    for (const toolCall of lastMsg.toolCalls as ToolCall[]) {
+      this.toolCall$.next({ toolCall })
     }
   }
 
@@ -194,5 +210,22 @@ export class AgentSessionManager {
 
   addMessages(messages: Message[]) {
     this.messages$.next([...this.getMessages(), ...messages])
+  }
+
+  /**
+   * 添加 tool result 消息
+   * @param result { toolCallId, result, status, error? }
+   * @param options { triggerAgent?: boolean }
+   */
+  addToolResult(result: { toolCallId: string, result: any, status: string, error?: string }, options?: { triggerAgent?: boolean }): void {
+    this.messages$.next([
+      ...this.getMessages(),
+      {
+        id: v4(),
+        role: 'tool',
+        content: typeof result.result === 'string' ? result.result : JSON.stringify(result.result),
+        toolCallId: result.toolCallId,
+      },
+    ])
   }
 } 

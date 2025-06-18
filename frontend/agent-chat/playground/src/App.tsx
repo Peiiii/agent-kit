@@ -1,15 +1,14 @@
 import { HttpAgent } from '@ag-ui/client'
-import { AgentChatCore, useProvideAgentContexts } from '@agent-labs/agent-chat'
+import { AgentChatCore, useProvideAgentContexts, useProvideAgentToolExecutors } from '@agent-labs/agent-chat'
 import { VSCodeLayout } from "composite-kit"
 import { Bell, GitBranch as BranchIcon, CheckCircle, ChevronDown, Folder, GitBranch, LayoutGrid, Play, Search, Wifi, Zap } from 'lucide-react'
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { v4 as uuidv4 } from 'uuid'
 import { InstructionSettings } from './features/settings/components/instruction-settings'
 import { TodoList } from './features/todo/components/todo-list'
-import { TodoProvider } from './features/todo/hooks/use-todo'
+import { TodoProvider, useTodo } from './features/todo/hooks/use-todo'
 import { todoToolRenderers } from './features/todo/tool-renderers'
 import { todoTools } from './features/todo/tools'
-import { useTodo } from './features/todo/hooks/use-todo'
-import { v4 as uuidv4 } from 'uuid'
 
 const { Activity,
   Controls,
@@ -54,6 +53,17 @@ function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructio
       value: JSON.stringify(todoListContext),
     },
   ])
+
+  // 注册 listTodos executor
+  useProvideAgentToolExecutors({
+    listTodos: (toolCall) => {
+      return {
+        toolCallId: toolCall.id,
+        result: { todos: state.todos },
+        status: 'success',
+      }
+    },
+  })
 
   return (
     <AgentChatCore
