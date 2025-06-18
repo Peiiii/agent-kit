@@ -12,5 +12,9 @@ export interface AgentChatProps {
   
   export interface AgentChatRef {
     reset: () => void
+    addMessages: (
+      messages: Message[],
+      options?: { triggerAgent?: boolean },
+    ) => Promise<void>
   }
   

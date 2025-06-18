@@ -31,6 +31,10 @@ interface UseAgentChatReturn {
     result: ToolResult,
     options?: { triggerAgent?: boolean },
   ) => Promise<void>
+  addMessages: (
+    messages: Message[],
+    options?: { triggerAgent?: boolean },
+  ) => Promise<void>
   reset: () => void
 }
 
@@ -88,51 +92,52 @@ export function useAgentChat({
     })
   }, [])
 
+  const runAgent = useCallback(
+    async (currentThreadId?: string) => {
+      setIsLoading(true)
+      
+      try {
+        let targetThreadId = currentThreadId
+        
+        if (!targetThreadId) {
+          // 如果没有 threadId，创建新的 thread
+          targetThreadId = v4()
+          setThreadId(targetThreadId)
+        }
+        
+        const response = await agent.run({
+          threadId: targetThreadId,
+          runId: v4(),
+          messages: sessionManager.current.getMessages(),
+          tools: getToolDefs(),
+          context: getContexts(),
+          state: {},
+          forwardedProps: {},
+        })
+        
+        handleAgentResponse(response as unknown as Observable<BaseEvent>)
+      } catch (error) {
+        console.error('Error running agent:', error)
+        setIsLoading(false)
+      }
+    },
+    [agent, getToolDefs, getContexts, handleAgentResponse],
+  )
+
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim()) return
 
-      setIsLoading(true)
-      try {
-        const userMessage: Message = {
-          id: v4(),
-          role: 'user',
-          content,
-        }
-
-        sessionManager.current.addMessages([userMessage])
-
-        if (!threadId) {
-          const newThreadId = v4()
-          setThreadId(newThreadId)
-          const response = await agent.run({
-            threadId: newThreadId,
-            runId: v4(),
-            messages: sessionManager.current.getMessages(),
-            tools: getToolDefs(),
-            context: getContexts(),
-            state: {},
-            forwardedProps: {},
-          })
-          handleAgentResponse(response as unknown as Observable<BaseEvent>)
-        } else {
-          const response = await agent.run({
-            threadId,
-            runId: v4(),
-            messages: sessionManager.current.getMessages(),
-            tools,
-            context: getContexts(),
-            state: {},
-            forwardedProps: {},
-          })
-          handleAgentResponse(response as unknown as Observable<BaseEvent>)
-        }
-      } catch (error) {
-        console.error('Error sending message:', error)
-        setIsLoading(false)
+      const userMessage: Message = {
+        id: v4(),
+        role: 'user',
+        content,
       }
+
+      sessionManager.current.addMessages([userMessage])
+      await runAgent(threadId || undefined)
     },
-    [threadId, agent, getToolDefs, getContexts, handleAgentResponse, tools],
+    [threadId, runAgent],
   )
 
   const addToolResult = useCallback(
@@ -152,22 +157,33 @@ export function useAgentChat({
         sessionManager.current.addMessages([toolMessage])
 
         if (triggerAgent) {
-          const response = await agent.run({
-            threadId,
-            runId: v4(),
-            messages: sessionManager.current.getMessages(),
-            tools,
-            context: getContexts(),
-            state: {},
-            forwardedProps: {},
-          })
-          handleAgentResponse(response as unknown as Observable<BaseEvent>)
+          await runAgent(threadId)
         }
       } catch (error) {
         console.error('Error handling tool result:', error)
       }
     },
-    [agent, threadId, tools, handleAgentResponse, getContexts],
+    [threadId, runAgent],
+  )
+
+  const addMessages = useCallback(
+    async (messages: Message[], options?: { triggerAgent?: boolean }) => {
+      const { triggerAgent = true } = options || {}
+
+      try {
+        sessionManager.current.addMessages(messages)
+
+        if (triggerAgent) {
+          await runAgent(threadId || undefined)
+        }
+      } catch (error) {
+        console.error('Error adding messages:', error)
+        if (triggerAgent) {
+          setIsLoading(false)
+        }
+      }
+    },
+    [threadId, runAgent],
   )
 
   const uiMessages = useMemo(() => {
@@ -181,6 +197,7 @@ export function useAgentChat({
     threadId,
     sendMessage,
     addToolResult,
+    addMessages,
     reset,
   }
 }

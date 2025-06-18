@@ -14,6 +14,7 @@ export interface ChatInterfaceProps {
   input: string
   onInputChange: (value: string) => void
   onSend: () => void
+  onPoke?: () => void
   isLoading: boolean
 }
 
@@ -24,6 +25,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   input,
   onInputChange,
   onSend,
+  onPoke,
   isLoading,
 }) => {
   const { containerRef, isSticky, scrollToBottom, setSticky } = useChatAutoScroll({
@@ -38,6 +40,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       scrollToBottom()
     }, 0)
   }, [onSend, setSticky, scrollToBottom])
+
+  // 包装 onPoke，拍一拍后自动滚动到底部并 sticky
+  const handlePoke = React.useCallback(() => {
+    onPoke?.()
+    setTimeout(() => {
+      setSticky(true)
+      scrollToBottom()
+    }, 0)
+  }, [onPoke, setSticky, scrollToBottom])
 
   return (
     <div className="flex h-full flex-col">
@@ -64,6 +75,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           input={input}
           onInputChange={onInputChange}
           onSend={handleSend}
+          onPoke={handlePoke}
           isLoading={isLoading}
         />
       </div>
