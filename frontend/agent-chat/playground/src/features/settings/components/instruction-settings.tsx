@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { ChevronDown, Settings, X, Edit2, Check } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 
 interface Instruction {
   description: string
@@ -19,56 +20,45 @@ export function InstructionSettings({ instructions, onInstructionsChange }: Inst
   const [newInstruction, setNewInstruction] = useState<Instruction>({ description: '', value: '' })
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingInstruction, setEditingInstruction] = useState<Instruction>({ description: '', value: '' })
-  const [isInitialized, setIsInitialized] = useState(false)
 
-  // 只在组件首次加载时从localStorage读取数据
-  useEffect(() => {
-    if (!isInitialized) {
-      const savedInstructions = localStorage.getItem(STORAGE_KEY)
-      if (savedInstructions) {
-        try {
-          const parsed = JSON.parse(savedInstructions)
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            onInstructionsChange(parsed)
-          }
-        } catch (error) {
-          console.error('Failed to parse saved instructions:', error)
-        }
+  // 使用 useLocalStorage Hook 管理指令列表
+  const { data: storedInstructions, setData: setStoredInstructions } = useLocalStorage<Instruction[]>({
+    key: STORAGE_KEY,
+    initialValue: [],
+    onLoad: (loadedInstructions) => {
+      if (loadedInstructions.length > 0) {
+        onInstructionsChange(loadedInstructions)
       }
-      setIsInitialized(true)
-    }
-  }, [isInitialized, onInstructionsChange])
-
-  // 只在instructions变化且已经初始化后保存到localStorage
-  useEffect(() => {
-    if (isInitialized && instructions.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(instructions))
-    }
-  }, [instructions, isInitialized])
+    },
+  })
 
   const handleAddInstruction = () => {
     if (newInstruction.description && newInstruction.value) {
-      onInstructionsChange([...instructions, newInstruction])
+      const updatedInstructions = [...storedInstructions, newInstruction]
+      setStoredInstructions(updatedInstructions)
+      onInstructionsChange(updatedInstructions)
       setNewInstruction({ description: '', value: '' })
     }
   }
 
   const handleRemoveInstruction = (index: number) => {
-    const newInstructions = [...instructions]
-    newInstructions.splice(index, 1)
-    onInstructionsChange(newInstructions)
+    const updatedInstructions = [...storedInstructions]
+    updatedInstructions.splice(index, 1)
+    setStoredInstructions(updatedInstructions)
+    onInstructionsChange(updatedInstructions)
   }
 
   const handleStartEdit = (index: number) => {
     setEditingIndex(index)
-    setEditingInstruction(instructions[index])
+    setEditingInstruction(storedInstructions[index])
   }
 
   const handleSaveEdit = () => {
     if (editingIndex !== null) {
-      const newInstructions = [...instructions]
-      newInstructions[editingIndex] = editingInstruction
-      onInstructionsChange(newInstructions)
+      const updatedInstructions = [...storedInstructions]
+      updatedInstructions[editingIndex] = editingInstruction
+      setStoredInstructions(updatedInstructions)
+      onInstructionsChange(updatedInstructions)
       setEditingIndex(null)
       setEditingInstruction({ description: '', value: '' })
     }
@@ -99,7 +89,7 @@ export function InstructionSettings({ instructions, onInstructionsChange }: Inst
           {/* 现有指令列表 */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium">当前指令</h3>
-            {instructions.map((instruction, index) => (
+            {storedInstructions.map((instruction, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-2 bg-muted rounded-md"

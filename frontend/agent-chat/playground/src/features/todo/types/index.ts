@@ -18,4 +18,5 @@ export interface TodoContextType {
   toggleTodo: (id: string) => Promise<void>
   deleteTodo: (id: string) => Promise<void>
   updateTodo: (id: string, title: string) => Promise<void>
+  getTodoListContext: () => { todos: Todo[] }
 } 

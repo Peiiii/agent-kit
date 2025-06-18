@@ -1,5 +1,5 @@
 import { HttpAgent } from '@ag-ui/client'
-import { AgentChatCore } from '@agent-labs/agent-chat'
+import { AgentChatCore, useProvideAgentContexts } from '@agent-labs/agent-chat'
 import { VSCodeLayout } from "composite-kit"
 import { Bell, GitBranch as BranchIcon, CheckCircle, ChevronDown, Folder, GitBranch, LayoutGrid, Play, Search, Wifi } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -8,6 +8,7 @@ import { TodoList } from './features/todo/components/todo-list'
 import { TodoProvider } from './features/todo/hooks/use-todo'
 import { todoToolRenderers } from './features/todo/tool-renderers'
 import { todoTools } from './features/todo/tools'
+import { useTodo } from './features/todo/hooks/use-todo'
 
 const { Activity,
   Controls,
@@ -22,6 +23,36 @@ const { Activity,
 const agent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',
 })
+
+function AgentChatWithContext({ allInstructions }: { allInstructions: Array<{ description: string; value: string }> }) {
+  const { state } = useTodo()
+  const todoListContext = useMemo(() => ({
+    todos: state.todos.map(todo => ({
+      id: todo.id,
+      title: todo.title,
+      completed: todo.completed,
+      createdAt: todo.createdAt,
+      updatedAt: todo.updatedAt
+    }))
+  }), [state.todos])
+
+  useProvideAgentContexts([
+    {
+      description: '待办事项列表',
+      value: JSON.stringify(todoListContext),
+    },
+  ])
+
+  return (
+    <AgentChatCore
+      agent={agent}
+      tools={todoTools}
+      toolRenderers={todoToolRenderers}
+      contexts={allInstructions}
+      className='flex-1 overflow-y-auto'
+    />
+  )
+}
 
 export function App() {
   // 使用 Hook 管理面板状态
@@ -173,13 +204,7 @@ export function App() {
                             instructions={customInstructions}
                             onInstructionsChange={setCustomInstructions}
                           />
-                          <AgentChatCore
-                            agent={agent}
-                            tools={todoTools}
-                            toolRenderers={todoToolRenderers}
-                            contexts={allInstructions}
-                            className='flex-1 overflow-y-auto'
-                          />
+                          <AgentChatWithContext allInstructions={allInstructions} />
                         </div>
                       </Editor.Content>
                     </Workspace.Panel>

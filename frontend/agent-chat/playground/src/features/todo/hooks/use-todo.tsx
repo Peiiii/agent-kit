@@ -1,5 +1,8 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react'
 import { Todo, TodoState, TodoContextType } from '../types'
+import { useLocalStorage } from '@/hooks/use-local-storage'
+
+const STORAGE_KEY = 'todoList'
 
 const initialState: TodoState = {
   todos: [],
@@ -59,6 +62,31 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined)
 export function TodoProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(todoReducer, initialState)
 
+  // 使用 useLocalStorage Hook 管理待办事项列表
+  const { data: todos, setData: setTodos } = useLocalStorage<Todo[]>({
+    key: STORAGE_KEY,
+    initialValue: [],
+    onLoad: (loadedTodos) => {
+      dispatch({ type: 'SET_TODOS', payload: loadedTodos })
+    },
+    onSave: (savedTodos) => {
+      dispatch({ type: 'SET_TODOS', payload: savedTodos })
+    },
+  })
+
+  // 获取 TodoList 上下文数据
+  const getTodoListContext = () => {
+    return {
+      todos: todos.map(todo => ({
+        id: todo.id,
+        title: todo.title,
+        completed: todo.completed,
+        createdAt: todo.createdAt,
+        updatedAt: todo.updatedAt
+      }))
+    }
+  }
+
   const addTodo = async (title: string) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
@@ -69,7 +97,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
-      dispatch({ type: 'ADD_TODO', payload: newTodo })
+      const updatedTodos = [...todos, newTodo]
+      setTodos(updatedTodos)
     } catch (error) {
       dispatch({
         type: 'SET_ERROR',
@@ -83,7 +112,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   const toggleTodo = async (id: string) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
-      dispatch({ type: 'TOGGLE_TODO', payload: id })
+      const updatedTodos = todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+      setTodos(updatedTodos)
     } catch (error) {
       dispatch({
         type: 'SET_ERROR',
@@ -97,7 +129,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   const deleteTodo = async (id: string) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
-      dispatch({ type: 'DELETE_TODO', payload: id })
+      const updatedTodos = todos.filter((todo) => todo.id !== id)
+      setTodos(updatedTodos)
     } catch (error) {
       dispatch({
         type: 'SET_ERROR',
@@ -111,7 +144,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   const updateTodo = async (id: string, title: string) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
-      dispatch({ type: 'UPDATE_TODO', payload: { id, title } })
+      const updatedTodos = todos.map((todo) =>
+        todo.id === id ? { ...todo, title } : todo
+      )
+      setTodos(updatedTodos)
     } catch (error) {
       dispatch({
         type: 'SET_ERROR',
@@ -125,11 +161,12 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   return (
     <TodoContext.Provider
       value={{
-        state,
+        state: { ...state, todos },
         addTodo,
         toggleTodo,
         deleteTodo,
         updateTodo,
+        getTodoListContext,
       }}
     >
       {children}
