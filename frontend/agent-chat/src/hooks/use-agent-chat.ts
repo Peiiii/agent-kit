@@ -169,6 +169,7 @@ export function useAgentChat({
   const addMessages = useCallback(
     async (messages: Message[], options?: { triggerAgent?: boolean }) => {
       const { triggerAgent = true } = options || {}
+      console.log('[useAgentChat] addMessages', messages)
 
       try {
         sessionManager.current.addMessages(messages)

@@ -133,6 +133,7 @@ export class OpenAIAgent {
       processor.addHandler('tool', new ToolCallHandler(encoder));
       yield* processor.process(stream);
     } catch (error) {
+      throw error;
       yield* this.handleError(error as Error, encoder);
     }
 
@@ -159,6 +160,7 @@ export class OpenAIAgent {
         message: error.message,
       },
     };
+    console.error('[OpenAIAgent][handleError]:', error);
     yield encoder.encode(event);
   }
 }

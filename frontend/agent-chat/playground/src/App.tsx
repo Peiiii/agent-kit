@@ -1,14 +1,15 @@
 import { HttpAgent } from '@ag-ui/client'
 import { AgentChatCore, useProvideAgentContexts } from '@agent-labs/agent-chat'
 import { VSCodeLayout } from "composite-kit"
-import { Bell, GitBranch as BranchIcon, CheckCircle, ChevronDown, Folder, GitBranch, LayoutGrid, Play, Search, Wifi } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Bell, GitBranch as BranchIcon, CheckCircle, ChevronDown, Folder, GitBranch, LayoutGrid, Play, Search, Wifi, Zap } from 'lucide-react'
+import { useMemo, useState, useRef } from 'react'
 import { InstructionSettings } from './features/settings/components/instruction-settings'
 import { TodoList } from './features/todo/components/todo-list'
 import { TodoProvider } from './features/todo/hooks/use-todo'
 import { todoToolRenderers } from './features/todo/tool-renderers'
 import { todoTools } from './features/todo/tools'
 import { useTodo } from './features/todo/hooks/use-todo'
+import { v4 as uuidv4 } from 'uuid'
 
 const { Activity,
   Controls,
@@ -24,7 +25,16 @@ const agent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',
 })
 
-function AgentChatWithContext({ allInstructions }: { allInstructions: Array<{ description: string; value: string }> }) {
+// 解决类型导入问题，直接声明 AgentChatRef
+interface AgentChatRef {
+  reset: () => void
+  addMessages: (
+    messages: any[],
+    options?: { triggerAgent?: boolean },
+  ) => Promise<void>
+}
+
+function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructions: Array<{ description: string; value: string }>, agentChatRef: React.RefObject<AgentChatRef | null> }) {
   const { state } = useTodo()
   const todoListContext = useMemo(() => ({
     todos: state.todos.map(todo => ({
@@ -47,6 +57,7 @@ function AgentChatWithContext({ allInstructions }: { allInstructions: Array<{ de
 
   return (
     <AgentChatCore
+      ref={agentChatRef}
       agent={agent}
       tools={todoTools}
       toolRenderers={todoToolRenderers}
@@ -145,6 +156,26 @@ export function App() {
     },
   ]
 
+  const agentChatRef = useRef<AgentChatRef | null>(null)
+
+  // 拍一拍业务逻辑
+  const handlePoke = async () => {
+    if (agentChatRef.current?.addMessages) {
+      await agentChatRef.current.addMessages([
+        {
+          id: uuidv4(),
+          role: 'system',
+          content: `用户使用了\"拍一拍\"功能唤醒AI助手。这通常表示用户想要开始对话但不知道说什么，或者希望AI主动提供帮助。请以友好、热情的方式回应，可以：\n1. 简单打招呼并询问如何帮助\n2. 根据当前上下文（如待办事项、时间等）主动提供建议\n3. 介绍一些你能提供的功能\n\n请保持回答简洁、友好且有用。`,
+        },
+        {
+          id: uuidv4(),
+          role: 'user',
+          content: '[action:poke]',
+        },
+      ], { triggerAgent: true })
+    }
+  }
+
   return (
     <TodoProvider>
       <Workspace.Layout>
@@ -201,10 +232,21 @@ export function App() {
                   <Panel.Resizable>
                     <Workspace.Panel>
                       <Editor.Header>
-                        <Editor.Tab
-                          title="AI 助手"
-                          isActive={true}
-                        />
+                        <div className="flex items-center justify-between w-full">
+                          <Editor.Tab
+                            title="AI 助手"
+                            isActive={true}
+                          />
+                          <button
+                            onClick={handlePoke}
+                            className="ml-auto flex items-center gap-1 px-2 py-1 rounded text-xs border border-muted bg-muted hover:bg-accent transition-colors"
+                            title="拍一拍唤醒 AI 助手"
+                            style={{ lineHeight: 1 }}
+                          >
+                            <Zap className="h-4 w-4 text-yellow-500" />
+                            <span>拍一拍</span>
+                          </button>
+                        </div>
                       </Editor.Header>
                       <Editor.Content>
                         <div className="relative h-full flex flex-col">
@@ -212,7 +254,7 @@ export function App() {
                             instructions={customInstructions}
                             onInstructionsChange={setCustomInstructions}
                           />
-                          <AgentChatWithContext allInstructions={allInstructions} />
+                          <AgentChatWithContext allInstructions={allInstructions} agentChatRef={agentChatRef} />
                         </div>
                       </Editor.Content>
                     </Workspace.Panel>
