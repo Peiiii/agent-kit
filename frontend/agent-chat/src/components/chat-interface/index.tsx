@@ -4,6 +4,8 @@ import type { ToolRenderer, ToolResult } from '../../types/agent'
 import { MessageInput } from './message-input'
 import { MessageItem } from './message-item'
 import type { UIMessage } from '@ai-sdk/ui-utils'
+import { useChatAutoScroll } from '../../hooks/use-chat-auto-scroll'
+import clsx from 'clsx'
 
 export interface ChatInterfaceProps {
   uiMessages: UIMessage[]
@@ -24,9 +26,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onSend,
   isLoading,
 }) => {
+  const { containerRef, isSticky, scrollToBottom, setSticky } = useChatAutoScroll({
+    deps: [uiMessages],
+  })
+
+  // 包装 onSend，发送后自动滚动到底部并 sticky
+  const handleSend = React.useCallback(() => {
+    onSend()
+    setTimeout(() => {
+      setSticky(true)
+      scrollToBottom()
+    }, 0)
+  }, [onSend, setSticky, scrollToBottom])
+
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto px-4 py-2">
+      <div
+        ref={containerRef}
+        className={
+          clsx(
+            'flex-1 overflow-y-auto px-4 py-2',
+            isSticky ? ' sticky-bottom' : '',
+          )
+        }
+      >
         {uiMessages.map((uiMessage, index) => (
           <MessageItem
             key={index}
@@ -40,7 +63,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <MessageInput
           input={input}
           onInputChange={onInputChange}
-          onSend={onSend}
+          onSend={handleSend}
           isLoading={isLoading}
         />
       </div>

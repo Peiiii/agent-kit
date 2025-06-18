@@ -96,6 +96,12 @@ export function App() {
       }),
     },
     {
+      description: "当前时间",
+      value: JSON.stringify({
+        time: `${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+      }),
+    },
+    {
       description: 'AI 助手行为指南',
       value: JSON.stringify({
         personality: '专业、友好、高效',
