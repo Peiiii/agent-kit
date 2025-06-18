@@ -1,4 +1,4 @@
-import { Send, Zap } from 'lucide-react'
+import { Send } from 'lucide-react'
 import * as React from 'react'
 
 import { Button } from '../ui/button'
@@ -8,14 +8,14 @@ interface MessageInputProps {
   input: string
   onInputChange: (v: string) => void
   onSend: () => void
-  isLoading: boolean
+  isAgentResponding: boolean
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   input,
   onInputChange,
   onSend,
-  isLoading,
+  isAgentResponding,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onInputChange(e.target.value)
@@ -24,7 +24,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      onSend()
+      if (!isAgentResponding) {
+        onSend()
+      }
     }
   }
 
@@ -39,14 +41,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder="输入消息或拍一拍唤醒 AI..."
-        disabled={isLoading}
+        disabled={false}
         className="flex-1"
       />
       <Button
         variant="default"
         size="icon"
         onClick={onSend}
-        disabled={isLoading || !input.trim()}
+        disabled={isAgentResponding || !input.trim()}
       >
         <Send className="h-4 w-4" />
       </Button>

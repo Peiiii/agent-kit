@@ -49,35 +49,35 @@ export const convertMessagesToUIMessages = (
   return messages
     .filter((message) => message.role !== 'tool')
     .map((message) => {
-      const parts: Array<TextUIPart | ToolInvocationUIPart> = []
+    const parts: Array<TextUIPart | ToolInvocationUIPart> = []
 
-      // 添加文本内容
-      if (message.content) {
-        parts.push({
-          type: 'text',
-          text: message.content,
+    // 添加文本内容
+    if (message.content) {
+      parts.push({
+        type: 'text',
+        text: message.content,
+      })
+    }
+
+    // 处理助手消息的工具调用
+    if (message.role === 'assistant') {
+      const assistantMessage = message as AssistantMessage
+      if (assistantMessage.toolCalls && assistantMessage.toolCalls.length > 0) {
+        assistantMessage.toolCalls.forEach((toolCall) => {
+          const toolInvocation = toolCallMap.get(toolCall.id)
+          if (toolInvocation) {
+            parts.push({
+              type: 'tool-invocation',
+              toolInvocation,
+            })
+          }
         })
       }
+    }
 
-      // 处理助手消息的工具调用
-      if (message.role === 'assistant') {
-        const assistantMessage = message as AssistantMessage
-        if (assistantMessage.toolCalls && assistantMessage.toolCalls.length > 0) {
-          assistantMessage.toolCalls.forEach((toolCall) => {
-            const toolInvocation = toolCallMap.get(toolCall.id)
-            if (toolInvocation) {
-              parts.push({
-                type: 'tool-invocation',
-                toolInvocation,
-              })
-            }
-          })
-        }
-      }
-
-      return {
-        ...message,
-        parts,
-      } as UIMessage
-    })
+    return {
+      ...message,
+      parts,
+    } as UIMessage
+  })
 }

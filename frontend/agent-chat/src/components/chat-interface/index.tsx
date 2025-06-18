@@ -14,7 +14,7 @@ export interface ChatInterfaceProps {
   input: string
   onInputChange: (value: string) => void
   onSend: () => void
-  isLoading: boolean
+  isAgentResponding: boolean
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -24,7 +24,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   input,
   onInputChange,
   onSend,
-  isLoading,
+  isAgentResponding,
 }) => {
   const { containerRef, isSticky, scrollToBottom, setSticky } = useChatAutoScroll({
     deps: [uiMessages],
@@ -64,7 +64,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           input={input}
           onInputChange={onInputChange}
           onSend={handleSend}
-          isLoading={isLoading}
+          isAgentResponding={isAgentResponding}
         />
       </div>
     </div>

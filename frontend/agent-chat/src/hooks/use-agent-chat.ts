@@ -24,7 +24,7 @@ interface UseAgentChatProps {
 interface UseAgentChatReturn {
   messages: Message[]
   uiMessages: UIMessage[]
-  isLoading: boolean
+  isAgentResponding: boolean
   threadId: string | null
   sendMessage: (content: string) => Promise<void>
   addToolResult: (
@@ -45,7 +45,7 @@ export function useAgentChat({
   initialMessages = [],
 }: UseAgentChatProps): UseAgentChatReturn {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isAgentResponding, setIsAgentResponding] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
   const contextManager = useContext(AgentContextManagerContext)
   const toolDefManager = useContext(AgentToolDefManagerContext)
@@ -66,7 +66,7 @@ export function useAgentChat({
   const reset = useCallback(() => {
     sessionManager.current.reset()
     setThreadId(null)
-    setIsLoading(false)
+    setIsAgentResponding(false)
   }, [])
 
   const getContexts = useCallback(() => {
@@ -87,14 +87,14 @@ export function useAgentChat({
         event.type === EventType.RUN_FINISHED ||
         event.type === EventType.RUN_ERROR
       ) {
-        setIsLoading(false)
+        setIsAgentResponding(false)
       }
     })
   }, [])
 
   const runAgent = useCallback(
     async (currentThreadId?: string) => {
-      setIsLoading(true)
+      setIsAgentResponding(true)
       
       try {
         let targetThreadId = currentThreadId
@@ -118,7 +118,7 @@ export function useAgentChat({
         handleAgentResponse(response as unknown as Observable<BaseEvent>)
       } catch (error) {
         console.error('Error running agent:', error)
-        setIsLoading(false)
+        setIsAgentResponding(false)
       }
     },
     [agent, getToolDefs, getContexts, handleAgentResponse],
@@ -180,7 +180,7 @@ export function useAgentChat({
       } catch (error) {
         console.error('Error adding messages:', error)
         if (triggerAgent) {
-          setIsLoading(false)
+          setIsAgentResponding(false)
         }
       }
     },
@@ -194,7 +194,7 @@ export function useAgentChat({
   return {
     messages,
     uiMessages,
-    isLoading,
+    isAgentResponding,
     threadId,
     sendMessage,
     addToolResult,

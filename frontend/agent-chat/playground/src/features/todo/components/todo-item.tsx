@@ -74,28 +74,28 @@ export function TodoItem({ todo }: TodoItemProps) {
                 setEditEndTime(e.target.value)
               }
               placeholder="结束时间（可选）"
-              className="flex-1"
-            />
+            className="flex-1"
+          />
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleSave}>
-              保存
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleCancel}>
-              取消
-            </Button>
+          <Button variant="outline" size="sm" onClick={handleSave}>
+            保存
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            取消
+          </Button>
           </div>
         </div>
       ) : (
         <>
           <div className="flex-1">
-            <span
+          <span
               className={`block ${
-                todo.completed ? 'line-through text-muted-foreground' : ''
-              }`}
-            >
-              {todo.title}
-            </span>
+              todo.completed ? 'line-through text-muted-foreground' : ''
+            }`}
+          >
+            {todo.title}
+          </span>
             {(todo.startTime || todo.endTime) && (
               <div className="text-xs text-muted-foreground mt-1">
                 {todo.startTime && <span>开始: {formatDateTime(todo.startTime)}</span>}

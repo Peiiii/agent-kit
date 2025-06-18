@@ -23,7 +23,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     const [input, setInput] = useState('')
     const {
       uiMessages,
-      isLoading,
+      isAgentResponding,
       sendMessage,
       addToolResult: sendToolResult,
       addMessages,
@@ -36,8 +36,10 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     })
 
     const handleSend = async () => {
-      await sendMessage(input)
-      setInput('')
+      if (!isAgentResponding) {
+        await sendMessage(input)
+        setInput('')
+      }
     }
 
     useImperativeHandle(
@@ -58,7 +60,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
           input={input}
           onInputChange={setInput}
           onSend={handleSend}
-          isLoading={isLoading}
+          isAgentResponding={isAgentResponding}
         />
       </div>
     )

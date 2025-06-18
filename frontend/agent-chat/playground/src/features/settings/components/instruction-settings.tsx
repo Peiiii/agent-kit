@@ -76,7 +76,7 @@ export function InstructionSettings({ instructions, onInstructionsChange }: Inst
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <Settings className="h-4 w-4" />
+        <Settings className="h-4 w-4" />
           <h3 className="text-sm font-medium">自定义 AI 助手指令</h3>
         </div>
         <ChevronDown 
@@ -86,14 +86,14 @@ export function InstructionSettings({ instructions, onInstructionsChange }: Inst
 
       {isExpanded && (
         <div className="space-y-4 mt-4">
-          {/* 现有指令列表 */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">当前指令</h3>
+            {/* 现有指令列表 */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">当前指令</h3>
             {storedInstructions.map((instruction, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2 bg-muted rounded-md"
-              >
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 bg-muted rounded-md"
+                >
                 {editingIndex === index ? (
                   <div className="flex-1 space-y-2">
                     <input
@@ -129,12 +129,12 @@ export function InstructionSettings({ instructions, onInstructionsChange }: Inst
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{instruction.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {instruction.value}
-                      </p>
-                    </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">{instruction.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {instruction.value}
+                    </p>
+                  </div>
                     <div className="flex gap-2">
                       <Button
                         variant="ghost"
@@ -143,51 +143,51 @@ export function InstructionSettings({ instructions, onInstructionsChange }: Inst
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveInstruction(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveInstruction(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                     </div>
                   </>
                 )}
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
 
-          {/* 添加新指令 */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">添加新指令</h3>
+            {/* 添加新指令 */}
             <div className="space-y-2">
-              <input
-                type="text"
-                placeholder="指令描述"
-                value={newInstruction.description}
-                onChange={(e) =>
-                  setNewInstruction({
-                    ...newInstruction,
-                    description: e.target.value,
-                  })
-                }
-                className="w-full p-2 border rounded-md"
-              />
-              <textarea
-                placeholder="指令内容"
-                value={newInstruction.value}
-                onChange={(e) =>
-                  setNewInstruction({
-                    ...newInstruction,
-                    value: e.target.value,
-                  })
-                }
-                className="w-full p-2 border rounded-md h-24"
-              />
-              <Button onClick={handleAddInstruction}>添加指令</Button>
+              <h3 className="text-sm font-medium">添加新指令</h3>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="指令描述"
+                  value={newInstruction.description}
+                  onChange={(e) =>
+                    setNewInstruction({
+                      ...newInstruction,
+                      description: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border rounded-md"
+                />
+                <textarea
+                  placeholder="指令内容"
+                  value={newInstruction.value}
+                  onChange={(e) =>
+                    setNewInstruction({
+                      ...newInstruction,
+                      value: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border rounded-md h-24"
+                />
+                <Button onClick={handleAddInstruction}>添加指令</Button>
+              </div>
             </div>
           </div>
-        </div>
       )}
     </div>
   )
