@@ -11,6 +11,14 @@ export const todoTools: ToolDefinition[] = [
           type: 'string',
           description: '待办事项的标题',
         },
+        startTime: {
+          type: 'string',
+          description: '开始时间（可选），ISO字符串格式，例如: "2024-01-15T09:00:00Z"',
+        },
+        endTime: {
+          type: 'string',
+          description: '结束时间（可选），ISO字符串格式，例如: "2024-01-15T17:00:00Z"',
+        },
       },
       required: ['title'],
     },
@@ -45,7 +53,7 @@ export const todoTools: ToolDefinition[] = [
   },
   {
     name: 'updateTodo',
-    description: '更新待办事项的标题',
+    description: '更新待办事项的信息',
     parameters: {
       type: 'object',
       properties: {
@@ -55,10 +63,18 @@ export const todoTools: ToolDefinition[] = [
         },
         title: {
           type: 'string',
-          description: '新的标题',
+          description: '新的标题（可选）',
+        },
+        startTime: {
+          type: 'string',
+          description: '新的开始时间（可选），ISO字符串格式，例如: "2024-01-15T09:00:00Z"。如果要清空开始时间，请传入空字符串 ""',
+        },
+        endTime: {
+          type: 'string',
+          description: '新的结束时间（可选），ISO字符串格式，例如: "2024-01-15T17:00:00Z"。如果要清空结束时间，请传入空字符串 ""',
         },
       },
-      required: ['id', 'title'],
+      required: ['id'],
     },
   },
   {

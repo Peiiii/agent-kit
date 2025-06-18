@@ -32,7 +32,9 @@ function AgentChatWithContext({ allInstructions }: { allInstructions: Array<{ de
       title: todo.title,
       completed: todo.completed,
       createdAt: todo.createdAt,
-      updatedAt: todo.updatedAt
+      updatedAt: todo.updatedAt,
+      startTime: todo.startTime,
+      endTime: todo.endTime
     }))
   }), [state.todos])
 

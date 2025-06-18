@@ -10,7 +10,7 @@ export function TodoList() {
 
   const handleAddTodo = async () => {
     if (newTodoTitle.trim()) {
-      await addTodo(newTodoTitle.trim())
+      await addTodo({ title: newTodoTitle.trim() })
       setNewTodoTitle('')
     }
   }

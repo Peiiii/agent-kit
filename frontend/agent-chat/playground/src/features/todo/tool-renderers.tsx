@@ -6,17 +6,34 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
   addTodo: {
     render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
       const { addTodo } = useTodo()
-      const { title } = JSON.parse(toolCall.function.arguments) as { title: string }
+      const params = JSON.parse(toolCall.function.arguments) as { 
+        title: string
+        startTime?: string
+        endTime?: string
+      }
+
+      const formatDateTime = (dateTimeString?: string) => {
+        if (!dateTimeString) return ''
+        return new Date(dateTimeString).toLocaleString('zh-CN')
+      }
 
       return (
         <div className="p-4 border rounded-lg">
           <h3 className="font-bold mb-2">添加待办事项</h3>
-          <p className="mb-4">标题: {title}</p>
+          <div className="mb-4 space-y-2">
+            <p><strong>标题:</strong> {params.title}</p>
+            {params.startTime && (
+              <p><strong>开始时间:</strong> {formatDateTime(params.startTime)}</p>
+            )}
+            {params.endTime && (
+              <p><strong>结束时间:</strong> {formatDateTime(params.endTime)}</p>
+            )}
+          </div>
           <div className="flex justify-end gap-2">
             <button
               className="px-4 py-2 bg-primary text-primary-foreground rounded"
               onClick={async () => {
-                await addTodo(title)
+                await addTodo(params)
                 onResult({
                   toolCallId: toolCall.id,
                   result: { success: true },
@@ -51,6 +68,14 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
           title: {
             type: 'string',
             description: '待办事项的标题',
+          },
+          startTime: {
+            type: 'string',
+            description: '开始时间（可选），ISO字符串格式',
+          },
+          endTime: {
+            type: 'string',
+            description: '结束时间（可选），ISO字符串格式',
           },
         },
         required: ['title'],
@@ -171,21 +196,36 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
   updateTodo: {
     render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
       const { updateTodo } = useTodo()
-      const { id, title } = JSON.parse(toolCall.function.arguments) as {
+      const params = JSON.parse(toolCall.function.arguments) as {
         id: string
-        title: string
+        title?: string
+        startTime?: string
+        endTime?: string
+      }
+
+      const formatDateTime = (dateTimeString?: string) => {
+        if (!dateTimeString) return ''
+        return new Date(dateTimeString).toLocaleString('zh-CN')
       }
 
       return (
         <div className="p-4 border rounded-lg">
           <h3 className="font-bold mb-2">更新待办事项</h3>
-          <p className="mb-4">ID: {id}</p>
-          <p className="mb-4">新标题: {title}</p>
+          <div className="mb-4 space-y-2">
+            <p><strong>ID:</strong> {params.id}</p>
+            {params.title && <p><strong>新标题:</strong> {params.title}</p>}
+            {params.startTime && (
+              <p><strong>新开始时间:</strong> {formatDateTime(params.startTime)}</p>
+            )}
+            {params.endTime && (
+              <p><strong>新结束时间:</strong> {formatDateTime(params.endTime)}</p>
+            )}
+          </div>
           <div className="flex justify-end gap-2">
             <button
               className="px-4 py-2 bg-primary text-primary-foreground rounded"
               onClick={async () => {
-                await updateTodo(id, title)
+                await updateTodo(params)
                 onResult({
                   toolCallId: toolCall.id,
                   result: { success: true },
@@ -213,7 +253,7 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
     },
     definition: {
       name: 'updateTodo',
-      description: '更新待办事项的标题',
+      description: '更新待办事项的信息',
       parameters: {
         type: 'object',
         properties: {
@@ -223,10 +263,18 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
           },
           title: {
             type: 'string',
-            description: '新的标题',
+            description: '新的标题（可选）',
+          },
+          startTime: {
+            type: 'string',
+            description: '新的开始时间（可选），ISO字符串格式',
+          },
+          endTime: {
+            type: 'string',
+            description: '新的结束时间（可选），ISO字符串格式',
           },
         },
-        required: ['id', 'title'],
+        required: ['id'],
       },
     },
   },

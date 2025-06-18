@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode } from 'react'
-import { Todo, TodoState, TodoContextType } from '../types'
+import { Todo, TodoState, TodoContextType, AddTodoParams, UpdateTodoParams } from '../types'
 import { useLocalStorage } from '@/hooks/use-local-storage'
 
 const STORAGE_KEY = 'todoList'
@@ -17,7 +17,7 @@ type TodoAction =
   | { type: 'ADD_TODO'; payload: Todo }
   | { type: 'TOGGLE_TODO'; payload: string }
   | { type: 'DELETE_TODO'; payload: string }
-  | { type: 'UPDATE_TODO'; payload: { id: string; title: string } }
+  | { type: 'UPDATE_TODO'; payload: UpdateTodoParams }
 
 const todoReducer = (state: TodoState, action: TodoAction): TodoState => {
   switch (action.type) {
@@ -48,7 +48,13 @@ const todoReducer = (state: TodoState, action: TodoAction): TodoState => {
         ...state,
         todos: state.todos.map((todo) =>
           todo.id === action.payload.id
-            ? { ...todo, title: action.payload.title }
+            ? { 
+                ...todo, 
+                ...(action.payload.title !== undefined && { title: action.payload.title }),
+                ...(action.payload.startTime !== undefined && { startTime: action.payload.startTime === '' ? undefined : action.payload.startTime }),
+                ...(action.payload.endTime !== undefined && { endTime: action.payload.endTime === '' ? undefined : action.payload.endTime }),
+                updatedAt: new Date().toISOString() 
+              }
             : todo
         ),
       }
@@ -69,9 +75,6 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     onLoad: (loadedTodos) => {
       dispatch({ type: 'SET_TODOS', payload: loadedTodos })
     },
-    onSave: (savedTodos) => {
-      dispatch({ type: 'SET_TODOS', payload: savedTodos })
-    },
   })
 
   // 获取 TodoList 上下文数据
@@ -82,20 +85,24 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         title: todo.title,
         completed: todo.completed,
         createdAt: todo.createdAt,
-        updatedAt: todo.updatedAt
+        updatedAt: todo.updatedAt,
+        startTime: todo.startTime,
+        endTime: todo.endTime
       }))
     }
   }
 
-  const addTodo = async (title: string) => {
+  const addTodo = async (params: AddTodoParams) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       const newTodo: Todo = {
         id: Date.now().toString(),
-        title,
+        title: params.title,
         completed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        startTime: params.startTime,
+        endTime: params.endTime,
       }
       const updatedTodos = [...todos, newTodo]
       setTodos(updatedTodos)
@@ -141,11 +148,19 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const updateTodo = async (id: string, title: string) => {
+  const updateTodo = async (params: UpdateTodoParams) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       const updatedTodos = todos.map((todo) =>
-        todo.id === id ? { ...todo, title } : todo
+        todo.id === params.id 
+          ? { 
+              ...todo, 
+              ...(params.title !== undefined && { title: params.title }),
+              ...(params.startTime !== undefined && { startTime: params.startTime === '' ? undefined : params.startTime }),
+              ...(params.endTime !== undefined && { endTime: params.endTime === '' ? undefined : params.endTime }),
+              updatedAt: new Date().toISOString() 
+            } 
+          : todo
       )
       setTodos(updatedTodos)
     } catch (error) {
