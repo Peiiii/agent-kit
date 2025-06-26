@@ -1,22 +1,31 @@
-import { convertMessagesToUIMessages } from '../utils/ui-message'
 import {
   EventType,
   type BaseEvent,
-  type HttpAgent,
   type Message,
+  type RunAgentInput
 } from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { Observable } from 'rxjs'
+import type { Observable, Observer, Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
 import type { Context, ToolDefinition, ToolResult } from '../types/agent'
+import { convertMessagesToUIMessages } from '../utils/ui-message'
 import { AgentSessionManager } from './agent-session-manager'
 import { AgentContextManagerContext } from './use-provide-agent-contexts'
 import { AgentToolDefManagerContext } from './use-provide-agent-tool-defs'
 import { AgentToolExecutorManagerContext } from './use-provide-agent-tool-executors'
 
+
+export interface IObservable<T> {
+  subscribe: (observer: Partial<Observer<T>>) => Unsubscribable
+}
+
+export interface IAgent {
+  run: (input: RunAgentInput) => IObservable<BaseEvent>
+}
+
 interface UseAgentChatProps {
-  agent: HttpAgent
+  agent: IAgent
   tools: ToolDefinition[]
   contexts?: Context[]
   initialMessages?: Message[]
