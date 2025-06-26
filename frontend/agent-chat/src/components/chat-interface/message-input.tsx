@@ -32,10 +32,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   }
 
-  const handlePoke = () => {
-    // No action needed for the new implementation
-  }
-
   return (
     <div className="flex w-full items-center gap-2">
       <Input
