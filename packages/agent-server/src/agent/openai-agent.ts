@@ -28,6 +28,7 @@ export class OpenAIAgent {
     this.client = new OpenAI({
       apiKey: config.openaiApiKey,
       baseURL: config.baseURL,
+      dangerouslyAllowBrowser: true,
     });
   }
 
