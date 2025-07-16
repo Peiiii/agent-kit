@@ -73,6 +73,9 @@ export function useAgentChat({
     if (initialMessages.length > 0) {
       sessionManager.current.addMessages(initialMessages)
     }
+    return () => {
+      sessionManager.current.removeMessages(initialMessages.map(msg => msg.id))
+    }
   }, [initialMessages])
 
   const reset = useCallback(() => {

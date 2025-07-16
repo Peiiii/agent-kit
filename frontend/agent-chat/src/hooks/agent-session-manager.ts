@@ -212,6 +212,11 @@ export class AgentSessionManager {
     this.messages$.next([...this.getMessages(), ...messages])
   }
 
+  removeMessages(messageIds: string[]) {
+    if (messageIds.length === 0) return
+    this.messages$.next(this.getMessages().filter(msg => !messageIds.includes(msg.id)))
+  }
+
   /**
    * 添加 tool result 消息
    * @param result { toolCallId, result, status, error? }
