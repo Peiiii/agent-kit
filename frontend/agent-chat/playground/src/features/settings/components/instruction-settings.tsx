@@ -15,7 +15,7 @@ interface InstructionSettingsProps {
 
 const STORAGE_KEY = 'aiInstructions'
 
-export function InstructionSettings({ instructions, onInstructionsChange }: InstructionSettingsProps) {
+export function InstructionSettings({ onInstructionsChange }: Omit<InstructionSettingsProps, 'instructions'>) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [newInstruction, setNewInstruction] = useState<Instruction>({ description: '', value: '' })
   const [editingIndex, setEditingIndex] = useState<number | null>(null)

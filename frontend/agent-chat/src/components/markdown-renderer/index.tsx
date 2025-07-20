@@ -16,12 +16,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          // @ts-ignore
+          // @ts-expect-error - ReactMarkdown components type issue
           code({ inline, className, children }) {
             const match = /language-(\w+)/.exec(className || '')
             return !inline && match ? (
               <SyntaxHighlighter
-                style={vscDarkPlus as any}
+                style={vscDarkPlus}
                 language={match[1]}
                 PreTag="div"
                 className="rounded-lg my-2"

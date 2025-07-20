@@ -28,7 +28,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: (id, parentId, isResolved) => {
+      external: (id, _parentId, _isResolved) => {
         // 自动检测所有外部依赖
         const allDependencies = {
           ...dependencies,

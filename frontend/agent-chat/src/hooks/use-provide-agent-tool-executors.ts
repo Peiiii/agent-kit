@@ -4,7 +4,7 @@ import type { ToolCall, ToolResult } from '../types/agent'
 // ToolExecutor: (toolCall, context) => ToolResult | Promise<ToolResult>
 export type ToolExecutor = (
   toolCall: ToolCall,
-  context?: any
+  context?: Record<string, unknown>
 ) => ToolResult | Promise<ToolResult>
 
 export class AgentToolExecutorManager {

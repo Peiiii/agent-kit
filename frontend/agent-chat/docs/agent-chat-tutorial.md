@@ -71,6 +71,8 @@ function App() {
 
 就这么简单！
 
+**注意**: 本库不提供任何默认工具，所有工具都需要用户自己定义和提供。这样可以确保组件的通用性和灵活性。
+
 ## 使用方式
 
 ### 基础组件 (AgentChatCore)
@@ -1061,8 +1063,8 @@ function CustomChatInterface() {
     reset,
   } = useAgentChat({
     agent,
-    tools: [],
-    contexts: [],
+    defaultToolDefs: [],
+    defaultContexts: [],
   })
 
   const handleSend = async () => {
@@ -1164,9 +1166,10 @@ function CustomChatInterface() {
 | 属性 | 类型 | 必填 | 描述 |
 |------|------|------|------|
 | agent | HttpAgent | 是 | HTTP Agent 实例 |
-| tools | ToolDefinition[] | 否 | 工具定义数组 |
-| toolRenderers | Record<string, ToolRenderer> | 否 | 工具渲染器映射 |
-| staticContext | Array<{description: string, value: string}> | 否 | 静态上下文信息 |
+| defaultToolDefs | ToolDefinition[] | 否 | 默认工具定义数组 |
+| defaultToolRenderers | Record<string, ToolRenderer> | 否 | 默认工具渲染器映射 |
+| defaultToolExecutors | Record<string, ToolExecutor> | 否 | 默认工具执行器映射 |
+| defaultContexts | Array<{description: string, value: string}> | 否 | 默认上下文信息 |
 | className | string | 否 | 自定义 CSS 类名 |
 | initialMessages | Message[] | 否 | 初始化时预加载的消息数组 |
 
@@ -1175,9 +1178,10 @@ function CustomChatInterface() {
 | 属性 | 类型 | 必填 | 描述 |
 |------|------|------|------|
 | agent | HttpAgent | 是 | HTTP Agent 实例 |
-| tools | ToolDefinition[] | 否 | 工具定义数组 |
-| toolRenderers | Record<string, ToolRenderer> | 否 | 工具渲染器映射 |
-| staticContext | Array<{description: string, value: string}> | 否 | 静态上下文信息 |
+| defaultToolDefs | ToolDefinition[] | 否 | 默认工具定义数组 |
+| defaultToolRenderers | Record<string, ToolRenderer> | 否 | 默认工具渲染器映射 |
+| defaultToolExecutors | Record<string, ToolExecutor> | 否 | 默认工具执行器映射 |
+| defaultContexts | Array<{description: string, value: string}> | 否 | 默认上下文信息 |
 | className | string | 否 | 自定义 CSS 类名 |
 | initialMessages | Message[] | 否 | 初始化时预加载的消息数组 |
 

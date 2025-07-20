@@ -1,5 +1,5 @@
 import { HttpAgent } from '@ag-ui/client'
-import { AgentChatWindow, toolRenderers, tools } from '@agent-labs/agent-chat'
+import { AgentChatWindow } from '@agent-labs/agent-chat'
 import './App.css'
 
 const agent = new HttpAgent({
@@ -16,9 +16,7 @@ function App() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <AgentChatWindow
             agent={agent}
-            tools={tools}
-            toolRenderers={toolRenderers}
-            contexts={[
+            defaultContexts={[
               {
                 description: '当前用户信息',
                 value: JSON.stringify({

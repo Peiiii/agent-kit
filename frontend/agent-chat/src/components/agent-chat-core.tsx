@@ -12,9 +12,10 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
   (
     {
       agent,
-      toolRenderers: renderers = {},
-      tools: toolsList = [],
-      contexts = [],
+      defaultToolRenderers: renderers = {},
+      defaultToolDefs: toolsList = [],
+      defaultToolExecutors = {},
+      defaultContexts = [],
       initialMessages = [],
       className,
     },
@@ -31,8 +32,9 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       abortAgentRun,
     } = useAgentChat({
       agent,
-      tools: toolsList,
-      contexts: contexts,
+      defaultToolDefs: toolsList,
+      defaultToolExecutors,
+      defaultContexts: defaultContexts,
       initialMessages,
     })
 

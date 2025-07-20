@@ -1,12 +1,18 @@
 import { ToolRenderer, ToolCall, ToolResult } from '@agent-labs/agent-chat'
-import { useTodo } from './hooks/use-todo'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useEffect } from 'react'
 
-export const todoToolRenderers: Record<string, ToolRenderer> = {
+// 定义 Todo 操作函数的类型
+interface TodoActions {
+  addTodo: (params: { title: string; startTime?: string; endTime?: string }) => Promise<void>
+  toggleTodo: (id: string) => Promise<void>
+  deleteTodo: (id: string) => Promise<void>
+  updateTodo: (params: { id: string; title?: string; startTime?: string; endTime?: string }) => Promise<void>
+  state: { todos: Array<{ id: string; title: string; completed: boolean }> }
+}
+
+export const createTodoToolRenderers = (todoActions: TodoActions): Record<string, ToolRenderer> => ({
   addTodo: {
     render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
-      const { addTodo } = useTodo()
       const params = JSON.parse(toolCall.function.arguments) as { 
         title: string
         startTime?: string
@@ -34,7 +40,7 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
             <button
               className="px-4 py-2 bg-primary text-primary-foreground rounded"
               onClick={async () => {
-                await addTodo(params)
+                await todoActions.addTodo(params)
                 onResult({
                   toolCallId: toolCall.id,
                   result: { success: true },
@@ -86,7 +92,6 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
 
   toggleTodo: {
     render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
-      const { toggleTodo } = useTodo()
       const { id } = JSON.parse(toolCall.function.arguments) as { id: string }
 
       return (
@@ -97,7 +102,7 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
             <button
               className="px-4 py-2 bg-primary text-primary-foreground rounded"
               onClick={async () => {
-                await toggleTodo(id)
+                await todoActions.toggleTodo(id)
                 onResult({
                   toolCallId: toolCall.id,
                   result: { success: true },
@@ -141,7 +146,6 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
 
   deleteTodo: {
     render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
-      const { deleteTodo } = useTodo()
       const { id } = JSON.parse(toolCall.function.arguments) as { id: string }
 
       return (
@@ -152,7 +156,7 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
             <button
               className="px-4 py-2 bg-primary text-primary-foreground rounded"
               onClick={async () => {
-                await deleteTodo(id)
+                await todoActions.deleteTodo(id)
                 onResult({
                   toolCallId: toolCall.id,
                   result: { success: true },
@@ -196,7 +200,6 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
 
   updateTodo: {
     render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
-      const { updateTodo } = useTodo()
       const params = JSON.parse(toolCall.function.arguments) as {
         id: string
         title?: string
@@ -226,7 +229,7 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
             <button
               className="px-4 py-2 bg-primary text-primary-foreground rounded"
               onClick={async () => {
-                await updateTodo(params)
+                await todoActions.updateTodo(params)
                 onResult({
                   toolCallId: toolCall.id,
                   result: { success: true },
@@ -281,13 +284,12 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
   },
 
   listTodos: {
-    render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => {
-      const { state } = useTodo()
+    render: (_toolCall: ToolCall, _onResult: (result: ToolResult) => void) => {
       return (
         <div className="p-4 border rounded-lg">
           <h3 className="font-bold mb-2">待办事项列表</h3>
           <div className="space-y-2">
-            {state.todos.map((todo) => (
+            {todoActions.state.todos.map((todo) => (
               <div
                 key={todo.id}
                 className="flex items-center gap-2 p-2 border rounded"
@@ -319,4 +321,4 @@ export const todoToolRenderers: Record<string, ToolRenderer> = {
       },
     },
   },
-} 
+}) 

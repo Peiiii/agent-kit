@@ -1,4 +1,3 @@
-import { codeRenderer, codeTool } from './code'
 import type {
   Context,
   ToolCall,
@@ -6,18 +5,11 @@ import type {
   ToolRenderer,
   ToolResult,
 } from './types/agent'
-import {
-  userConfirmationRenderer,
-  userConfirmationTool,
-} from './user-confirmation'
 
-// 导出工具定义和渲染器
-export const tools: ToolDefinition[] = [userConfirmationTool, codeTool]
+// 导出空的默认工具定义和渲染器
+export const defaultToolDefs: ToolDefinition[] = []
 
-export const toolRenderers: Record<string, ToolRenderer> = {
-  user_confirmation: userConfirmationRenderer,
-  generate_code: codeRenderer,
-}
+export const defaultToolRenderers: Record<string, ToolRenderer> = {}
 
 // 导出组件
 export { AgentChatWindow } from './components/agent-chat-window'

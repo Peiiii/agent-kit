@@ -222,7 +222,7 @@ export class AgentSessionManager {
    * @param result { toolCallId, result, status, error? }
    * @param options { triggerAgent?: boolean }
    */
-  addToolResult(result: { toolCallId: string, result: any, status: string, error?: string }, options?: { triggerAgent?: boolean }): void {
+  addToolResult(result: { toolCallId: string, result: unknown, status: string, error?: string }, _options?: { triggerAgent?: boolean }): void {
     this.messages$.next([
       ...this.getMessages(),
       {

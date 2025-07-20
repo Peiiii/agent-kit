@@ -2,10 +2,8 @@ import * as React from 'react'
 import { HttpAgent } from '@ag-ui/client'
 import { AgentChatWindow } from '../components/agent-chat-window'
 import type { ToolDefinition, ToolRenderer, ToolCall, ToolResult } from '../types/agent'
-import {
-  toolRenderers as availableToolRenderers,
-  tools as availableTools,
-} from '../index'
+import type { ToolExecutor } from '../hooks/use-provide-agent-tool-executors'
+// 不再导入默认工具，用户需要自己提供
 
 export function AdvancedDemo() {
   const customTools: ToolDefinition[] = [
@@ -54,12 +52,29 @@ export function AdvancedDemo() {
     },
   }
 
+  // 添加自定义工具执行器
+  const customToolExecutors: Record<string, ToolExecutor> = {
+    customTool: async (toolCall: ToolCall) => {
+      const args = JSON.parse(toolCall.function.arguments)
+      // 模拟异步处理
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      return {
+        toolCallId: toolCall.id,
+        result: {
+          message: `自动处理了参数: ${args.param1}`,
+          timestamp: new Date().toISOString(),
+        },
+        status: 'success',
+      }
+    },
+  }
+
   const customContext = [
     {
       description: '高级上下文',
       value: JSON.stringify({
         environment: 'production',
-        features: ['custom-tools', 'advanced-ui'],
+        features: ['custom-tools', 'advanced-ui', 'default-executors'],
       }),
     },
   ]
@@ -69,9 +84,10 @@ export function AdvancedDemo() {
       agent={new HttpAgent({
         url: 'http://localhost:8000/openai-agent',
       })}
-      toolRenderers={{ ...availableToolRenderers, ...customToolRenderers }}
-      tools={[...availableTools, ...customTools]}
-      contexts={customContext}
+      defaultToolRenderers={customToolRenderers}
+      defaultToolDefs={customTools}
+      defaultToolExecutors={customToolExecutors}
+      defaultContexts={customContext}
     />
   )
 } 

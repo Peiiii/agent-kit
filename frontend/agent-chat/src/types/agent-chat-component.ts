@@ -1,11 +1,13 @@
 import type { ToolDefinition, ToolRenderer } from "@/types/agent";
 import type { HttpAgent, Message } from "@ag-ui/client";
+import type { ToolExecutor } from "../hooks/use-provide-agent-tool-executors";
 
 export interface AgentChatProps {
     agent: HttpAgent
-    toolRenderers?: Record<string, ToolRenderer>
-    tools?: ToolDefinition[]
-    contexts?: Array<{ description: string; value: string }>
+    defaultToolRenderers?: Record<string, ToolRenderer>
+    defaultToolDefs?: ToolDefinition[]
+    defaultToolExecutors?: Record<string, ToolExecutor>
+    defaultContexts?: Array<{ description: string; value: string }>
     initialMessages?: Message[]
     className?: string
   }

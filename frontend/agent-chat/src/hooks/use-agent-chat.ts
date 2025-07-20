@@ -10,10 +10,10 @@ import type { Observable, Observer, Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
 import type { Context, ToolDefinition, ToolResult } from '../types/agent'
 import { convertMessagesToUIMessages } from '../utils/ui-message'
-import { AgentSessionManager } from './agent-session-manager'
+import { AgentSessionManager } from '../services/agent-session-manager'
 import { AgentContextManagerContext } from './use-provide-agent-contexts'
 import { AgentToolDefManagerContext } from './use-provide-agent-tool-defs'
-import { AgentToolExecutorManagerContext } from './use-provide-agent-tool-executors'
+import { AgentToolExecutorManagerContext, type ToolExecutor } from './use-provide-agent-tool-executors'
 
 
 export interface IObservable<T> {
@@ -26,8 +26,9 @@ export interface IAgent {
 
 interface UseAgentChatProps {
   agent: IAgent
-  tools: ToolDefinition[]
-  contexts?: Context[]
+  defaultToolDefs: ToolDefinition[]
+  defaultToolExecutors?: Record<string, ToolExecutor>
+  defaultContexts?: Context[]
   initialMessages?: Message[]
 }
 
@@ -51,8 +52,9 @@ interface UseAgentChatReturn {
 
 export function useAgentChat({
   agent,
-  tools,
-  contexts = [],
+  defaultToolDefs,
+  defaultToolExecutors = {},
+  defaultContexts = [],
   initialMessages = [],
 }: UseAgentChatProps): UseAgentChatReturn {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
@@ -78,6 +80,16 @@ export function useAgentChat({
     }
   }, [initialMessages])
 
+  // 注册默认工具执行器
+  useEffect(() => {
+    if (Object.keys(defaultToolExecutors).length > 0) {
+      const removeExecutors = toolExecutorManager.addToolExecutors(defaultToolExecutors)
+      return () => {
+        removeExecutors()
+      }
+    }
+  }, [toolExecutorManager, defaultToolExecutors])
+
   const reset = useCallback(() => {
     sessionManager.current.reset()
     setThreadId(null)
@@ -86,16 +98,16 @@ export function useAgentChat({
 
   const getContexts = useCallback(() => {
     const dynamicContexts = contextManager.getContexts()
-    return [...contexts, ...dynamicContexts]
-  }, [contexts, contextManager])
+    return [...defaultContexts, ...dynamicContexts]
+  }, [defaultContexts, contextManager])
 
   const getToolDefs = useCallback(() => {
     const dynamicToolDefs = toolDefManager.getToolDefs()
-    return [...tools, ...dynamicToolDefs]
-  }, [tools, toolDefManager])
+    return [...defaultToolDefs, ...dynamicToolDefs]
+  }, [defaultToolDefs, toolDefManager])
 
   // 记录当前订阅
-  const agentRunSubscriptionRef = useRef<any>(null)
+  const agentRunSubscriptionRef = useRef<Unsubscribable | null>(null)
   const handleAgentResponse = useCallback((response: Observable<BaseEvent>) => {
     if (agentRunSubscriptionRef.current) {
       agentRunSubscriptionRef.current.unsubscribe()
@@ -133,7 +145,7 @@ export function useAgentChat({
         })
         handleAgentResponse(response as unknown as Observable<BaseEvent>)
       } catch (error) {
-        if ((error as any)?.name === 'AbortError') {
+        if ((error as Error)?.name === 'AbortError') {
           // 用户主动终止
           console.info('Agent run aborted')
         } else {

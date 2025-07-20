@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ag-ui/client": "^0.0.28",
-    "@agent-labs/agent-chat": "^1.1.6",
+    "@ag-ui/client": "^0.0.30",
+    "@agent-labs/agent-chat": "1.6.0",
     "composite-kit": "^0.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

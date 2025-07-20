@@ -116,9 +116,9 @@ export class OpenAIAgent {
       if (inputData.context) {
         messages = this.addContextToMessages(messages, inputData.context);
       }
-      const tools = inputData.tools
+      const tools = inputData.tools && inputData.tools.length > 0
         ? this.convertToolsToOpenAIFormat(inputData.tools)
-        : [];
+        : undefined;
 
       // 创建流
       const stream = await this.client.chat.completions.create({
