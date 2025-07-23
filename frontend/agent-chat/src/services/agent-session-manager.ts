@@ -37,6 +37,10 @@ export class AgentSessionManager {
     return this.messages$.getValue()
   }
 
+  // 允许外部直接设置消息列表
+  public setMessages(messages: Message[]): void {
+    this.messages$.next(messages)
+  }
 
   // 处理事件
   handleEvent(event: BaseEvent) {

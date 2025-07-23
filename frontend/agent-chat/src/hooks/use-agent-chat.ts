@@ -48,6 +48,9 @@ interface UseAgentChatReturn {
   ) => Promise<void>
   reset: () => void
   abortAgentRun: () => void
+  setMessages: (msgs: Message[]) => void
+  runAgent: (currentThreadId?: string) => Promise<void>
+  removeMessages: (messageIds: string[]) => void
 }
 
 export function useAgentChat({
@@ -56,7 +59,7 @@ export function useAgentChat({
   defaultToolExecutors = {},
   defaultContexts = [],
   initialMessages = [],
-}: UseAgentChatProps): UseAgentChatReturn {
+}: UseAgentChatProps): UseAgentChatReturn{
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isAgentResponding, setIsAgentResponding] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
@@ -236,6 +239,15 @@ export function useAgentChat({
     return convertMessagesToUIMessages(messages)
   }, [messages])
 
+  // 新增 setMessages 方法，允许外部直接设置消息列表
+  const setMessagesExternal = useCallback((msgs: Message[]) => {
+    sessionManager.current.setMessages(msgs)
+  }, [])
+
+  const removeMessages = useCallback((messageIds: string[]) => {
+    sessionManager.current.removeMessages(messageIds)
+  }, [])
+
   return {
     messages,
     uiMessages,
@@ -246,5 +258,8 @@ export function useAgentChat({
     addMessages,
     reset,
     abortAgentRun,
+    setMessages: setMessagesExternal,
+    runAgent,
+    removeMessages,
   }
 }
