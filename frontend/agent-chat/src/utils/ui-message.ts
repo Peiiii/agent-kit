@@ -23,11 +23,21 @@ export const convertMessagesToUIMessages = (
       const assistantMessage = message as AssistantMessage
       if (assistantMessage.toolCalls && assistantMessage.toolCalls.length > 0) {
         assistantMessage.toolCalls.forEach((toolCall) => {
+          let parsedArgs: any = null;
+          try {
+            if (typeof toolCall.function.arguments === 'string') {
+              parsedArgs = JSON.parse(toolCall.function.arguments);
+            } else {
+              parsedArgs = toolCall.function.arguments;
+            }
+          } catch (e) {
+            parsedArgs = { error: 'Invalid JSON', raw: toolCall.function.arguments };
+          }
           toolCallMap.set(toolCall.id, {
             state: 'call' as const,
             toolCallId: toolCall.id,
             toolName: toolCall.function.name,
-            args: JSON.parse(toolCall.function.arguments),
+            args: parsedArgs,
           })
         })
       }
