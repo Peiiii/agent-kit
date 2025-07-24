@@ -36,10 +36,21 @@ export const convertMessagesToUIMessages = (
       const toolInvocation = toolCallMap.get(toolMessage.toolCallId)
       if (toolInvocation) {
         // 更新工具调用的状态为结果
+        let parsedResult: any = null;
+        try {
+          if (typeof toolMessage.content === 'string') {
+            parsedResult = JSON.parse(toolMessage.content);
+          } else {
+            parsedResult = toolMessage.content;
+          }
+        } catch (e) {
+          // 解析失败时，保留原始内容并标记错误
+          parsedResult = { error: 'Invalid JSON', raw: toolMessage.content };
+        }
         toolCallMap.set(toolMessage.toolCallId, {
           ...toolInvocation,
           state: 'result' as const,
-          result: JSON.parse(toolMessage.content),
+          result: parsedResult,
         })
       }
     }
