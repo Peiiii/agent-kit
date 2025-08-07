@@ -1,6 +1,7 @@
+import type { ToolInvocation } from '@ai-sdk/ui-utils'
 import * as React from 'react'
 import type { ToolRenderer, ToolResult } from '../../core/types/agent'
-import type { ToolInvocation } from '@ai-sdk/ui-utils'
+import { toolInvocationToToolCall } from '../../core/utils/tool'
 
 interface ToolCallRendererProps {
   toolInvocation: ToolInvocation
@@ -14,13 +15,15 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
   onToolResult,
 }) => {
   const renderer = toolRenderers[toolInvocation.toolName]
-  if (!renderer) {
-    return (
-      <div className="rounded-lg border bg-background p-2">
-        <p className="text-sm text-muted-foreground">
-          Unknown tool: {toolInvocation.toolName}
-        </p>
-      </div>
+
+  if (renderer) {
+    return renderer.render(
+      toolInvocationToToolCall(toolInvocation),
+      (result) => {
+        if (onToolResult) {
+          onToolResult(result)
+        }
+      },
     )
   }
 
@@ -41,24 +44,16 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
     )
   }
 
-  // 否则展示工具调用界面
+  // 工具信息，参数
   return (
     <div className="rounded-lg border bg-background p-2">
-      {renderer.render(
-        {
-          id: toolInvocation.toolCallId,
-          type: 'function',
-          function: {
-            name: toolInvocation.toolName,
-            arguments: JSON.stringify(toolInvocation.args),
-          },
-        },
-        (result) => {
-          if (onToolResult) {
-            onToolResult(result)
-          }
-        },
-      )}
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium">工具调用</span>
+        <span className="text-xs text-muted-foreground">{toolInvocation.toolName}</span>
+      </div>
+      <div className="rounded-md bg-muted p-2">
+        <pre className="text-sm">{JSON.stringify(toolInvocation.args, null, 2)}</pre>
+      </div>
     </div>
   )
 }

@@ -8,11 +8,9 @@ import type { UIMessage } from '@ai-sdk/ui-utils'
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { Observable, Observer, Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
+import { AgentSessionManager } from '../services/agent-session-manager'
 import type { Context, ToolDefinition, ToolResult } from '../types/agent'
 import { convertMessagesToUIMessages } from '../utils/ui-message'
-import { AgentSessionManager } from '../services/agent-session-manager'
-import { AgentContextManagerContext } from './use-provide-agent-contexts'
-import { AgentToolDefManagerContext } from './use-provide-agent-tool-defs'
 import { AgentToolExecutorManagerContext, type ToolExecutor } from './use-provide-agent-tool-executors'
 
 
@@ -26,9 +24,9 @@ export interface IAgent {
 
 interface UseAgentChatProps {
   agent: IAgent
-  defaultToolDefs: ToolDefinition[]
-  defaultToolExecutors?: Record<string, ToolExecutor>
-  defaultContexts?: Context[]
+  toolDefs: ToolDefinition[]
+  toolExecutors?: Record<string, ToolExecutor>
+  contexts?: Context[]
   initialMessages?: Message[]
 }
 
@@ -55,16 +53,14 @@ interface UseAgentChatReturn {
 
 export function useAgentChat({
   agent,
-  defaultToolDefs,
-  defaultToolExecutors = {},
-  defaultContexts = [],
+  toolDefs,
+  toolExecutors,
+  contexts = [],
   initialMessages = [],
-}: UseAgentChatProps): UseAgentChatReturn{
+}: UseAgentChatProps): UseAgentChatReturn {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isAgentResponding, setIsAgentResponding] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
-  const contextManager = useContext(AgentContextManagerContext)
-  const toolDefManager = useContext(AgentToolDefManagerContext)
   const toolExecutorManager = useContext(AgentToolExecutorManagerContext)
   const sessionManager = useRef(new AgentSessionManager())
 
@@ -85,13 +81,13 @@ export function useAgentChat({
 
   // 注册默认工具执行器
   useEffect(() => {
-    if (Object.keys(defaultToolExecutors).length > 0) {
-      const removeExecutors = toolExecutorManager.addToolExecutors(defaultToolExecutors)
+    if (toolExecutors && Object.keys(toolExecutors).length > 0) {
+      const removeExecutors = toolExecutorManager.addToolExecutors(toolExecutors)
       return () => {
         removeExecutors()
       }
     }
-  }, [toolExecutorManager, defaultToolExecutors])
+  }, [toolExecutorManager, toolExecutors])
 
   const reset = useCallback(() => {
     sessionManager.current.reset()
@@ -99,15 +95,9 @@ export function useAgentChat({
     setIsAgentResponding(false)
   }, [])
 
-  const getContexts = useCallback(() => {
-    const dynamicContexts = contextManager.getContexts()
-    return [...defaultContexts, ...dynamicContexts]
-  }, [defaultContexts, contextManager])
-
   const getToolDefs = useCallback(() => {
-    const dynamicToolDefs = toolDefManager.getToolDefs()
-    return [...defaultToolDefs, ...dynamicToolDefs]
-  }, [defaultToolDefs, toolDefManager])
+    return toolDefs
+  }, [toolDefs])
 
   // 记录当前订阅
   const agentRunSubscriptionRef = useRef<Unsubscribable | null>(null)
@@ -142,7 +132,7 @@ export function useAgentChat({
           runId: v4(),
           messages: sessionManager.current.getMessages(),
           tools: getToolDefs(),
-          context: getContexts(),
+          context: contexts,
           state: {},
           forwardedProps: {},
         })
@@ -157,7 +147,7 @@ export function useAgentChat({
         setIsAgentResponding(false)
       }
     },
-    [agent, getToolDefs, getContexts, handleAgentResponse],
+    [agent, toolDefs, contexts, handleAgentResponse],
   )
 
   // 终止 agent 响应

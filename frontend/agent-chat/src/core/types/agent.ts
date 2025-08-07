@@ -28,6 +28,11 @@ export interface ToolRenderer {
   definition: ToolDefinition
 }
 
+export interface Tool extends ToolDefinition {
+  execute?: (toolCall: ToolCall) => Promise<ToolResult>
+  render?: (tool: ToolCall, onResult: (result: ToolResult) => void) => ReactNode
+}
+
 export interface Context {
   description: string
   value: string
