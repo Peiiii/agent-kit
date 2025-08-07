@@ -1,4 +1,4 @@
-import type { ToolDefinition, ToolRenderer } from "@/types/agent";
+import type { ToolDefinition, ToolRenderer } from "@/core/types/agent";
 import type { HttpAgent, Message } from "@ag-ui/client";
 import type { ToolExecutor } from "../hooks/use-provide-agent-tool-executors";
 

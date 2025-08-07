@@ -4,7 +4,7 @@ import type {
   ToolDefinition,
   ToolRenderer,
   ToolResult,
-} from './types/agent'
+} from './core/types/agent'
 
 // 导出空的默认工具定义和渲染器
 export const defaultToolDefs: ToolDefinition[] = []
@@ -21,11 +21,12 @@ export type {
   ToolCall,
   ToolDefinition,
   ToolRenderer,
-  ToolResult,
+  ToolResult
 }
 
 // 导出 hooks
-export * from './hooks'
+export * from './core'
+
 
 // 导出 UI 组件
 export * from './components/chat-interface'
@@ -34,5 +35,4 @@ export * from './components/markdown-renderer'
 
 export * from './components/agent-chat-core'
 
-// 导出服务
-export * from './services'
+

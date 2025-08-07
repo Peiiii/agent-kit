@@ -1,11 +1,11 @@
 import { Bot, User } from 'lucide-react'
 import * as React from 'react'
 import { useContext, useMemo } from 'react'
-import { AgentToolRendererManagerContext } from '../../hooks/use-provide-agent-tool-renderers'
+import { AgentToolRendererManagerContext } from '../../core/hooks/use-provide-agent-tool-renderers'
 
 import type { UIMessage } from '@ai-sdk/ui-utils'
 import clsx from 'clsx'
-import type { ToolRenderer, ToolResult } from '../../types/agent'
+import type { ToolRenderer, ToolResult } from '../../core/types/agent'
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ToolCallRenderer } from './tool-call-renderer'

@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { HttpAgent } from '@ag-ui/client'
 // 不再导入默认工具，用户需要自己提供
 import { AgentChatWindow } from '../components/agent-chat-window'
-import type { ToolDefinition, ToolRenderer } from '../types/agent'
+import type { ToolDefinition, ToolRenderer } from '../core/types/agent'
 
 export const demoAgent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',

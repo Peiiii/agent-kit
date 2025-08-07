@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { useImperativeHandle, useState } from 'react'
-import { useAgentChat } from '../hooks/use-agent-chat'
+import { useAgentChat } from '../core/hooks/use-agent-chat'
 import '../styles/globals.css'
 import type {
   AgentChatProps,
   AgentChatRef,
-} from '../types/agent-chat-component'
+} from '../core/types/agent-chat-component'
 import { ChatInterface } from './chat-interface'
 
 export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(

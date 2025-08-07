@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { HttpAgent } from '@ag-ui/client'
 import { AgentChatWindow } from '../components/agent-chat-window'
-import type { ToolDefinition, ToolRenderer, ToolCall, ToolResult } from '../types/agent'
+import type { ToolDefinition, ToolRenderer, ToolCall, ToolResult } from '../core/types/agent'
 import type { ToolExecutor } from '../hooks/use-provide-agent-tool-executors'
 // 不再导入默认工具，用户需要自己提供
 

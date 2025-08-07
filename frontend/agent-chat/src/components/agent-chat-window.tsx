@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import type {
   AgentChatProps,
   AgentChatRef,
-} from '../types/agent-chat-component'
+} from '../core/types/agent-chat-component'
 
 import clsx from 'clsx'
 import { AgentChatCore } from './agent-chat-core'

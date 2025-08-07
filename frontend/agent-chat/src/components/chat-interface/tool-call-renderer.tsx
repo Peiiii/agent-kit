@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { ToolRenderer, ToolResult } from '../../types/agent'
+import type { ToolRenderer, ToolResult } from '../../core/types/agent'
 import type { ToolInvocation } from '@ai-sdk/ui-utils'
 
 interface ToolCallRendererProps {

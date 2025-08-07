@@ -1,10 +1,10 @@
 import * as React from 'react'
-import type { ToolRenderer, ToolResult } from '../../types/agent'
+import type { ToolRenderer, ToolResult } from '../../core/types/agent'
 
 import { MessageInput } from './message-input'
 import { MessageItem } from './message-item'
 import type { UIMessage } from '@ai-sdk/ui-utils'
-import { useChatAutoScroll } from '../../hooks/use-chat-auto-scroll'
+import { useChatAutoScroll } from '../../core/hooks/use-chat-auto-scroll'
 import clsx from 'clsx'
 
 export interface ChatInterfaceProps {
