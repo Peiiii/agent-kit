@@ -1,5 +1,6 @@
 import { Tool, ToolCall, ToolResult } from "@agent-labs/agent-chat";
 import { Checkbox } from "@/components/ui/checkbox";
+import React from "react";
 
 export const createListTodosTool = ({
     state,
@@ -33,6 +34,23 @@ export const createListTodosTool = ({
                 if (!dateTimeString) return ''
                 return new Date(dateTimeString).toLocaleString('zh-CN')
             }
+
+            // 自动执行并返回结果
+            React.useEffect(() => {
+                const todosList = state.todos.map(todo => ({
+                    id: todo.id,
+                    title: todo.title,
+                    completed: todo.completed,
+                    startTime: todo.startTime,
+                    endTime: todo.endTime
+                }))
+                
+                onResult({
+                    toolCallId: toolCall.id,
+                    result: { success: true, data: todosList },
+                    status: 'success',
+                })
+            }, [])
 
             return (
                 <div className="p-4 border rounded-lg">
@@ -74,19 +92,8 @@ export const createListTodosTool = ({
                             ))
                         )}
                     </div>
-                    <div className="flex justify-end mt-4">
-                        <button
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded"
-                            onClick={() => {
-                                onResult({
-                                    toolCallId: toolCall.id,
-                                    result: { success: true },
-                                    status: 'success',
-                                })
-                            }}
-                        >
-                            确认
-                        </button>
+                    <div className="text-sm text-muted-foreground mt-4">
+                        共 {state.todos.length} 个待办事项
                     </div>
                 </div>
             )

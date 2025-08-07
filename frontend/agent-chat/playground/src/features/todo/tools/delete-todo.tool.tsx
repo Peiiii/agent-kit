@@ -1,4 +1,5 @@
 import { Tool, ToolCall, ToolResult } from "@agent-labs/agent-chat";
+import React from "react";
 
 export const createDeleteTodoTool = ({
     deleteTodo,
@@ -35,41 +36,38 @@ export const createDeleteTodoTool = ({
                 id: string
             }
 
+            // 自动执行并返回结果
+            React.useEffect(() => {
+                const executeTool = async () => {
+                    try {
+                        await deleteTodo(params.id)
+                        onResult({
+                            toolCallId: toolCall.id,
+                            result: { success: true },
+                            status: 'success',
+                        })
+                    } catch (error) {
+                        onResult({
+                            toolCallId: toolCall.id,
+                            result: { success: false, error: error instanceof Error ? error.message : '未知错误' },
+                            status: 'error',
+                        })
+                    }
+                }
+                executeTool()
+            }, [])
+
             return (
                 <div className="p-4 border rounded-lg">
                     <h3 className="font-bold mb-2">删除待办事项</h3>
                     <div className="mb-4 space-y-2">
                         <p><strong>待办事项ID:</strong> {params.id}</p>
                         <p className="text-sm text-muted-foreground">
-                            此操作不可撤销，请确认是否要删除此待办事项。
+                            正在删除此待办事项...
                         </p>
                     </div>
-                    <div className="flex justify-end gap-2">
-                        <button
-                            className="px-4 py-2 bg-destructive text-destructive-foreground rounded"
-                            onClick={async () => {
-                                await deleteTodo(params.id)
-                                onResult({
-                                    toolCallId: toolCall.id,
-                                    result: { success: true },
-                                    status: 'success',
-                                })
-                            }}
-                        >
-                            确认删除
-                        </button>
-                        <button
-                            className="px-4 py-2 border rounded"
-                            onClick={() => {
-                                onResult({
-                                    toolCallId: toolCall.id,
-                                    result: { success: false },
-                                    status: 'error',
-                                })
-                            }}
-                        >
-                            取消
-                        </button>
+                    <div className="text-sm text-muted-foreground">
+                        正在自动删除待办事项...
                     </div>
                 </div>
             )

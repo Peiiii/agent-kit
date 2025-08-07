@@ -1,4 +1,5 @@
 import { Tool, ToolCall, ToolResult } from "@agent-labs/agent-chat";
+import React from "react";
 
 export const createUpdateTodoTool = ({
     updateTodo,
@@ -58,6 +59,27 @@ export const createUpdateTodoTool = ({
                 return new Date(dateTimeString).toLocaleString('zh-CN')
             }
 
+            // 自动执行并返回结果
+            React.useEffect(() => {
+                const executeTool = async () => {
+                    try {
+                        await updateTodo(params)
+                        onResult({
+                            toolCallId: toolCall.id,
+                            result: { success: true },
+                            status: 'success',
+                        })
+                    } catch (error) {
+                        onResult({
+                            toolCallId: toolCall.id,
+                            result: { success: false, error: error instanceof Error ? error.message : '未知错误' },
+                            status: 'error',
+                        })
+                    }
+                }
+                executeTool()
+            }, [])
+
             return (
                 <div className="p-4 border rounded-lg">
                     <h3 className="font-bold mb-2">更新待办事项</h3>
@@ -73,32 +95,8 @@ export const createUpdateTodoTool = ({
                             <p><strong>新结束时间:</strong> {params.endTime === '' ? '清空' : formatDateTime(params.endTime)}</p>
                         )}
                     </div>
-                    <div className="flex justify-end gap-2">
-                        <button
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded"
-                            onClick={async () => {
-                                await updateTodo(params)
-                                onResult({
-                                    toolCallId: toolCall.id,
-                                    result: { success: true },
-                                    status: 'success',
-                                })
-                            }}
-                        >
-                            确认
-                        </button>
-                        <button
-                            className="px-4 py-2 border rounded"
-                            onClick={() => {
-                                onResult({
-                                    toolCallId: toolCall.id,
-                                    result: { success: false },
-                                    status: 'error',
-                                })
-                            }}
-                        >
-                            取消
-                        </button>
+                    <div className="text-sm text-muted-foreground">
+                        正在自动更新待办事项...
                     </div>
                 </div>
             )
