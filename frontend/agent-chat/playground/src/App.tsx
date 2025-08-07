@@ -1,6 +1,6 @@
-import { HttpAgent } from '@ag-ui/client'
-import { AgentChatCore, useProvideAgentContexts, useProvideAgentToolExecutors } from '@agent-labs/agent-chat'
 import type { Message } from '@ag-ui/client'
+import { HttpAgent } from '@ag-ui/client'
+import { AgentChatCore } from '@agent-labs/agent-chat'
 import { VSCodeLayout } from "composite-kit"
 import { Bell, GitBranch as BranchIcon, CheckCircle, ChevronDown, Folder, GitBranch, LayoutGrid, Play, Search, Wifi, Zap } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
@@ -8,8 +8,11 @@ import { v4 as uuidv4 } from 'uuid'
 import { InstructionSettings } from './features/settings/components/instruction-settings'
 import { TodoList } from './features/todo/components/todo-list'
 import { TodoProvider, useTodo } from './features/todo/hooks/use-todo'
-import { createTodoToolRenderers } from './features/todo/tool-renderers'
-import { todoTools } from './features/todo/tools'
+import { createAddTodoTool } from './features/todo/tools/add-todo.tool'
+import { createToggleTodoTool } from './features/todo/tools/toggle-todo.tool'
+import { createDeleteTodoTool } from './features/todo/tools/delete-todo.tool'
+import { createUpdateTodoTool } from './features/todo/tools/update-todo.tool'
+import { createListTodosTool } from './features/todo/tools/list-todos.tool'
 
 const { Activity,
   Controls,
@@ -48,39 +51,23 @@ function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructio
     }))
   }), [state.todos])
 
-  useProvideAgentContexts([
-    {
-      description: '待办事项列表',
-      value: JSON.stringify(todoListContext),
-    },
-  ])
-
-  // 注册 listTodos executor
-  useProvideAgentToolExecutors({
-    listTodos: (toolCall) => {
-      return {
-        toolCallId: toolCall.id,
-        result: { todos: state.todos },
-        status: 'success',
-      }
-    },
-  })
-
-  const todoToolRenderers = useMemo(() => createTodoToolRenderers({
-    addTodo,
-    toggleTodo,
-    deleteTodo,
-    updateTodo,
-    state
-  }), [addTodo, toggleTodo, deleteTodo, updateTodo, state])
+  const todoTools = useMemo(() => [
+    createAddTodoTool({ addTodo }),
+    createToggleTodoTool({ toggleTodo }),
+    createDeleteTodoTool({ deleteTodo }),
+    createUpdateTodoTool({ updateTodo }),
+    createListTodosTool({ state }),
+  ], [addTodo, toggleTodo, deleteTodo, updateTodo, state])
 
   return (
     <AgentChatCore
       ref={agentChatRef}
       agent={agent}
-      defaultToolDefs={todoTools}
-      defaultToolRenderers={todoToolRenderers}
-      defaultContexts={allInstructions}
+      tools={todoTools}
+      contexts={[...allInstructions,{
+        description: '待办事项列表',
+        value: JSON.stringify(todoListContext),
+      }]}
       className='flex-1 overflow-y-auto'
     />
   )
