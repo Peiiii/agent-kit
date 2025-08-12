@@ -38,7 +38,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       }]))
     }, [])
     const {
-      uiMessages,
+      messages,
       isAgentResponding,
       sendMessage,
       addToolResult: sendToolResult,
@@ -72,7 +72,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     return (
       <div className={className}>
         <ChatInterface
-          uiMessages={uiMessages}
+          uiMessages={messages}
           toolRenderers={renderers}
           onToolResult={sendToolResult}
           input={input}

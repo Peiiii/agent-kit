@@ -41,6 +41,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }, 0)
   }, [onSend, setSticky, scrollToBottom])
 
+  console.log('[ChatInterface] uiMessages', {uiMessages})
+
   return (
     <div className="flex h-full flex-col">
       <div

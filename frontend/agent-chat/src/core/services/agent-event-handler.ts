@@ -1,7 +1,8 @@
 import { EventType, type BaseEvent, type MessagesSnapshotEvent, type StateSnapshotEvent, type TextMessageContentEvent, type TextMessageStartEvent, type ToolCallArgsEvent, type ToolCallStartEvent } from "@ag-ui/core"
-import { AgentSessionManager } from "./agent-session-manager"
-import type { ToolCall } from "../types"
 import { v4 } from "uuid"
+import { convertMessagesToUIMessages, toolCallToToolInvocation } from "../utils"
+import { AgentSessionManager } from "./agent-session-manager"
+import type { UIMessage } from "@ai-sdk/ui-utils"
 
 export class AgentEventHandler {
     private currentMessageId?: string
@@ -26,9 +27,20 @@ export class AgentEventHandler {
     private emitToolCallEvents() {
         const currentMessages = this.sessionManager.getMessages()
         const lastMsg = currentMessages[currentMessages.length - 1]
-        if (!lastMsg || lastMsg.role !== 'assistant' || !lastMsg.toolCalls) return
-        for (const toolCall of lastMsg.toolCalls as ToolCall[]) {
-            this.sessionManager.toolCall$.next({ toolCall })
+        if (!lastMsg || lastMsg.role !== 'assistant' || !lastMsg.parts) return
+        for (const part of lastMsg.parts) {
+            if (part.type === 'tool-invocation') {
+                this.sessionManager.toolCall$.next({
+                    toolCall: {
+                        id: part.toolInvocation.toolCallId,
+                        type: 'function',
+                        function: {
+                            name: part.toolInvocation.toolName,
+                            arguments: JSON.stringify(part.toolInvocation.args),
+                        },
+                    }
+                })
+            }
         }
     }
 
@@ -76,6 +88,20 @@ export class AgentEventHandler {
         this.currentMessageContent = ''
     }
 
+    private updateTextPart(message: UIMessage, text: string) {
+        const lastPart = message.parts?.[message.parts.length - 1]
+        if (lastPart && lastPart.type === 'text') {
+            return {
+                ...message,
+                parts: [...(message.parts.slice(0, -1) || []), { type: 'text' as const, text }]
+            }
+        }
+        return {
+            ...message,
+            parts: [...(message.parts || []), { type: 'text' as const, text }],
+        }
+    }
+
     private handleTextMessageContent(event: TextMessageContentEvent) {
         if (!event.delta || this.currentMessageId !== event.messageId) return
 
@@ -89,10 +115,7 @@ export class AgentEventHandler {
         if (lastMessage && lastMessage.role === 'assistant' && lastMessage.id === messageId) {
             this.sessionManager.setMessages([
                 ...currentMessages.slice(0, -1),
-                {
-                    ...lastMessage,
-                    content: messageContent
-                }
+                this.updateTextPart(lastMessage, messageContent)
             ])
         } else {
             this.sessionManager.setMessages([
@@ -101,6 +124,10 @@ export class AgentEventHandler {
                     id: messageId!,
                     content: messageContent,
                     role: 'assistant',
+                    parts: [{
+                        type: 'text',
+                        text: messageContent,
+                    }],
                 }
             ])
         }
@@ -145,7 +172,10 @@ export class AgentEventHandler {
                         if (index === currentMessages.length - 1 && msg.role === 'assistant') {
                             return {
                                 ...msg,
-                                toolCalls: [...(msg.toolCalls || []), toolCall]
+                                parts: [...(msg.parts || []), {
+                                    type: 'tool-invocation',
+                                    toolInvocation: toolCallToToolInvocation(toolCall),
+                                }]
                             }
                         }
                         return msg
@@ -157,7 +187,11 @@ export class AgentEventHandler {
                     {
                         id: v4(),
                         role: 'assistant',
-                        toolCalls: [toolCall],
+                        content: "",
+                        parts: [{
+                            type: 'tool-invocation',
+                            toolInvocation: toolCallToToolInvocation(toolCall),
+                        }],
                     }
                 ])
             }
@@ -178,7 +212,7 @@ export class AgentEventHandler {
 
     private handleMessagesSnapshot(event: MessagesSnapshotEvent) {
         if (event.messages) {
-            this.sessionManager.setMessages(event.messages)
+            this.sessionManager.setMessages(convertMessagesToUIMessages(event.messages))
         }
     }
 }

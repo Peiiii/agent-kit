@@ -1,14 +1,13 @@
 import {
-  type BaseEvent,
-  type Message
+  type BaseEvent
 } from '@ag-ui/client'
+import type { UIMessage } from '@ai-sdk/ui-utils'
 import { BehaviorSubject, Subject } from 'rxjs'
-import { v4 } from 'uuid'
 import type { ToolCall } from '../types/agent'
 import { AgentEventHandler } from './agent-event-handler'
 
 export class AgentSessionManager {
-  private messages$ = new BehaviorSubject<Message[]>([])
+  private messages$ = new BehaviorSubject<UIMessage[]>([])
   // 工具调用事件流
   public toolCall$ = new Subject<{ toolCall: ToolCall }>()
 
@@ -19,7 +18,7 @@ export class AgentSessionManager {
   }
 
   // 订阅消息流
-  subscribeMessages(callback: (messages: Message[]) => void) {
+  subscribeMessages(callback: (messages: UIMessage[]) => void) {
     return this.messages$.subscribe(callback)
   }
 
@@ -29,7 +28,7 @@ export class AgentSessionManager {
   }
 
   // 允许外部直接设置消息列表
-  public setMessages(messages: Message[]): void {
+  public setMessages(messages: UIMessage[]): void {
     this.messages$.next(messages)
   }
 
@@ -44,7 +43,7 @@ export class AgentSessionManager {
     this.eventHandler.reset()
   }
 
-  addMessages(messages: Message[]) {
+  addMessages(messages: UIMessage[]) {
     this.messages$.next([...this.getMessages(), ...messages])
   }
 
@@ -59,14 +58,28 @@ export class AgentSessionManager {
    * @param options { triggerAgent?: boolean }
    */
   addToolResult(result: { toolCallId: string, result: unknown, status: string, error?: string }, _options?: { triggerAgent?: boolean }): void {
-    this.messages$.next([
-      ...this.getMessages(),
-      {
-        id: v4(),
-        role: 'tool',
-        content: typeof result.result === 'string' ? result.result : JSON.stringify(result.result),
-        toolCallId: result.toolCallId,
-      },
-    ])
+    const targetMessage = this.getMessages().find(msg => msg.parts.find(part => part.type === "tool-invocation" && part.toolInvocation.toolCallId === result.toolCallId))
+    if (!targetMessage) {
+      return
+    }
+
+    const newMessage: UIMessage = {
+      ...targetMessage,
+      parts: targetMessage.parts.map(part => {
+        if (part.type === "tool-invocation" && part.toolInvocation.toolCallId === result.toolCallId) {
+          return {
+            ...part,
+            toolInvocation: {
+              ...part.toolInvocation,
+              result: result.result,
+              status: result.status,
+              error: result.error,
+            },
+          }
+        }
+        return part
+      }),
+    }
+    this.messages$.next(this.getMessages().map(msg => msg.id === targetMessage.id ? newMessage : msg))
   }
 } 

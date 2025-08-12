@@ -1,11 +1,7 @@
 import { createContext, useContext, useEffect } from 'react'
-import type { ToolCall, ToolResult } from '../types/agent'
+import type { ToolExecutor } from '../types'
 
 // ToolExecutor: (toolCall, context) => ToolResult | Promise<ToolResult>
-export type ToolExecutor = (
-  toolCall: ToolCall,
-  context?: Record<string, unknown>
-) => ToolResult | Promise<ToolResult>
 
 export class AgentToolExecutorManager {
   private executors: Record<string, ToolExecutor> = {}

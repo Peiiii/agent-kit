@@ -1,55 +1,17 @@
 import {
   EventType,
-  type BaseEvent,
-  type Message,
-  type RunAgentInput
+  type BaseEvent
 } from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { Observable, Observer, Unsubscribable } from 'rxjs'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import type { Observable, Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
 import { AgentSessionManager } from '../services/agent-session-manager'
-import type { Context, ToolDefinition, ToolResult } from '../types/agent'
-import { convertMessagesToUIMessages } from '../utils/ui-message'
-import { AgentToolExecutorManagerContext, type ToolExecutor } from './use-provide-agent-tool-executors'
+import type { UseAgentChatProps, UseAgentChatReturn } from '../types'
+import type { ToolResult } from '../types/agent'
+import { convertUIMessagesToMessages } from '../utils/ui-message'
+import { AgentToolExecutorManagerContext } from './use-provide-agent-tool-executors'
 
-
-export interface IObservable<T> {
-  subscribe: (observer: Partial<Observer<T>>) => Unsubscribable
-}
-
-export interface IAgent {
-  run: (input: RunAgentInput) => IObservable<BaseEvent>
-}
-
-interface UseAgentChatProps {
-  agent: IAgent
-  toolDefs: ToolDefinition[]
-  toolExecutors?: Record<string, ToolExecutor>
-  contexts?: Context[]
-  initialMessages?: Message[]
-}
-
-interface UseAgentChatReturn {
-  messages: Message[]
-  uiMessages: UIMessage[]
-  isAgentResponding: boolean
-  threadId: string | null
-  sendMessage: (content: string) => Promise<void>
-  addToolResult: (
-    result: ToolResult,
-    options?: { triggerAgent?: boolean },
-  ) => Promise<void>
-  addMessages: (
-    messages: Message[],
-    options?: { triggerAgent?: boolean },
-  ) => Promise<void>
-  reset: () => void
-  abortAgentRun: () => void
-  setMessages: (msgs: Message[]) => void
-  runAgent: (currentThreadId?: string) => Promise<void>
-  removeMessages: (messageIds: string[]) => void
-}
 
 export function useAgentChat({
   agent,
@@ -58,7 +20,7 @@ export function useAgentChat({
   contexts = [],
   initialMessages = [],
 }: UseAgentChatProps): UseAgentChatReturn {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [messages, setMessages] = useState<UIMessage[]>(initialMessages)
   const [isAgentResponding, setIsAgentResponding] = useState(false)
   const [threadId, setThreadId] = useState<string | null>(null)
   const toolExecutorManager = useContext(AgentToolExecutorManagerContext)
@@ -130,7 +92,7 @@ export function useAgentChat({
         const response = await agent.run({
           threadId: targetThreadId,
           runId: v4(),
-          messages: sessionManager.current.getMessages(),
+          messages: convertUIMessagesToMessages(sessionManager.current.getMessages()),
           tools: getToolDefs(),
           context: contexts,
           state: {},
@@ -163,13 +125,15 @@ export function useAgentChat({
     async (content: string) => {
       if (!content.trim()) return
 
-      const userMessage: Message = {
+      sessionManager.current.addMessages([{
         id: v4(),
         role: 'user',
         content,
-      }
-
-      sessionManager.current.addMessages([userMessage])
+        parts: [{
+          type: 'text',
+          text: content,
+        }],
+      }])
       await runAgent(threadId || undefined)
     },
     [threadId, runAgent],
@@ -187,7 +151,7 @@ export function useAgentChat({
   )
 
   const addMessages = useCallback(
-    async (messages: Message[], options?: { triggerAgent?: boolean }) => {
+    async (messages: UIMessage[], options?: { triggerAgent?: boolean }) => {
       const { triggerAgent = true } = options || {}
       console.log('[useAgentChat] addMessages', messages)
 
@@ -225,12 +189,8 @@ export function useAgentChat({
     return () => sub.unsubscribe()
   }, [toolExecutorManager, runAgent, threadId])
 
-  const uiMessages = useMemo(() => {
-    return convertMessagesToUIMessages(messages)
-  }, [messages])
-
   // 新增 setMessages 方法，允许外部直接设置消息列表
-  const setMessagesExternal = useCallback((msgs: Message[]) => {
+  const setMessagesExternal = useCallback((msgs: UIMessage[]) => {
     sessionManager.current.setMessages(msgs)
   }, [])
 
@@ -240,7 +200,6 @@ export function useAgentChat({
 
   return {
     messages,
-    uiMessages,
     isAgentResponding,
     threadId,
     sendMessage,

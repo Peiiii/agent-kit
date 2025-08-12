@@ -1,10 +1,20 @@
-import type { AssistantMessage, Message, ToolMessage } from '@ag-ui/client'
+import type { AssistantMessage, Message, ToolCall, ToolMessage } from '@ag-ui/client'
 import type {
   TextUIPart,
   ToolInvocation,
   ToolInvocationUIPart,
   UIMessage,
 } from '@ai-sdk/ui-utils'
+
+
+export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => {
+  return {
+    toolCallId: toolCall.id,
+    toolName: toolCall.function.name,
+    args: JSON.parse(toolCall.function.arguments),
+    state: "call",
+  }
+} 
 
 /**
  * 将 Message 数组转换为 UIMessage 数组
@@ -70,35 +80,111 @@ export const convertMessagesToUIMessages = (
   return messages
     .filter((message) => message.role !== 'tool')
     .map((message) => {
-    const parts: Array<TextUIPart | ToolInvocationUIPart> = []
+      const parts: Array<TextUIPart | ToolInvocationUIPart> = []
 
-    // 添加文本内容
-    if (message.content) {
-      parts.push({
-        type: 'text',
-        text: message.content,
-      })
-    }
-
-    // 处理助手消息的工具调用
-    if (message.role === 'assistant') {
-      const assistantMessage = message as AssistantMessage
-      if (assistantMessage.toolCalls && assistantMessage.toolCalls.length > 0) {
-        assistantMessage.toolCalls.forEach((toolCall) => {
-          const toolInvocation = toolCallMap.get(toolCall.id)
-          if (toolInvocation) {
-            parts.push({
-              type: 'tool-invocation',
-              toolInvocation,
-            })
-          }
+      // 添加文本内容
+      if (message.content) {
+        parts.push({
+          type: 'text',
+          text: message.content,
         })
       }
-    }
 
-    return {
-      ...message,
-      parts,
-    } as UIMessage
-  })
+      // 处理助手消息的工具调用
+      if (message.role === 'assistant') {
+        const assistantMessage = message as AssistantMessage
+        if (assistantMessage.toolCalls && assistantMessage.toolCalls.length > 0) {
+          assistantMessage.toolCalls.forEach((toolCall) => {
+            const toolInvocation = toolCallMap.get(toolCall.id)
+            if (toolInvocation) {
+              parts.push({
+                type: 'tool-invocation',
+                toolInvocation,
+              })
+            }
+          })
+        }
+      }
+
+      return {
+        ...message,
+        parts,
+      } as UIMessage
+    })
+}
+
+
+const mergeAssistantMessages = (params: {
+  messages: (Message & { role: "assistant" | "tool" })[],
+  assistantMessageId: string,
+}): Message[] => {
+  const { messages, assistantMessageId } = params
+  const toolCalls: ToolCall[] = messages.filter((message): message is Message & { role: "assistant", toolCalls: ToolCall[] } => message.role === "assistant" && !!message.toolCalls).map((message) => message.toolCalls).flat()
+  const content = messages.filter(message => message.role === "assistant").map(message => message.content).join('\n')
+  const toolResultMessages = messages.filter(message => message.role === "tool")
+  return [{
+    id: assistantMessageId,
+    role: "assistant",
+    content,
+    toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+  }, ...toolResultMessages]
+}
+
+export const convertMessageToMessages = (
+  message: UIMessage & { role: "system" | "assistant" | "user" },
+  part: UIMessage["parts"][number],
+  index: number,
+): Message[] => {
+  const { id: groupId, role } = message
+  const messages: Message[] = []
+  const partId = `${groupId}-${index}`
+  if (part.type === 'text') {
+    messages.push({
+      id: partId,
+      role,
+      content: part.text,
+    })
+  }
+  else if (part.type === 'tool-invocation') {
+    const toolCallMessage: AssistantMessage = {
+      id: `${partId}-tool-call`,
+      role: "assistant",
+      content: "",
+      toolCalls: [
+        {
+          id: part.toolInvocation.toolCallId,
+          type: 'function',
+          function: {
+            name: part.toolInvocation.toolName,
+            arguments: JSON.stringify(part.toolInvocation.args),
+          }
+        },
+      ],
+    }
+    if (part.toolInvocation.state !== "result") {
+      messages.push(toolCallMessage)
+    } else {
+      const toolResultMessage: ToolMessage = {
+        id: `${partId}-tool-result`,
+        role: 'tool',
+        toolCallId: part.toolInvocation.toolCallId,
+        content: JSON.stringify(part.toolInvocation.result),
+      }
+      messages.push(toolCallMessage, toolResultMessage)
+    }
+  }
+  return role === "assistant" ? mergeAssistantMessages({
+    messages: messages as (Message & { role: "assistant" | "tool" })[],
+    assistantMessageId: groupId,
+  }) : messages
+}
+
+export const convertUIMessagesToMessages = (
+  messages: UIMessage[],
+): Message[] => {
+  return messages.filter(message => message.role !== "data").map(message => {
+    return message.parts.map((part, index) => {
+      return convertMessageToMessages(message as UIMessage & { role: "system" | "assistant" | "user" }, part, index)
+    }).flat()
+  }).flat()
 }

@@ -1,19 +1,18 @@
-import type { Message } from '@ag-ui/client'
 import { HttpAgent } from '@ag-ui/client'
-import { AgentChatCore } from '@agent-labs/agent-chat'
+import { AgentChatCore, AgentChatRef } from '@agent-labs/agent-chat'
 import { VSCodeLayout } from "composite-kit"
 import { Bell, GitBranch as BranchIcon, CheckCircle, ChevronDown, Folder, GitBranch, LayoutGrid, Play, Search, Wifi, Zap } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
+import { AgentChatWindowDemo } from './features/agent-chat-window-demo'
 import { InstructionSettings } from './features/settings/components/instruction-settings'
 import { TodoList } from './features/todo/components/todo-list'
 import { TodoProvider, useTodo } from './features/todo/hooks/use-todo'
 import { createAddTodoTool } from './features/todo/tools/add-todo.tool'
-import { createToggleTodoTool } from './features/todo/tools/toggle-todo.tool'
 import { createDeleteTodoTool } from './features/todo/tools/delete-todo.tool'
-import { createUpdateTodoTool } from './features/todo/tools/update-todo.tool'
 import { createListTodosTool } from './features/todo/tools/list-todos.tool'
-import { AgentChatWindowDemo } from './features/agent-chat-window-demo'
+import { createToggleTodoTool } from './features/todo/tools/toggle-todo.tool'
+import { createUpdateTodoTool } from './features/todo/tools/update-todo.tool'
 
 const { Activity,
   Controls,
@@ -28,15 +27,6 @@ const { Activity,
 const agent = new HttpAgent({
   url: 'http://localhost:8000/openai-agent',
 })
-
-// 解决类型导入问题，直接声明 AgentChatRef
-interface AgentChatRef {
-  reset: () => void
-  addMessages: (
-    messages: Message[],
-    options?: { triggerAgent?: boolean },
-  ) => Promise<void>
-}
 
 function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructions: Array<{ description: string; value: string }>, agentChatRef: React.RefObject<AgentChatRef | null> }) {
   const { state, addTodo, toggleTodo, deleteTodo, updateTodo } = useTodo()
@@ -65,7 +55,7 @@ function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructio
       ref={agentChatRef}
       agent={agent}
       tools={todoTools}
-      contexts={[...allInstructions,{
+      contexts={[...allInstructions, {
         description: '待办事项列表',
         value: JSON.stringify(todoListContext),
       }]}
@@ -174,11 +164,19 @@ export function App() {
           id: uuidv4(),
           role: 'system',
           content: `用户使用了"拍一拍"功能唤醒AI助手。这通常表示用户想要开始对话但不知道说什么，或者希望AI主动提供帮助。请以友好、热情的方式回应，可以：\n1. 简单打招呼并询问如何帮助\n2. 根据当前上下文（如待办事项、时间等）主动提供建议\n3. 介绍一些你能提供的功能\n\n请保持回答简洁、友好且有用。`,
+          parts: [{
+            type: 'text',
+            text: `用户使用了"拍一拍"功能唤醒AI助手。这通常表示用户想要开始对话但不知道说什么，或者希望AI主动提供帮助。请以友好、热情的方式回应，可以：\n1. 简单打招呼并询问如何帮助\n2. 根据当前上下文（如待办事项、时间等）主动提供建议\n3. 介绍一些你能提供的功能\n\n请保持回答简洁、友好且有用。`,
+          }],
         },
         {
           id: uuidv4(),
           role: 'user',
           content: '[action:poke]',
+          parts: [{
+            type: 'text',
+            text: '[action:poke]',
+          }],
         },
       ], { triggerAgent: true })
     }
