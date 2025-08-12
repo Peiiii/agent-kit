@@ -13,6 +13,7 @@ import { createToggleTodoTool } from './features/todo/tools/toggle-todo.tool'
 import { createDeleteTodoTool } from './features/todo/tools/delete-todo.tool'
 import { createUpdateTodoTool } from './features/todo/tools/update-todo.tool'
 import { createListTodosTool } from './features/todo/tools/list-todos.tool'
+import { AgentChatWindowDemo } from './features/agent-chat-window-demo'
 
 const { Activity,
   Controls,
@@ -81,6 +82,7 @@ export function App() {
 
   const [activeActivityItem, setActiveActivityItem] = useState("explorer")
   const [isActivityBarExpanded, setIsActivityBarExpanded] = useState(false)
+  const [activeDemo, setActiveDemo] = useState<"todo" | "window">("todo")
 
   // 定义系统指令和用户偏好
   const defaultInstructions = useMemo(() => [
@@ -239,27 +241,43 @@ export function App() {
                     <Workspace.Panel>
                       <Editor.Header>
                         <div className="flex items-center justify-between w-full">
-                          <Editor.Tab
-                            title="AI 助手"
-                            isActive={true}
-                          />
-                          <button
-                            onClick={handlePoke}
-                            className="ml-auto flex items-center gap-1 px-2 py-1 rounded text-xs border border-muted bg-muted hover:bg-accent transition-colors"
-                            title="拍一拍唤醒 AI 助手"
-                            style={{ lineHeight: 1 }}
-                          >
-                            <Zap className="h-4 w-4 text-yellow-500" />
-                            <span>拍一拍</span>
-                          </button>
+                          <div className="flex space-x-1">
+                            <Editor.Tab
+                              title="待办事项 Demo"
+                              isActive={activeDemo === "todo"}
+                              onClick={() => setActiveDemo("todo")}
+                            />
+                            <Editor.Tab
+                              title="浮动窗口 Demo"
+                              isActive={activeDemo === "window"}
+                              onClick={() => setActiveDemo("window")}
+                            />
+                          </div>
+                          {activeDemo === "todo" && (
+                            <button
+                              onClick={handlePoke}
+                              className="ml-auto flex items-center gap-1 px-2 py-1 rounded text-xs border border-muted bg-muted hover:bg-accent transition-colors"
+                              title="拍一拍唤醒 AI 助手"
+                              style={{ lineHeight: 1 }}
+                            >
+                              <Zap className="h-4 w-4 text-yellow-500" />
+                              <span>拍一拍</span>
+                            </button>
+                          )}
                         </div>
                       </Editor.Header>
                       <Editor.Content>
                         <div className="relative h-full flex flex-col">
-                          <InstructionSettings
-                            onInstructionsChange={setCustomInstructions}
-                          />
-                          <AgentChatWithContext allInstructions={allInstructions} agentChatRef={agentChatRef} />
+                          {activeDemo === "todo" ? (
+                            <>
+                              <InstructionSettings
+                                onInstructionsChange={setCustomInstructions}
+                              />
+                              <AgentChatWithContext allInstructions={allInstructions} agentChatRef={agentChatRef} />
+                            </>
+                          ) : (
+                            <AgentChatWindowDemo />
+                          )}
                         </div>
                       </Editor.Content>
                     </Workspace.Panel>
