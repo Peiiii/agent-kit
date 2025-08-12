@@ -4,118 +4,11 @@ import { AgentChatWindow, AgentChatRef } from '@agent-labs/agent-chat'
 import { Bot, MessageSquare, Settings, Users, Zap } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
+import { createGreetingTool, createWeatherTool, createCalculatorTool } from './tools'
 
 // 创建 HTTP 代理实例
 const agent = new HttpAgent({
     url: 'http://localhost:8000/openai-agent',
-})
-
-// 定义一些示例工具函数
-const createGreetingTool = () => ({
-    name: 'greeting',
-    description: '生成友好的问候语',
-    parameters: {
-        type: 'object' as const,
-        properties: {
-            name: {
-                type: 'string' as const,
-                description: '要问候的人名'
-            },
-            time: {
-                type: 'string' as const,
-                description: '问候的时间（早上、下午、晚上）'
-            }
-        },
-        required: ['name']
-    }
-})
-
-const createWeatherTool = () => ({
-    name: 'getWeather',
-    description: '获取指定城市的天气信息',
-    parameters: {
-        type: 'object' as const,
-        properties: {
-            city: {
-                type: 'string' as const,
-                description: '城市名称'
-            }
-        },
-        required: ['city']
-    },
-    execute: async (toolCall: any) => {
-        try {
-            const args = JSON.parse(toolCall.function.arguments)
-            const { city } = args
-
-            // 模拟天气数据
-            const weatherData = {
-                '北京': { temperature: '22°C', condition: '晴天', humidity: '45%' },
-                '上海': { temperature: '25°C', condition: '多云', humidity: '60%' },
-                '广州': { temperature: '28°C', condition: '小雨', humidity: '75%' },
-                '深圳': { temperature: '27°C', condition: '晴天', humidity: '50%' }
-            }
-
-            const weather = weatherData[city as keyof typeof weatherData] || { temperature: '20°C', condition: '未知', humidity: '50%' }
-            const result = `${city}的天气：${weather.condition}，温度${weather.temperature}，湿度${weather.humidity}`
-
-            return {
-                toolCallId: toolCall.id,
-                result,
-                status: 'success' as const
-            }
-        } catch (error) {
-            return {
-                toolCallId: toolCall.id,
-                result: '天气查询失败',
-                status: 'error' as const,
-                error: String(error)
-            }
-        }
-    }
-})
-
-const createCalculatorTool = () => ({
-    name: 'calculate',
-    description: '执行基本的数学计算',
-    parameters: {
-        type: 'object' as const,
-        properties: {
-            expression: {
-                type: 'string' as const,
-                description: '数学表达式，如 "2 + 3 * 4"'
-            }
-        },
-        required: ['expression']
-    },
-    execute: async (toolCall: any) => {
-        try {
-            const args = JSON.parse(toolCall.function.arguments)
-            const { expression } = args
-
-            // 使用 Function 构造函数来安全地执行数学表达式
-            const sanitizedExpression = expression.replace(/[^0-9+\-*/().\s]/g, '')
-            const calculateFunction = new Function(`return ${sanitizedExpression}`)
-            const result = calculateFunction()
-
-            if (typeof result !== 'number' || !isFinite(result)) {
-                throw new Error('计算结果无效')
-            }
-
-            return {
-                toolCallId: toolCall.id,
-                result: `计算结果：${expression} = ${result}`,
-                status: 'success' as const
-            }
-        } catch (error) {
-            return {
-                toolCallId: toolCall.id,
-                result: '计算失败',
-                status: 'error' as const,
-                error: String(error)
-            }
-        }
-    }
 })
 
 export function AgentChatWindowDemo() {

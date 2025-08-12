@@ -1,3 +1,4 @@
+import type { ToolInvocation } from '@ai-sdk/ui-utils'
 import type { JSONSchema7 } from 'json-schema'
 import type { ReactNode } from 'react'
 
@@ -24,13 +25,13 @@ export interface ToolDefinition {
 }
 
 export interface ToolRenderer {
-  render: (tool: ToolCall, onResult: (result: ToolResult) => void) => ReactNode
+  render: (tool: ToolInvocation, onResult: (result: ToolResult) => void) => ReactNode
   definition: ToolDefinition
 }
 
 export interface Tool extends ToolDefinition {
   execute?: (toolCall: ToolCall) => Promise<ToolResult>
-  render?: (tool: ToolCall, onResult: (result: ToolResult) => void) => ReactNode
+  render?: (tool: ToolInvocation, onResult: (result: ToolResult) => void) => ReactNode
 }
 
 export interface Context {
