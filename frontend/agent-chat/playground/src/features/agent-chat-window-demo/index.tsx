@@ -4,7 +4,7 @@ import { AgentChatWindow, AgentChatRef } from '@agent-labs/agent-chat'
 import { Bot, MessageSquare, Settings, Users, Zap } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { createGreetingTool, createWeatherTool, createCalculatorTool } from './tools'
+import { createGreetingTool, createWeatherTool, createCalculatorTool, createUserConfirmationTool } from './tools'
 
 // 创建 HTTP 代理实例
 const agent = new HttpAgent({
@@ -19,6 +19,7 @@ export function AgentChatWindowDemo() {
         createGreetingTool(),
         createWeatherTool(),
         createCalculatorTool(),
+        createUserConfirmationTool(),
     ], [])
 
     // 定义上下文信息

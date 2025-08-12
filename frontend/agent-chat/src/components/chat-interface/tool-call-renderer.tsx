@@ -1,7 +1,6 @@
 import type { ToolInvocation } from '@ai-sdk/ui-utils'
 import * as React from 'react'
 import type { ToolRenderer, ToolResult } from '../../core/types/agent'
-import { toolInvocationToToolCall } from '../../core/utils/tool'
 
 interface ToolCallRendererProps {
   toolInvocation: ToolInvocation
@@ -18,7 +17,7 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
 
   if (renderer) {
     return renderer.render(
-      toolInvocationToToolCall(toolInvocation),
+      toolInvocation,
       (result) => {
         if (onToolResult) {
           onToolResult(result)

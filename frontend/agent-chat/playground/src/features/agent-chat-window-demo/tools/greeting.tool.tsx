@@ -47,33 +47,6 @@ export const createGreetingTool = (): Tool => ({
             time?: string
         }
 
-        // 自动执行问候语生成并返回结果
-        React.useEffect(() => {
-            const executeGreeting = async () => {
-                try {
-                    const { name, time } = params
-
-                    const currentTime = time || getCurrentTimeOfDay()
-                    const greeting = generateGreeting(name, currentTime)
-
-                    onResult({
-                        toolCallId: toolInvocation.toolCallId,
-                        result: greeting,
-                        status: 'success',
-                    })
-                } catch (error) {
-                    onResult({
-                        toolCallId: toolInvocation.toolCallId,
-                        result: '问候语生成失败',
-                        status: 'error',
-                        error: String(error)
-                    })
-                }
-            }
-
-            executeGreeting()
-        }, [params, toolInvocation.toolCallId, onResult])
-
         return (
             <div className="p-4 border rounded-lg bg-yellow-50">
                 <h3 className="font-bold mb-2 text-yellow-800">👋 问候语生成</h3>
@@ -84,7 +57,7 @@ export const createGreetingTool = (): Tool => ({
                     )}
                 </div>
                 <div className="text-sm text-yellow-600">
-                    正在生成问候语...
+                    工具已执行，结果已返回给AI助手
                 </div>
             </div>
         )
