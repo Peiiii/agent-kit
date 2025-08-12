@@ -23,7 +23,7 @@ export interface ToolCall {
 export interface ToolResult {
   toolCallId: string
   result: string | boolean | number | object
-  status: 'success' | 'error' | 'cancelled'
+  state: ToolInvocationState
   error?: string
 }
 
