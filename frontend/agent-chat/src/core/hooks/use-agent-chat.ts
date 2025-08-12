@@ -178,10 +178,10 @@ export function useAgentChat({
       if (executor) {
         try {
           const result = await executor(toolCall)
-          sessionManager.current.addToolResult({ toolCallId: toolCall.id, result, status: 'success' })
+          sessionManager.current.addToolResult({ toolCallId: toolCall.id, result, state: "result" })
           if (threadId) await runAgent(threadId)
         } catch (err) {
-          sessionManager.current.addToolResult({ toolCallId: toolCall.id, result: { error: err instanceof Error ? err.message : String(err) }, status: 'error' })
+          sessionManager.current.addToolResult({ toolCallId: toolCall.id, result: { error: err instanceof Error ? err.message : String(err) }, state: "result" })
           if (threadId) await runAgent(threadId)
         }
       }

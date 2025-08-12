@@ -9,6 +9,8 @@ import type { ToolInvocation } from '@ai-sdk/ui-utils'
 import type { JSONSchema7 } from 'json-schema'
 import type { ReactNode } from 'react'
 
+export type ToolInvocationState = 'call' | 'result' | 'partial-call'
+
 export interface ToolCall {
   id: string
   type: string

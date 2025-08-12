@@ -1,4 +1,4 @@
-import type { HttpAgent, Message } from "@ag-ui/client";
+import type { HttpAgent } from "@ag-ui/client";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Tool, ToolCall } from "./agent";
 

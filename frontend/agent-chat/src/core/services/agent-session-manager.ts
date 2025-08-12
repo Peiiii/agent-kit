@@ -3,7 +3,7 @@ import {
 } from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
 import { BehaviorSubject, Subject } from 'rxjs'
-import type { ToolCall } from '../types/agent'
+import type { ToolCall, ToolInvocationState } from '../types/agent'
 import { AgentEventHandler } from './agent-event-handler'
 
 export class AgentSessionManager {
@@ -57,7 +57,7 @@ export class AgentSessionManager {
    * @param result { toolCallId, result, status, error? }
    * @param options { triggerAgent?: boolean }
    */
-  addToolResult(result: { toolCallId: string, result: unknown, status: string, error?: string }, _options?: { triggerAgent?: boolean }): void {
+  addToolResult(result: { toolCallId: string, result: unknown, state: ToolInvocationState, error?: string }, _options?: { triggerAgent?: boolean }): void {
     const targetMessage = this.getMessages().find(msg => msg.parts.find(part => part.type === "tool-invocation" && part.toolInvocation.toolCallId === result.toolCallId))
     if (!targetMessage) {
       return
@@ -72,7 +72,7 @@ export class AgentSessionManager {
             toolInvocation: {
               ...part.toolInvocation,
               result: result.result,
-              status: result.status,
+              state: result.state,
               error: result.error,
             },
           }
