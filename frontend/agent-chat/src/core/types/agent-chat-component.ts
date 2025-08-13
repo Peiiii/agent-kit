@@ -1,4 +1,3 @@
-import type { HttpAgent } from "@ag-ui/client";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Tool, ToolCall } from "./agent";
 
@@ -6,7 +5,7 @@ import {
   type BaseEvent,
   type RunAgentInput
 } from '@ag-ui/client';
-import type { Observer, Unsubscribable } from 'rxjs';
+import type { Subscribable } from "rxjs";
 import type { Context, ToolDefinition, ToolResult } from '../types/agent';
 
 export type ToolExecutor = (
@@ -16,7 +15,7 @@ export type ToolExecutor = (
 
 
 export interface AgentChatProps {
-  agent: HttpAgent
+  agent: IAgent
   tools?: Tool[]
   contexts?: Array<{ description: string; value: string }>
   initialMessages?: UIMessage[]
@@ -32,12 +31,8 @@ export interface AgentChatRef {
 }
 
 
-export interface IObservable<T> {
-  subscribe: (observer: Partial<Observer<T>>) => Unsubscribable
-}
-
 export interface IAgent {
-  run: (input: RunAgentInput) => IObservable<BaseEvent>
+  run: (input: RunAgentInput) => Subscribable<BaseEvent>
 }
 
 export interface UseAgentChatProps {
