@@ -1,5 +1,5 @@
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import type { Tool, ToolCall } from "./agent";
+import type { Tool, ToolCall, ToolRenderer } from "./agent";
 
 import {
   type BaseEvent,
@@ -45,7 +45,6 @@ export interface UseAgentChatProps {
 
 export interface UseAgentChatReturn {
   messages: UIMessage[]
-  // uiMessages: UIMessage[]
   isAgentResponding: boolean
   threadId: string | null
   sendMessage: (content: string) => Promise<void>
@@ -63,3 +62,15 @@ export interface UseAgentChatReturn {
   runAgent: (currentThreadId?: string) => Promise<void>
   removeMessages: (messageIds: string[]) => void
 }
+
+export interface ChatInterfaceProps {
+  uiMessages: UIMessage[]
+  toolRenderers: Record<string, ToolRenderer>
+  onToolResult?: (result: ToolResult) => void
+  input: string
+  onInputChange: (value: string) => void
+  onSend: () => void
+  isAgentResponding: boolean
+  onAbort?: () => void
+}
+

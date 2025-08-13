@@ -17,6 +17,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       contexts: defaultContexts = [],
       initialMessages = [],
       className,
+      senderProps,
     },
     ref,
   ) => {
@@ -72,6 +73,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     return (
       <div className={className}>
         <ChatInterface
+          senderProps={senderProps}
           uiMessages={messages}
           toolRenderers={renderers}
           onToolResult={sendToolResult}

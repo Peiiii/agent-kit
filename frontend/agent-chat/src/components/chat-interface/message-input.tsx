@@ -38,7 +38,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         value={input}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder="输入消息或拍一拍唤醒 AI..."
         disabled={false}
         className="flex-1"
       />

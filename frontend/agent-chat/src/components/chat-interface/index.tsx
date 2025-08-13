@@ -1,28 +1,17 @@
 import * as React from 'react'
-import type { ToolRenderer, ToolResult } from '../../core/types/agent'
 
 import { MessageInput } from './message-input'
 import { MessageItem } from './message-item'
-import type { UIMessage } from '@ai-sdk/ui-utils'
 import { useChatAutoScroll } from '../../core/hooks/use-chat-auto-scroll'
 import clsx from 'clsx'
-
-export interface ChatInterfaceProps {
-  uiMessages: UIMessage[]
-  toolRenderers: Record<string, ToolRenderer>
-  onToolResult?: (result: ToolResult) => void
-  input: string
-  onInputChange: (value: string) => void
-  onSend: () => void
-  isAgentResponding: boolean
-  onAbort?: () => void
-}
+import type { ChatInterfaceProps } from '@/core/types/agent-chat-component'
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   uiMessages,
   toolRenderers,
   onToolResult,
   input,
+  senderProps,
   onInputChange,
   onSend,
   isAgentResponding,
@@ -66,6 +55,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="border-t p-4">
         <MessageInput
           input={input}
+          {...senderProps}
           onInputChange={onInputChange}
           onSend={handleSend}
           isAgentResponding={isAgentResponding}
