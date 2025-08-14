@@ -1,16 +1,9 @@
 import { Send, Square } from 'lucide-react'
 import * as React from 'react'
 
+import type { MessageInputProps } from '@/core/types/agent-chat-component'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-
-interface MessageInputProps {
-  input: string
-  onInputChange: (v: string) => void
-  onSend: () => void
-  isAgentResponding: boolean
-  onAbort?: () => void
-}
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   input,

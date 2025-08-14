@@ -14,12 +14,17 @@ export type ToolExecutor = (
 ) => ToolResult | Promise<ToolResult>
 
 
+export interface SenderProps {
+  placeholder?: string
+}
+
 export interface AgentChatProps {
   agent: IAgent
   tools?: Tool[]
   contexts?: Array<{ description: string; value: string }>
   initialMessages?: UIMessage[]
   className?: string
+  senderProps?: SenderProps
 }
 
 export interface AgentChatRef {
@@ -68,7 +73,15 @@ export interface ChatInterfaceProps {
   toolRenderers: Record<string, ToolRenderer>
   onToolResult?: (result: ToolResult) => void
   input: string
+  senderProps?: SenderProps
   onInputChange: (value: string) => void
+  onSend: () => void
+  isAgentResponding: boolean
+  onAbort?: () => void
+}
+export interface MessageInputProps {
+  input: string
+  onInputChange: (v: string) => void
   onSend: () => void
   isAgentResponding: boolean
   onAbort?: () => void
