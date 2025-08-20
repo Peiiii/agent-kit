@@ -35,7 +35,7 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
           <span className="text-xs text-muted-foreground">{toolInvocation.toolName}</span>
         </div>
         <div className="rounded-md bg-muted p-2">
-          <pre className="text-sm whitespace-pre-wrap break-words max-h-64 overflow-y-auto">
+          <pre className="text-sm whitespace-pre-wrap break-words" style={{ maxHeight: '12rem', overflowY: 'auto' }}>
             {JSON.stringify(toolInvocation.result, null, 2)}
           </pre>
         </div>
@@ -50,8 +50,8 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
         <span className="text-sm font-medium">工具调用</span>
         <span className="text-xs text-muted-foreground">{toolInvocation.toolName}</span>
       </div>
-              <div className="rounded-md bg-muted p-2">
-          <pre className="text-sm whitespace-pre-wrap break-words max-h-64 overflow-y-auto">
+        <div className="rounded-md bg-muted p-2">
+          <pre className="text-sm whitespace-pre-wrap break-words" style={{ maxHeight: '12rem', overflowY: 'auto' }}>
             {JSON.stringify(toolInvocation.args, null, 2)}
           </pre>
         </div>
