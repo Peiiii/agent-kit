@@ -141,7 +141,7 @@ export function useAgentChat({
 
   const addToolResult = useCallback(
     async (result: ToolResult, options?: { triggerAgent?: boolean }) => {
-      const { triggerAgent = true } = options || {}
+      const { triggerAgent } = options || {}
       await sessionManager.current.addToolResult(result, { triggerAgent })
       if (triggerAgent && threadId) {
         await runAgent(threadId)
