@@ -1,7 +1,5 @@
 import { Bot, User } from 'lucide-react'
 import * as React from 'react'
-import { useContext, useMemo } from 'react'
-import { AgentToolRendererManagerContext } from '../../core/hooks/use-provide-agent-tool-renderers'
 
 import type { UIMessage } from '@ai-sdk/ui-utils'
 import clsx from 'clsx'
@@ -22,18 +20,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onToolResult,
 }) => {
   const isUser = uiMessage.role === 'user'
-
-  const toolRendererManager = useContext(AgentToolRendererManagerContext)
-  const allToolRenderers = useMemo(() => {
-    return {
-      ...Object.fromEntries(
-        toolRendererManager
-          .getToolRenderers()
-          .map((renderer) => [renderer.definition.name, renderer]),
-      ),
-      ...toolRenderers,
-    }
-  }, [toolRenderers, toolRendererManager])
 
   return (
     <div
@@ -82,7 +68,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                 <div key={index} className="mt-1">
                   <ToolCallRenderer
                     toolInvocation={part.toolInvocation}
-                    toolRenderers={allToolRenderers}
+                    toolRenderers={toolRenderers}
                     onToolResult={onToolResult}
                   />
                 </div>

@@ -29,7 +29,9 @@ export function useAgentChat({
   const memoizedGetToolDefs = useMemoizedFn(() => toolDefs)
   const memoizedGetContexts = useMemoizedFn(() => contexts)
 
-  const sessionManager = useRef(new AgentSessionManager({ agent, getToolDefs: memoizedGetToolDefs, getContexts: memoizedGetContexts }))
+  const sessionManager = useRef(new AgentSessionManager({ agent, getToolDefs: memoizedGetToolDefs, getContexts: memoizedGetContexts }, {
+    initialMessages
+  }))
   const { reset,
     abortAgentRun,
     runAgent,
@@ -42,16 +44,6 @@ export function useAgentChat({
   const messages = useValueFromBehaviorSubject(sessionManager.current.messages$)
   const isAgentResponding = useValueFromBehaviorSubject(sessionManager.current.isAgentResponding$)
   const threadId = useValueFromBehaviorSubject(sessionManager.current.threadId$)
-
-  useEffect(() => {
-    if (initialMessages.length > 0) {
-      sessionManager.current.addMessages(initialMessages)
-    }
-    return () => {
-      sessionManager.current.removeMessages(initialMessages.map(msg => msg.id))
-    }
-  }, [initialMessages])
-
 
   useEffect(() => {
     if (toolExecutors && Object.keys(toolExecutors).length > 0) {

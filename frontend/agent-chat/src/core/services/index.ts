@@ -1,1 +1,2 @@
-export * from './agent-resource-manager'
+export * from './agent-session-manager'
+export * from './agent-event-handler'
