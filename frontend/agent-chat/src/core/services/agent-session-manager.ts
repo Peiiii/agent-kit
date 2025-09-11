@@ -1,5 +1,4 @@
-import type { IAgent } from '@/core/types'
-import { convertUIMessagesToMessages } from '@/core/utils'
+
 import {
   EventType,
   type BaseEvent
@@ -8,7 +7,10 @@ import type { UIMessage } from '@ai-sdk/ui-utils'
 import { createRef } from 'react'
 import { BehaviorSubject, Observable, Subject, type Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
-import type { Context, ToolCall, ToolDefinition, ToolInvocationState } from '../types/agent'
+import type { AgentToolExecutorManager } from '../hooks'
+import type { IAgent } from '../types'
+import type { Context, ToolCall, ToolDefinition, ToolInvocationState, ToolResult } from '../types/agent'
+import { convertUIMessagesToMessages } from '../utils'
 import { AgentEventHandler } from './agent-event-handler'
 
 
@@ -148,5 +150,63 @@ export class AgentSessionManager {
       }
       this.isAgentResponding$.next(false)
     }
+  }
+
+  handleAddToolResult = async (result: ToolResult, options?: { triggerAgent?: boolean }) => {
+    const { triggerAgent } = options || {}
+    await this.addToolResult(result, { triggerAgent })
+    if (triggerAgent) {
+      await this.runAgent()
+    }
+  }
+  handleAddMessages = async (messages: UIMessage[], options?: { triggerAgent?: boolean }) => {
+    const { triggerAgent = true } = options || {}
+    console.log('[useAgentChat] addMessages', messages)
+
+    try {
+      this.addMessages(messages)
+
+      if (triggerAgent) {
+        await this.runAgent()
+      }
+    } catch (error) {
+      console.error('Error adding messages:', error)
+      if (triggerAgent) {
+        this.isAgentResponding$.next(false)
+      }
+    }
+  }
+
+  handleSendMessage = async (content: string) => {
+    if (!content.trim()) return
+
+    this.addMessages([{
+      id: v4(),
+      role: 'user',
+      content,
+      parts: [{
+        type: 'text',
+        text: content,
+      }],
+    }])
+    await this.runAgent()
+  }
+
+  connectToolExecutor = (toolExecutorManager: AgentToolExecutorManager) => {
+    const sub = this.toolCall$.subscribe(async ({ toolCall }) => {
+      const executor = toolExecutorManager.getToolExecutor(toolCall.function.name)
+      if (executor) {
+        try {
+          const result = await executor(toolCall)
+          this.addToolResult({ toolCallId: toolCall.id, result, state: "result" })
+          if (this.threadId$.getValue()) await this.runAgent()
+        } catch (err) {
+          this.addToolResult({ toolCallId: toolCall.id, result: { error: err instanceof Error ? err.message : String(err) }, state: "result" })
+          if (this.threadId$.getValue()) await this.runAgent()
+        }
+      }
+    })
+    return () => sub.unsubscribe()
+
   }
 } 
