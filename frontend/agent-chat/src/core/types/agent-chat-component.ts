@@ -18,6 +18,14 @@ export interface SenderProps {
   placeholder?: string
 }
 
+export interface PromptsProps {
+  items: Array<{
+    id: string
+    prompt: string
+  }>
+  onItemClick?: (item: { id: string; prompt: string }) => void
+}
+
 export interface AgentChatProps {
   agent: IAgent
   tools?: Tool[]
@@ -25,6 +33,7 @@ export interface AgentChatProps {
   initialMessages?: UIMessage[]
   className?: string
   senderProps?: SenderProps
+  promptsProps?: PromptsProps
 }
 
 export interface AgentChatRef {
@@ -78,6 +87,7 @@ export interface ChatInterfaceProps {
   onSend: () => void
   isAgentResponding: boolean
   onAbort?: () => void
+  promptsProps?: PromptsProps
 }
 export interface MessageInputProps {
   input: string

@@ -5,6 +5,7 @@ import { MessageItem } from './message-item'
 import { useChatAutoScroll } from '../../core/hooks/use-chat-auto-scroll'
 import clsx from 'clsx'
 import type { ChatInterfaceProps } from '@/core/types/agent-chat-component'
+import { Prompts } from './prompts'
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   uiMessages,
@@ -16,6 +17,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onSend,
   isAgentResponding,
   onAbort,
+  promptsProps,
 }) => {
   const { containerRef, isSticky, scrollToBottom, setSticky } = useChatAutoScroll({
     deps: [uiMessages],
@@ -52,6 +54,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           />
         ))}
       </div>
+      {promptsProps && uiMessages.length === 0 && (
+        <div className="border-t p-4">
+          <Prompts promptsProps={promptsProps} />
+        </div>
+      )}
       <div className="border-t p-4">
         <MessageInput
           input={input}

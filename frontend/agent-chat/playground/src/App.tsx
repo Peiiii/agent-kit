@@ -60,6 +60,26 @@ function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructio
         value: JSON.stringify(todoListContext),
       }]}
       className='flex-1 overflow-y-auto'
+      promptsProps={{
+        items: [
+          { id: '1', prompt: '待办事项' },
+          { id: '2', prompt: '搜索' },
+          { id: '3', prompt: '源代码管理' },
+        ],
+        onItemClick: (item) => {
+          agentChatRef.current?.addMessages([
+            {
+              id: uuidv4(),
+              role: 'user',
+              content: item.prompt,
+              parts: [{
+                type: 'text',
+                text: item.prompt,
+              }],
+            },
+          ], { triggerAgent: true })
+        },
+      }}
     />
   )
 }

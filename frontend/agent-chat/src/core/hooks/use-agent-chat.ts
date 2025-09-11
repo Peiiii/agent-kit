@@ -1,9 +1,10 @@
+import { useValueFromBehaviorSubject } from '../hooks/use-value-from-behavior-subject'
 import {
   EventType,
   type BaseEvent
 } from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
-import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef } from 'react'
 import type { Observable, Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
 import { AgentSessionManager } from '../services/agent-session-manager'
@@ -20,18 +21,15 @@ export function useAgentChat({
   contexts = [],
   initialMessages = [],
 }: UseAgentChatProps): UseAgentChatReturn {
-  const [messages, setMessages] = useState<UIMessage[]>(initialMessages)
-  const [isAgentResponding, setIsAgentResponding] = useState(false)
-  const [threadId, setThreadId] = useState<string | null>(null)
+
   const toolExecutorManager = useContext(AgentToolExecutorManagerContext)
   const sessionManager = useRef(new AgentSessionManager())
+  const { reset } = sessionManager.current
 
-  useEffect(() => {
-    const subscription = sessionManager.current.subscribeMessages(setMessages)
-    return () => subscription.unsubscribe()
-  }, [])
+  const messages = useValueFromBehaviorSubject(sessionManager.current.messages$)
+  const isAgentResponding = useValueFromBehaviorSubject(sessionManager.current.isAgentResponding$)
+  const threadId = useValueFromBehaviorSubject(sessionManager.current.threadId$)
 
-  // 初始化时添加预加载消息
   useEffect(() => {
     if (initialMessages.length > 0) {
       sessionManager.current.addMessages(initialMessages)
@@ -41,7 +39,7 @@ export function useAgentChat({
     }
   }, [initialMessages])
 
-  // 注册默认工具执行器
+
   useEffect(() => {
     if (toolExecutors && Object.keys(toolExecutors).length > 0) {
       const removeExecutors = toolExecutorManager.addToolExecutors(toolExecutors)
@@ -51,11 +49,7 @@ export function useAgentChat({
     }
   }, [toolExecutorManager, toolExecutors])
 
-  const reset = useCallback(() => {
-    sessionManager.current.reset()
-    setThreadId(null)
-    setIsAgentResponding(false)
-  }, [])
+
 
   const getToolDefs = useCallback(() => {
     return toolDefs
@@ -73,7 +67,7 @@ export function useAgentChat({
         event.type === EventType.RUN_FINISHED ||
         event.type === EventType.RUN_ERROR
       ) {
-        setIsAgentResponding(false)
+        sessionManager.current.isAgentResponding$.next(false)
         agentRunSubscriptionRef.current = null
       }
     })
@@ -81,13 +75,13 @@ export function useAgentChat({
 
   const runAgent = useCallback(
     async (currentThreadId?: string) => {
-      setIsAgentResponding(true)
+      sessionManager.current.isAgentResponding$.next(true)
       try {
         let targetThreadId = currentThreadId
         if (!targetThreadId) {
           // 如果没有 threadId，创建新的 thread
           targetThreadId = v4()
-          setThreadId(targetThreadId)
+          sessionManager.current.threadId$.next(targetThreadId)
         }
         const response = await agent.run({
           threadId: targetThreadId,
@@ -106,7 +100,7 @@ export function useAgentChat({
         } else {
           console.error('Error running agent:', error)
         }
-        setIsAgentResponding(false)
+        sessionManager.current.isAgentResponding$.next(false)
       }
     },
     [agent, toolDefs, contexts, handleAgentResponse],
@@ -117,7 +111,7 @@ export function useAgentChat({
     if (agentRunSubscriptionRef.current) {
       agentRunSubscriptionRef.current.unsubscribe()
       agentRunSubscriptionRef.current = null
-      setIsAgentResponding(false)
+      sessionManager.current.isAgentResponding$.next(false)
     }
   }, [])
 
@@ -164,7 +158,7 @@ export function useAgentChat({
       } catch (error) {
         console.error('Error adding messages:', error)
         if (triggerAgent) {
-          setIsAgentResponding(false)
+          sessionManager.current.isAgentResponding$.next(false)
         }
       }
     },

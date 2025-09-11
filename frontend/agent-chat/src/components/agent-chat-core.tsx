@@ -18,6 +18,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       initialMessages = [],
       className,
       senderProps,
+      promptsProps,
     },
     ref,
   ) => {
@@ -82,6 +83,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
           onSend={handleSend}
           isAgentResponding={isAgentResponding}
           onAbort={abortAgentRun}
+          promptsProps={promptsProps}
         />
       </div>
     )

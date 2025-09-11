@@ -3,24 +3,28 @@ import {
 } from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
 import { BehaviorSubject, Subject } from 'rxjs'
-import type { ToolCall, ToolInvocationState } from '../types/agent'
+import type { ToolCall, ToolInvocationState, ToolResult } from '../types/agent'
 import { AgentEventHandler } from './agent-event-handler'
+import { useCallback } from 'react'
 
 export class AgentSessionManager {
-  private messages$ = new BehaviorSubject<UIMessage[]>([])
-  // 工具调用事件流
+  messages$ = new BehaviorSubject<UIMessage[]>([])
+
+  threadId$ = new BehaviorSubject<string | null>(null)
+
+  isAgentResponding$ = new BehaviorSubject<boolean>(false)
+
   public toolCall$ = new Subject<{ toolCall: ToolCall }>()
 
   private eventHandler: AgentEventHandler = new AgentEventHandler(this)
 
-  constructor() {
-    this.messages$.next([])
+  constructor(options?: {
+    initialMessages?: UIMessage[],
+  }) {
+    const { initialMessages = [] } = options || {}
+    this.messages$.next(initialMessages)
   }
 
-  // 订阅消息流
-  subscribeMessages(callback: (messages: UIMessage[]) => void) {
-    return this.messages$.subscribe(callback)
-  }
 
   // 获取当前消息
   getMessages() {
@@ -41,6 +45,8 @@ export class AgentSessionManager {
   reset() {
     this.messages$.next([])
     this.eventHandler.reset()
+    this.threadId$.next(null)
+    this.isAgentResponding$.next(false)
   }
 
   addMessages(messages: UIMessage[]) {
@@ -82,4 +88,5 @@ export class AgentSessionManager {
     }
     this.messages$.next(this.getMessages().map(msg => msg.id === targetMessage.id ? newMessage : msg))
   }
+
 } 

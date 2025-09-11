@@ -12,14 +12,13 @@ import { Button } from './ui/button'
 import { Window } from './window'
 
 
-export const AgentChatWindow = ({
+export const AgentChatWindow = React.forwardRef<AgentChatRef, AgentChatProps>(({
   className,
   ...agentChatProps
-}: AgentChatProps) => {
+}, ref) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [isHeightMaximized, setIsHeightMaximized] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
-  const chatCoreRef = useRef<AgentChatRef>(null)
   const handleClose = () => {
     setIsVisible(false)
   }
@@ -35,8 +34,10 @@ export const AgentChatWindow = ({
     }
   }
 
+  const agentChatRef = useRef<AgentChatRef>(null)
+
   const handleClear = () => {
-    chatCoreRef.current?.reset()
+    agentChatRef.current?.reset()
   }
 
   if (!isVisible) {
@@ -72,10 +73,17 @@ export const AgentChatWindow = ({
       ]}
     >
       <AgentChatCore
-        ref={chatCoreRef}
+        ref={(_instance) => {
+          agentChatRef.current = _instance
+          if (typeof ref === 'function') {
+            ref(_instance)
+          } else if (ref) {
+            ref.current = _instance
+          }
+        }}
         {...agentChatProps}
         className={clsx('h-full', className)}
       />
     </Window>
   )
-}
+})
