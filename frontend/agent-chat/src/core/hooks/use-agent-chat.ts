@@ -1,18 +1,24 @@
-import { useValueFromBehaviorSubject } from '../hooks/use-value-from-behavior-subject'
-import {
-  EventType,
-  type BaseEvent
-} from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
 import { useCallback, useContext, useEffect, useRef } from 'react'
-import type { Observable, Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
+import { useValueFromBehaviorSubject } from '../hooks/use-value-from-behavior-subject'
 import { AgentSessionManager } from '../services/agent-session-manager'
 import type { UseAgentChatProps, UseAgentChatReturn } from '../types'
 import type { ToolResult } from '../types/agent'
-import { convertUIMessagesToMessages } from '../utils/ui-message'
 import { AgentToolExecutorManagerContext } from './use-provide-agent-tool-executors'
 
+
+export const useMemoizedFn = <T extends ((...args: any[]) => any)>(fn: T) => {
+  const ref = useRef<T>(null)
+  const innerFn = useRef(fn)
+  innerFn.current = fn
+  if (!ref.current) {
+    ref.current = ((...args: Parameters<typeof fn>) => {
+      return innerFn.current(...args)
+    }) as T
+  }
+  return ref.current!
+}
 
 export function useAgentChat({
   agent,
@@ -23,8 +29,11 @@ export function useAgentChat({
 }: UseAgentChatProps): UseAgentChatReturn {
 
   const toolExecutorManager = useContext(AgentToolExecutorManagerContext)
-  const sessionManager = useRef(new AgentSessionManager())
-  const { reset } = sessionManager.current
+  const memoizedGetToolDefs = useMemoizedFn(() => toolDefs)
+  const memoizedGetContexts = useMemoizedFn(() => contexts)
+
+  const sessionManager = useRef(new AgentSessionManager({ agent, getToolDefs: memoizedGetToolDefs, getContexts: memoizedGetContexts }))
+  const { reset, abortAgentRun, runAgent } = sessionManager.current
 
   const messages = useValueFromBehaviorSubject(sessionManager.current.messages$)
   const isAgentResponding = useValueFromBehaviorSubject(sessionManager.current.isAgentResponding$)
@@ -51,70 +60,6 @@ export function useAgentChat({
 
 
 
-  const getToolDefs = useCallback(() => {
-    return toolDefs
-  }, [toolDefs])
-
-  // 记录当前订阅
-  const agentRunSubscriptionRef = useRef<Unsubscribable | null>(null)
-  const handleAgentResponse = useCallback((response: Observable<BaseEvent>) => {
-    if (agentRunSubscriptionRef.current) {
-      agentRunSubscriptionRef.current.unsubscribe()
-    }
-    agentRunSubscriptionRef.current = response.subscribe((event: BaseEvent) => {
-      sessionManager.current.handleEvent(event)
-      if (
-        event.type === EventType.RUN_FINISHED ||
-        event.type === EventType.RUN_ERROR
-      ) {
-        sessionManager.current.isAgentResponding$.next(false)
-        agentRunSubscriptionRef.current = null
-      }
-    })
-  }, [])
-
-  const runAgent = useCallback(
-    async (currentThreadId?: string) => {
-      sessionManager.current.isAgentResponding$.next(true)
-      try {
-        let targetThreadId = currentThreadId
-        if (!targetThreadId) {
-          // 如果没有 threadId，创建新的 thread
-          targetThreadId = v4()
-          sessionManager.current.threadId$.next(targetThreadId)
-        }
-        const response = await agent.run({
-          threadId: targetThreadId,
-          runId: v4(),
-          messages: convertUIMessagesToMessages(sessionManager.current.getMessages()),
-          tools: getToolDefs(),
-          context: contexts,
-          state: {},
-          forwardedProps: {},
-        })
-        handleAgentResponse(response as unknown as Observable<BaseEvent>)
-      } catch (error) {
-        if ((error as Error)?.name === 'AbortError') {
-          // 用户主动终止
-          console.info('Agent run aborted')
-        } else {
-          console.error('Error running agent:', error)
-        }
-        sessionManager.current.isAgentResponding$.next(false)
-      }
-    },
-    [agent, toolDefs, contexts, handleAgentResponse],
-  )
-
-  // 终止 agent 响应
-  const abortAgentRun = useCallback(() => {
-    if (agentRunSubscriptionRef.current) {
-      agentRunSubscriptionRef.current.unsubscribe()
-      agentRunSubscriptionRef.current = null
-      sessionManager.current.isAgentResponding$.next(false)
-    }
-  }, [])
-
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim()) return
@@ -128,7 +73,7 @@ export function useAgentChat({
           text: content,
         }],
       }])
-      await runAgent(threadId || undefined)
+      await runAgent()
     },
     [threadId, runAgent],
   )
@@ -138,7 +83,7 @@ export function useAgentChat({
       const { triggerAgent } = options || {}
       await sessionManager.current.addToolResult(result, { triggerAgent })
       if (triggerAgent && threadId) {
-        await runAgent(threadId)
+        await runAgent()
       }
     },
     [threadId, runAgent],
@@ -153,7 +98,7 @@ export function useAgentChat({
         sessionManager.current.addMessages(messages)
 
         if (triggerAgent) {
-          await runAgent(threadId || undefined)
+          await runAgent()
         }
       } catch (error) {
         console.error('Error adding messages:', error)
@@ -173,17 +118,16 @@ export function useAgentChat({
         try {
           const result = await executor(toolCall)
           sessionManager.current.addToolResult({ toolCallId: toolCall.id, result, state: "result" })
-          if (threadId) await runAgent(threadId)
+          if (threadId) await runAgent()
         } catch (err) {
           sessionManager.current.addToolResult({ toolCallId: toolCall.id, result: { error: err instanceof Error ? err.message : String(err) }, state: "result" })
-          if (threadId) await runAgent(threadId)
+          if (threadId) await runAgent()
         }
       }
     })
     return () => sub.unsubscribe()
   }, [toolExecutorManager, runAgent, threadId])
 
-  // 新增 setMessages 方法，允许外部直接设置消息列表
   const setMessagesExternal = useCallback((msgs: UIMessage[]) => {
     sessionManager.current.setMessages(msgs)
   }, [])

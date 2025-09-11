@@ -1,10 +1,22 @@
+import type { IAgent } from '@/core/types'
+import { convertUIMessagesToMessages } from '@/core/utils'
 import {
+  EventType,
   type BaseEvent
 } from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
-import { BehaviorSubject, Subject } from 'rxjs'
-import type { ToolCall, ToolInvocationState } from '../types/agent'
+import { createRef } from 'react'
+import { BehaviorSubject, Observable, Subject, type Unsubscribable } from 'rxjs'
+import { v4 } from 'uuid'
+import type { Context, ToolCall, ToolDefinition, ToolInvocationState } from '../types/agent'
 import { AgentEventHandler } from './agent-event-handler'
+
+
+export interface IAgentProvider {
+  agent: IAgent,
+  getToolDefs: () => ToolDefinition[],
+  getContexts: () => Context[],
+}
 
 export class AgentSessionManager {
   messages$ = new BehaviorSubject<UIMessage[]>([])
@@ -12,12 +24,13 @@ export class AgentSessionManager {
   threadId$ = new BehaviorSubject<string | null>(null)
 
   isAgentResponding$ = new BehaviorSubject<boolean>(false)
+  agentRunSubscriptionRef = createRef<Unsubscribable | null>()
 
   public toolCall$ = new Subject<{ toolCall: ToolCall }>()
 
   private eventHandler: AgentEventHandler = new AgentEventHandler(this)
 
-  constructor(options?: {
+  constructor(private readonly agentProvider: IAgentProvider, options?: {
     initialMessages?: UIMessage[],
   }) {
     const { initialMessages = [] } = options || {}
@@ -88,4 +101,52 @@ export class AgentSessionManager {
     this.messages$.next(this.getMessages().map(msg => msg.id === targetMessage.id ? newMessage : msg))
   }
 
+  handleAgentResponse = (response: Observable<BaseEvent>) => {
+    if (this.agentRunSubscriptionRef.current) {
+      this.agentRunSubscriptionRef.current.unsubscribe()
+    }
+    this.agentRunSubscriptionRef.current = response.subscribe((event: BaseEvent) => {
+      this.handleEvent(event)
+      if (
+        event.type === EventType.RUN_FINISHED ||
+        event.type === EventType.RUN_ERROR
+      ) {
+        this.isAgentResponding$.next(false)
+        this.agentRunSubscriptionRef.current = null
+      }
+    })
+  }
+
+  abortAgentRun = () => {
+    if (this.agentRunSubscriptionRef.current) {
+      this.agentRunSubscriptionRef.current.unsubscribe()
+      this.agentRunSubscriptionRef.current = null
+      this.isAgentResponding$.next(false)
+    }
+  }
+
+
+  runAgent = async () => {
+    this.isAgentResponding$.next(true)
+    try {
+      const response = await this.agentProvider.agent.run({
+        threadId: this.threadId$.getValue() ?? "",
+        runId: v4(),
+        messages: convertUIMessagesToMessages(this.getMessages()),
+        tools: this.agentProvider.getToolDefs(),
+        context: this.agentProvider.getContexts(),
+        state: {},
+        forwardedProps: {},
+      })
+      this.handleAgentResponse(response as unknown as Observable<BaseEvent>)
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') {
+        // 用户主动终止
+        console.info('Agent run aborted')
+      } else {
+        console.error('Error running agent:', error)
+      }
+      this.isAgentResponding$.next(false)
+    }
+  }
 } 
