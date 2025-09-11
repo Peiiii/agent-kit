@@ -3,9 +3,8 @@ import {
 } from '@ag-ui/client'
 import type { UIMessage } from '@ai-sdk/ui-utils'
 import { BehaviorSubject, Subject } from 'rxjs'
-import type { ToolCall, ToolInvocationState, ToolResult } from '../types/agent'
+import type { ToolCall, ToolInvocationState } from '../types/agent'
 import { AgentEventHandler } from './agent-event-handler'
-import { useCallback } from 'react'
 
 export class AgentSessionManager {
   messages$ = new BehaviorSubject<UIMessage[]>([])
