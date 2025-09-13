@@ -4,7 +4,7 @@ import type {
   ToolInvocation,
   ToolInvocationUIPart,
   UIMessage,
-} from '@ai-sdk/ui-utils'
+} from '../types/ui-message'
 
 
 export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => {

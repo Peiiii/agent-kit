@@ -1,12 +1,12 @@
 import { Bot, User } from 'lucide-react'
 import * as React from 'react'
 
-import type { UIMessage } from '@ai-sdk/ui-utils'
 import clsx from 'clsx'
 import type { ToolRenderer, ToolResult } from '../../core/types/agent'
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ToolCallRenderer } from './tool-call-renderer'
+import type { UIMessage } from '../../core/types/ui-message'
 
 interface MessageItemProps {
   uiMessage: UIMessage

@@ -2,7 +2,7 @@ import { EventType, type BaseEvent, type MessagesSnapshotEvent, type StateSnapsh
 import { v4 } from "uuid"
 import { convertMessagesToUIMessages, toolCallToToolInvocation } from "../utils"
 import { AgentSessionManager } from "./agent-session-manager"
-import type { UIMessage } from "@ai-sdk/ui-utils"
+import type { UIMessage } from "../types/ui-message"
 
 export class AgentEventHandler {
     private currentMessageId?: string
@@ -122,7 +122,6 @@ export class AgentEventHandler {
                 ...currentMessages,
                 {
                     id: messageId!,
-                    content: messageContent,
                     role: 'assistant',
                     parts: [{
                         type: 'text',
@@ -187,7 +186,6 @@ export class AgentEventHandler {
                     {
                         id: v4(),
                         role: 'assistant',
-                        content: "",
                         parts: [{
                             type: 'tool-invocation',
                             toolInvocation: toolCallToToolInvocation(toolCall),

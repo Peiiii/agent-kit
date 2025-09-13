@@ -1,5 +1,5 @@
-import type { ToolInvocation } from "@ai-sdk/ui-utils"
 import type { Tool, ToolCall, ToolDefinition } from "../types/agent"
+import type { ToolInvocation } from "../types/ui-message"
 
 export const getToolDefFromTool = (tool: Tool): ToolDefinition => {
   return {

@@ -63,7 +63,7 @@ function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructio
       promptsProps={{
         items: [
           { id: '1', prompt: '待办事项' },
-          { id: '2', prompt: '搜索' },
+          { id: '2', prompt: '23455*34=?' },
           { id: '3', prompt: '源代码管理' },
         ],
         onItemClick: (item) => {
@@ -71,7 +71,6 @@ function AgentChatWithContext({ allInstructions, agentChatRef }: { allInstructio
             {
               id: uuidv4(),
               role: 'user',
-              content: item.prompt,
               parts: [{
                 type: 'text',
                 text: item.prompt,
@@ -183,7 +182,6 @@ export function App() {
         {
           id: uuidv4(),
           role: 'system',
-          content: `用户使用了"拍一拍"功能唤醒AI助手。这通常表示用户想要开始对话但不知道说什么，或者希望AI主动提供帮助。请以友好、热情的方式回应，可以：\n1. 简单打招呼并询问如何帮助\n2. 根据当前上下文（如待办事项、时间等）主动提供建议\n3. 介绍一些你能提供的功能\n\n请保持回答简洁、友好且有用。`,
           parts: [{
             type: 'text',
             text: `用户使用了"拍一拍"功能唤醒AI助手。这通常表示用户想要开始对话但不知道说什么，或者希望AI主动提供帮助。请以友好、热情的方式回应，可以：\n1. 简单打招呼并询问如何帮助\n2. 根据当前上下文（如待办事项、时间等）主动提供建议\n3. 介绍一些你能提供的功能\n\n请保持回答简洁、友好且有用。`,
@@ -192,7 +190,6 @@ export function App() {
         {
           id: uuidv4(),
           role: 'user',
-          content: '[action:poke]',
           parts: [{
             type: 'text',
             text: '[action:poke]',

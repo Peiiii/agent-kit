@@ -1,4 +1,3 @@
-import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Tool, ToolCall, ToolRenderer } from "./agent";
 
 import {
@@ -7,6 +6,7 @@ import {
 } from '@ag-ui/client';
 import type { Subscribable } from "rxjs";
 import type { Context, ToolDefinition, ToolResult } from '../types/agent';
+import type { UIMessage } from "./ui-message";
 
 export type ToolExecutor = (
   toolCall: ToolCall,

@@ -3,7 +3,6 @@ import {
   EventType,
   type BaseEvent
 } from '@ag-ui/client'
-import type { UIMessage } from '@ai-sdk/ui-utils'
 import { createRef } from 'react'
 import { BehaviorSubject, Observable, Subject, type Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
@@ -12,6 +11,7 @@ import type { IAgent } from '../types'
 import type { Context, ToolCall, ToolDefinition, ToolInvocationState, ToolResult } from '../types/agent'
 import { convertUIMessagesToMessages } from '../utils'
 import { AgentEventHandler } from './agent-event-handler'
+import type { UIMessage } from '../types/ui-message'
 
 
 export interface IAgentProvider {
@@ -183,7 +183,6 @@ export class AgentSessionManager {
     this.addMessages([{
       id: v4(),
       role: 'user',
-      content,
       parts: [{
         type: 'text',
         text: content,
@@ -199,10 +198,10 @@ export class AgentSessionManager {
         try {
           const result = await executor(toolCall)
           this.addToolResult({ toolCallId: toolCall.id, result, state: "result" })
-          if (this.threadId$.getValue()) await this.runAgent()
+          this.runAgent()
         } catch (err) {
           this.addToolResult({ toolCallId: toolCall.id, result: { error: err instanceof Error ? err.message : String(err) }, state: "result" })
-          if (this.threadId$.getValue()) await this.runAgent()
+          this.runAgent()
         }
       }
     })

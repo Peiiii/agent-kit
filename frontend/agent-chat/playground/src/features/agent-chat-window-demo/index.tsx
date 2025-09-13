@@ -11,6 +11,12 @@ const agent = new HttpAgent({
     url: 'http://localhost:8000/openai-agent',
 })
 
+const DEFAULT_PROMPTS = [
+    { id: '1', prompt: '待办事项' },
+    { id: '2', prompt: '23455*34=?' },
+    { id: '3', prompt: '源代码管理' },
+]
+
 export function AgentChatWindowDemo() {
     const chatRef = useRef<AgentChatRef | null>(null)
 
@@ -53,13 +59,6 @@ export function AgentChatWindowDemo() {
                 {
                     id: uuidv4(),
                     role: 'system',
-                    content: `用户使用了"拍一拍"功能。请以友好、热情的方式回应，可以：
-1. 简单打招呼并询问如何帮助
-2. 介绍一些你能提供的功能
-3. 主动提供一些有趣的对话话题
-4. 展示你的工具能力
-
-请保持回答简洁、友好且有用。`,
                     parts: [{
                         type: 'text',
                         text: `用户使用了"拍一拍"功能。请以友好、热情的方式回应，可以：
@@ -74,7 +73,6 @@ export function AgentChatWindowDemo() {
                 {
                     id: uuidv4(),
                     role: 'user',
-                    content: '[action:poke]',
                     parts: [{
                         type: 'text',
                         text: '[action:poke]',
@@ -91,7 +89,6 @@ export function AgentChatWindowDemo() {
                 {
                     id: uuidv4(),
                     role: 'user',
-                    content: '你好！请介绍一下你自己和你能做什么。',
                     parts: [{
                         type: 'text',
                         text: '你好！请介绍一下你自己和你能做什么。',
@@ -108,7 +105,6 @@ export function AgentChatWindowDemo() {
                 {
                     id: uuidv4(),
                     role: 'user',
-                    content: '请演示一下你的工具功能，比如问候、天气查询和计算器。',
                     parts: [{
                         type: 'text',
                         text: '请演示一下你的工具功能，比如问候、天气查询和计算器。',
@@ -214,18 +210,13 @@ export function AgentChatWindowDemo() {
                 contexts={contexts}
                 className="z-50"
                 promptsProps={{
-                    items: [
-                        { id: '1', prompt: '待办事项' },
-                        { id: '2', prompt: '搜索' },
-                        { id: '3', prompt: '源代码管理' },
-                    ],
+                    items: DEFAULT_PROMPTS,
                     onItemClick: (item) => {
                         console.log('onItemClick', item)
                         chatRef.current?.addMessages([
                             {
                                 id: uuidv4(),
                                 role: 'user',
-                                content: item.prompt,
                                 parts: [{
                                     type: 'text',
                                     text: item.prompt,

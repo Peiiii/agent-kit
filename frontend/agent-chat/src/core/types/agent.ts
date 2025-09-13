@@ -5,7 +5,7 @@
  * including the three tool execution patterns and their implementations.
  */
 
-import type { ToolInvocation } from '@ai-sdk/ui-utils'
+import type { ToolInvocation } from './ui-message'
 import type { JSONSchema7 } from 'json-schema'
 import type { ReactNode } from 'react'
 
