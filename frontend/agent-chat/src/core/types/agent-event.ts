@@ -15,24 +15,28 @@ export  enum EventType {
 }
 export interface BaseAgentEvent {
     type: EventType
-    runId: string
 }
 
 export interface TextStartEvent extends BaseAgentEvent {
     type: EventType.TEXT_START
+    messageId: string
+
 }
 
 export interface TextDeltaEvent extends BaseAgentEvent {
     type: EventType.TEXT_DELTA
+    messageId: string
     delta: string
 }
 
 export interface TextEndEvent extends BaseAgentEvent {
     type: EventType.TEXT_END
+    messageId: string
 }
 
 export interface ToolCallStartEvent extends BaseAgentEvent {
     type: EventType.TOOL_CALL_START
+    messageId?: string
     toolCallId: string
     toolName: string
 }
@@ -40,28 +44,24 @@ export interface ToolCallStartEvent extends BaseAgentEvent {
 export interface ToolCallArgsEvent extends BaseAgentEvent {
     type: EventType.TOOL_CALL_ARGS
     toolCallId: string
-    toolName: string
     args: string
 }
 
 export interface ToolCallArgsDeltaEvent extends BaseAgentEvent {
     type: EventType.TOOL_CALL_ARGS_DELTA
     toolCallId: string
-    toolName: string
     argsDelta: string
 }
 
 export interface ToolCallEndEvent extends BaseAgentEvent {
     type: EventType.TOOL_CALL_END
     toolCallId: string
-    toolName: string
 }
 
 export interface ToolCallResultEvent extends BaseAgentEvent {
     type: EventType.TOOL_CALL_RESULT
     toolCallId: string
-    toolName: string
-    result: unknown
+    content: unknown
 }
 
 export interface RunStartedEvent extends BaseAgentEvent {
@@ -74,7 +74,7 @@ export interface RunFinishedEvent extends BaseAgentEvent {
 
 export interface RunErrorEvent extends BaseAgentEvent {
     type: EventType.RUN_ERROR
-    error: string
+    error?: string
 }
 
 export type AgentEvent = TextStartEvent | TextDeltaEvent | TextEndEvent | ToolCallStartEvent | ToolCallArgsEvent | ToolCallArgsDeltaEvent | ToolCallEndEvent | ToolCallResultEvent | RunStartedEvent | RunFinishedEvent | RunErrorEvent

@@ -1,13 +1,13 @@
 import { Button } from '@/components/ui/button'
-import { HttpAgent } from '@ag-ui/client'
-import { AgentChatWindow, AgentChatRef } from '@agent-labs/agent-chat'
+import { AgentChatRef, AgentChatWindow } from '@agent-labs/agent-chat'
 import { Bot, MessageSquare, Settings, Users, Zap } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { createGreetingTool, createWeatherTool, createCalculatorTool, createUserConfirmationTool } from './tools'
+import { MappedHttpAgent } from '../../lib/mapped-http-agent'
+import { createCalculatorTool, createGreetingTool, createUserConfirmationTool, createWeatherTool } from './tools'
 
 // 创建 HTTP 代理实例
-const agent = new HttpAgent({
+const agent = new MappedHttpAgent({
     url: 'http://localhost:8000/openai-agent',
 })
 

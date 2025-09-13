@@ -1,13 +1,8 @@
-
-import {
-  EventType,
-  type BaseEvent
-} from '@ag-ui/client'
 import { createRef } from 'react'
 import { BehaviorSubject, Observable, Subject, type Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
 import type { AgentToolExecutorManager } from '../hooks'
-import type { IAgent } from '../types'
+import { EventType, type AgentEvent, type IAgent } from '../types'
 import type { Context, ToolCall, ToolDefinition, ToolInvocationState, ToolResult } from '../types/agent'
 import { convertUIMessagesToMessages } from '../utils'
 import { AgentEventHandler } from './agent-event-handler'
@@ -50,7 +45,7 @@ export class AgentSessionManager {
     this.messages$.next(messages)
   }
 
-  handleEvent(event: BaseEvent) {
+  handleEvent(event: AgentEvent) {
     this.eventHandler.handleEvent(event)
   }
 
@@ -103,11 +98,11 @@ export class AgentSessionManager {
     this.messages$.next(this.getMessages().map(msg => msg.id === targetMessage.id ? newMessage : msg))
   }
 
-  handleAgentResponse = (response: Observable<BaseEvent>) => {
+  handleAgentResponse = (response: Observable<AgentEvent>) => {
     if (this.agentRunSubscriptionRef.current) {
       this.agentRunSubscriptionRef.current.unsubscribe()
     }
-    this.agentRunSubscriptionRef.current = response.subscribe((event: BaseEvent) => {
+    this.agentRunSubscriptionRef.current = response.subscribe((event: AgentEvent) => {
       this.handleEvent(event)
       if (
         event.type === EventType.RUN_FINISHED ||
@@ -140,7 +135,7 @@ export class AgentSessionManager {
         state: {},
         forwardedProps: {},
       })
-      this.handleAgentResponse(response as unknown as Observable<BaseEvent>)
+      this.handleAgentResponse(response as unknown as Observable<AgentEvent>)
     } catch (error) {
       if ((error as Error)?.name === 'AbortError') {
         // 用户主动终止

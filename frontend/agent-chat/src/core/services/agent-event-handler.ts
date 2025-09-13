@@ -1,8 +1,8 @@
-import { EventType, type BaseEvent, type MessagesSnapshotEvent, type StateSnapshotEvent, type TextMessageContentEvent, type TextMessageStartEvent, type ToolCallArgsEvent, type ToolCallStartEvent } from "@ag-ui/core"
 import { v4 } from "uuid"
-import { convertMessagesToUIMessages, toolCallToToolInvocation } from "../utils"
-import { AgentSessionManager } from "./agent-session-manager"
+import { EventType, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallStartEvent } from "../types"
 import type { UIMessage } from "../types/ui-message"
+import { toolCallToToolInvocation } from "../utils"
+import { AgentSessionManager } from "./agent-session-manager"
 
 export class AgentEventHandler {
     private currentMessageId?: string
@@ -45,37 +45,31 @@ export class AgentEventHandler {
     }
 
     // 处理事件
-    handleEvent(event: BaseEvent) {
+    handleEvent(event: AgentEvent) {
         console.log('[AgentSessionManager] event', event)
 
         switch (event.type) {
             case EventType.RUN_STARTED:
                 break
-            case EventType.TEXT_MESSAGE_START:
-                this.handleTextMessageStart(event as TextMessageStartEvent)
+            case EventType.TEXT_START:
+                this.handleTextStart(event as TextStartEvent)
                 break
-            case EventType.TEXT_MESSAGE_CONTENT:
-                this.handleTextMessageContent(event as TextMessageContentEvent)
+            case EventType.TEXT_DELTA:
+                this.handleTextContent(event as TextDeltaEvent)
                 break
-            case EventType.TEXT_MESSAGE_END:
-                this.handleTextMessageEnd()
+            case EventType.TEXT_END:
+                this.handleTextEnd()
                 break
             case EventType.TOOL_CALL_START:
                 this.handleToolCallStart(event as ToolCallStartEvent)
                 break
-            case EventType.TOOL_CALL_ARGS:
-                this.handleToolCallArgs(event as ToolCallArgsEvent)
+            case EventType.TOOL_CALL_ARGS_DELTA:
+                this.handleToolCallArgsDelta(event as ToolCallArgsDeltaEvent)
                 break
             case EventType.TOOL_CALL_END:
                 this.handleToolCallEnd()
                 // 检查是否有 tool call 需要自动执行，推送事件到 toolCall$
                 this.emitToolCallEvents()
-                break
-            case EventType.STATE_SNAPSHOT:
-                this.handleStateSnapshot(event as StateSnapshotEvent)
-                break
-            case EventType.MESSAGES_SNAPSHOT:
-                this.handleMessagesSnapshot(event as MessagesSnapshotEvent)
                 break
             default:
                 console.info('Unknown event type:', event.type)
@@ -83,7 +77,7 @@ export class AgentEventHandler {
         }
     }
 
-    private handleTextMessageStart(event: TextMessageStartEvent) {
+    private handleTextStart(event: TextStartEvent) {
         this.currentMessageId = event.messageId
         this.currentMessageContent = ''
     }
@@ -102,7 +96,7 @@ export class AgentEventHandler {
         }
     }
 
-    private handleTextMessageContent(event: TextMessageContentEvent) {
+    private handleTextContent(event: TextDeltaEvent) {
         if (!event.delta || this.currentMessageId !== event.messageId) return
 
         this.currentMessageContent += event.delta
@@ -132,20 +126,20 @@ export class AgentEventHandler {
         }
     }
 
-    private handleTextMessageEnd() {
+    private handleTextEnd() {
         this.currentMessageId = undefined
         this.currentMessageContent = ''
     }
 
     private handleToolCallStart(event: ToolCallStartEvent) {
         this.currentToolCallId = event.toolCallId
-        this.currentToolCallName = event.toolCallName
+        this.currentToolCallName = event.toolName
         this.currentToolCallArgs = ''
     }
 
-    private handleToolCallArgs(event: ToolCallArgsEvent) {
+    private handleToolCallArgsDelta(event: ToolCallArgsDeltaEvent) {
         if (this.currentToolCallId === event.toolCallId) {
-            this.currentToolCallArgs += event.delta
+            this.currentToolCallArgs += event.argsDelta
         }
     }
 
@@ -200,17 +194,5 @@ export class AgentEventHandler {
         this.currentToolCallId = undefined
         this.currentToolCallName = undefined
         this.currentToolCallArgs = ''
-    }
-
-    private handleStateSnapshot(event: StateSnapshotEvent) {
-        if (event.snapshot?.messages) {
-            this.sessionManager.setMessages(event.snapshot.messages)
-        }
-    }
-
-    private handleMessagesSnapshot(event: MessagesSnapshotEvent) {
-        if (event.messages) {
-            this.sessionManager.setMessages(convertMessagesToUIMessages(event.messages))
-        }
     }
 }
