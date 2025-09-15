@@ -1,11 +1,5 @@
-import type { Tool, ToolCall, ToolRenderer } from "./agent";
-
-import {
-  type BaseEvent,
-  type RunAgentInput
-} from '@ag-ui/client';
-import type { Subscribable } from "rxjs";
 import type { Context, ToolDefinition, ToolResult } from '../types/agent';
+import type { IAgent, Tool, ToolCall, ToolRenderer } from "./agent";
 import type { UIMessage } from "./ui-message";
 
 export type ToolExecutor = (
@@ -45,9 +39,7 @@ export interface AgentChatRef {
 }
 
 
-export interface IAgent {
-  run: (input: RunAgentInput) => Subscribable<BaseEvent>
-}
+
 
 export interface UseAgentChatProps {
   agent: IAgent

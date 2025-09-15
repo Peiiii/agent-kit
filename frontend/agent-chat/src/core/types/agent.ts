@@ -5,9 +5,11 @@
  * including the three tool execution patterns and their implementations.
  */
 
-import type { ToolInvocation } from './ui-message'
 import type { JSONSchema7 } from 'json-schema'
 import type { ReactNode } from 'react'
+import type { Subscribable } from 'rxjs'
+import type { AgentEvent } from './agent-event'
+import type { ToolInvocation, UIMessage } from './ui-message'
 
 export type ToolInvocationState = 'call' | 'result' | 'partial-call'
 
@@ -88,7 +90,7 @@ export interface Tool extends ToolDefinition {
    * Should not be implemented for backend-only or user-interaction tools
    */
   execute?: (toolCall: ToolCall) => Promise<ToolResult>
-  
+
   /**
    * Optional render function for all tool types
    * - Backend-only tools: Display tool information
@@ -101,4 +103,17 @@ export interface Tool extends ToolDefinition {
 export interface Context {
   description: string
   value: string
+}
+
+
+export interface RunAgentInput {
+  threadId?: string
+  runId?: string
+  messages: UIMessage[]
+  tools?: Tool[]
+  context?: Context[]
+}
+
+export interface IAgent {
+  run: (input: RunAgentInput) => Subscribable<AgentEvent>
 }

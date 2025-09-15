@@ -10,7 +10,7 @@ import {
   ToolCallResultEvent,
   ToolCallStartEvent,
 } from '@ag-ui/client'
-import { AgentEvent, EventType as AgentEventType } from '@agent-labs/agent-chat'
+import { AgentEvent, EventType as AgentEventType, convertUIMessagesToMessages, RunAgentInput } from '@agent-labs/agent-chat'
 import { EMPTY, map, Subscribable } from 'rxjs'
 
 export class MappedHttpAgent {
@@ -19,9 +19,16 @@ export class MappedHttpAgent {
     this.agent = new HttpAgent(...args)
   }
 
-  run(...args: Parameters<HttpAgent['run']>): Subscribable<AgentEvent> {
-    console.log('[mapped-http-agent] run', args)
-    return this.agent.run(...args).pipe(map(this.mapEvent))
+  run(input: RunAgentInput): Subscribable<AgentEvent> {
+    console.log('[mapped-http-agent] run', input)
+    return this.agent.run({
+      ...input,
+      threadId: input.threadId ?? "",
+      runId: input.runId ?? "",
+      tools: input.tools ?? [],
+      context: input.context ?? [],
+      messages: convertUIMessagesToMessages(input.messages),
+    }).pipe(map(this.mapEvent))
   }
 
   private mapEvent = (event: BaseEvent): AgentEvent | typeof EMPTY => {

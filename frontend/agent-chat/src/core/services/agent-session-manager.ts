@@ -4,9 +4,8 @@ import { v4 } from 'uuid'
 import type { AgentToolExecutorManager } from '../hooks'
 import { EventType, type AgentEvent, type IAgent } from '../types'
 import type { Context, ToolCall, ToolDefinition, ToolInvocationState, ToolResult } from '../types/agent'
-import { convertUIMessagesToMessages } from '../utils'
-import { AgentEventHandler } from './agent-event-handler'
 import type { UIMessage } from '../types/ui-message'
+import { AgentEventHandler } from './agent-event-handler'
 
 
 export interface IAgentProvider {
@@ -21,6 +20,7 @@ export class AgentSessionManager {
   threadId$ = new BehaviorSubject<string | null>(null)
 
   isAgentResponding$ = new BehaviorSubject<boolean>(false)
+
   agentRunSubscriptionRef = createRef<Unsubscribable | null>()
 
   public toolCall$ = new Subject<{ toolCall: ToolCall }>()
@@ -35,34 +35,31 @@ export class AgentSessionManager {
   }
 
 
-  // 获取当前消息
-  getMessages() {
+  getMessages = () => {
     return this.messages$.getValue()
   }
 
-  // 允许外部直接设置消息列表
-  public setMessages(messages: UIMessage[]): void {
+  setMessages = (messages: UIMessage[]): void => {
     this.messages$.next(messages)
   }
 
-  handleEvent(event: AgentEvent) {
+  handleEvent = (event: AgentEvent) => {
     this.eventHandler.handleEvent(event)
   }
 
 
-  // 重置会话
-  reset() {
+  reset = () => {
     this.messages$.next([])
     this.eventHandler.reset()
     this.threadId$.next(null)
     this.isAgentResponding$.next(false)
   }
 
-  addMessages(messages: UIMessage[]) {
+  addMessages = (messages: UIMessage[]) => {
     this.messages$.next([...this.getMessages(), ...messages])
   }
 
-  removeMessages(messageIds: string[]) {
+  removeMessages = (messageIds: string[]) => {
     if (messageIds.length === 0) return
     this.messages$.next(this.getMessages().filter(msg => !messageIds.includes(msg.id)))
   }
@@ -72,7 +69,7 @@ export class AgentSessionManager {
    * @param result { toolCallId, result, status, error? }
    * @param options { triggerAgent?: boolean }
    */
-  addToolResult(result: { toolCallId: string, result: unknown, state: ToolInvocationState, error?: string }, _options?: { triggerAgent?: boolean }): void {
+  addToolResult = (result: { toolCallId: string, result: unknown, state: ToolInvocationState, error?: string }, _options?: { triggerAgent?: boolean }): void => {
     const targetMessage = this.getMessages().find(msg => msg.parts.find(part => part.type === "tool-invocation" && part.toolInvocation.toolCallId === result.toolCallId))
     if (!targetMessage) {
       return
@@ -129,11 +126,9 @@ export class AgentSessionManager {
       const response = await this.agentProvider.agent.run({
         threadId: this.threadId$.getValue() ?? "",
         runId: v4(),
-        messages: convertUIMessagesToMessages(this.getMessages()),
+        messages: this.getMessages(),
         tools: this.agentProvider.getToolDefs(),
         context: this.agentProvider.getContexts(),
-        state: {},
-        forwardedProps: {},
       })
       this.handleAgentResponse(response as unknown as Observable<AgentEvent>)
     } catch (error) {
