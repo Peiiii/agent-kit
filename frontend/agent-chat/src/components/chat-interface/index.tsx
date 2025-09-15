@@ -18,6 +18,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   isAgentResponding,
   onAbort,
   promptsProps,
+  messageItemProps,
 }) => {
   const { containerRef, isSticky, scrollToBottom, setSticky } = useChatAutoScroll({
     deps: [uiMessages],
@@ -51,6 +52,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             uiMessage={uiMessage}
             toolRenderers={toolRenderers}
             onToolResult={onToolResult}
+            {...messageItemProps}
           />
         ))}
       </div>

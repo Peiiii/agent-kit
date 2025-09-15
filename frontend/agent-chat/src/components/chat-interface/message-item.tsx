@@ -2,54 +2,52 @@ import { Bot, User } from 'lucide-react'
 import * as React from 'react'
 
 import clsx from 'clsx'
-import type { ToolRenderer, ToolResult } from '../../core/types/agent'
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { ToolCallRenderer } from './tool-call-renderer'
-import type { UIMessage } from '../../core/types/ui-message'
-
-interface MessageItemProps {
-  uiMessage: UIMessage
-  toolRenderers: Record<string, ToolRenderer>
-  onToolResult?: (result: ToolResult) => void
-}
+import type { MessageItemProps } from '../../core/types/component-types'
 
 export const MessageItem: React.FC<MessageItemProps> = ({
   uiMessage,
   toolRenderers,
   onToolResult,
+  className,
+  showAvatar = true,
 }) => {
   const isUser = uiMessage.role === 'user'
 
   return (
     <div
       className={clsx(
-        `flex w-full  p-2`,
+        `flex w-full p-2`,
         isUser ? 'justify-end' : 'justify-start',
+        className,
       )}
     >
       <div
         className={clsx(
-          'flex max-w-[80%] w-fit items-start gap-2',
-          isUser ? 'flex-row-reverse' : 'flex-row',
+          'flex w-fit flex-col items-center gap-2',
+          isUser ? 'items-end' : 'items-start',
         )}
       >
-        <Avatar className="h-10 w-10 shrink-0">
-          <AvatarImage src="" alt={isUser ? 'User' : 'Assistant'} />
-          <AvatarFallback
-            className={`${
-              isUser ? 'bg-primary' : 'bg-primary'
-            } text-primary-foreground`}
-          >
-            {isUser ? (
-              <User className="h-5 w-5" />
-            ) : (
-              <Bot className="h-5 w-5" />
-            )}
-          </AvatarFallback>
-        </Avatar>
+        {showAvatar && (
+          <Avatar className="h-10 w-10 shrink-0">
+            <AvatarImage src="" alt={isUser ? 'User' : 'Assistant'} />
+            <AvatarFallback
+              className={`${
+                isUser ? 'bg-primary' : 'bg-primary'
+              } text-primary-foreground`}
+            >
+              {isUser ? (
+                <User className="h-5 w-5" />
+              ) : (
+                <Bot className="h-5 w-5" />
+              )}
+            </AvatarFallback>
+          </Avatar>
+        )}
         <div
-          className={`min-w-0 flex-1 max-w-full overflow-hidden rounded-lg p-2 ${
+          className={`min-w-0 w-full overflow-hidden rounded-lg p-3 ${
             isUser
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-foreground'

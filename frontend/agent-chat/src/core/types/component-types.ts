@@ -1,5 +1,4 @@
-import type { Context, ToolDefinition, ToolResult } from './agent';
-import type { IAgent, Tool, ToolCall, ToolRenderer } from "./agent";
+import type { Context, IAgent, Tool, ToolCall, ToolDefinition, ToolRenderer, ToolResult } from './agent';
 import type { UIMessage } from "./ui-message";
 
 export type ToolExecutor = (
@@ -28,6 +27,7 @@ export interface AgentChatProps {
   className?: string
   senderProps?: SenderProps
   promptsProps?: PromptsProps
+  messageItemProps?: Partial<MessageItemProps>
 }
 
 export interface AgentChatRef {
@@ -78,12 +78,22 @@ export interface ChatInterfaceProps {
   isAgentResponding: boolean
   onAbort?: () => void
   promptsProps?: PromptsProps
+  messageItemProps?: Partial<MessageItemProps>
 }
+
 export interface MessageInputProps {
   input: string
   onInputChange: (v: string) => void
   onSend: () => void
   isAgentResponding: boolean
   onAbort?: () => void
+}
+
+export interface MessageItemProps {
+  uiMessage: UIMessage
+  toolRenderers: Record<string, ToolRenderer>
+  onToolResult?: (result: ToolResult) => void
+  className?: string
+  showAvatar?: boolean
 }
 

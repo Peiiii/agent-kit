@@ -225,7 +225,9 @@ export function AgentChatWindowDemo() {
                         ], { triggerAgent: true })
                     },
                 }}
-
+                messageItemProps={{
+                    showAvatar: false,
+                }}
             />
         </div>
     )
