@@ -1,4 +1,4 @@
-import type { PromptsProps } from '@/core/types/agent-chat-component'
+import type { PromptsProps } from '@/core/types/component-types'
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'

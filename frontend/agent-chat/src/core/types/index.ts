@@ -1,4 +1,4 @@
 export * from './agent'
-export * from './agent-chat-component'
+export * from './component-types'
 export * from './agent-event'
 export * from './ui-message'

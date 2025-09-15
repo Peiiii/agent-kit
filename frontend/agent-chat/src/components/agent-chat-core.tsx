@@ -5,7 +5,7 @@ import { useAgentChat } from '../core/hooks/use-agent-chat'
 import type {
   AgentChatProps,
   AgentChatRef,
-} from '../core/types/agent-chat-component'
+} from '../core/types/component-types'
 import '../styles/globals.css'
 import { ChatInterface } from './chat-interface'
 

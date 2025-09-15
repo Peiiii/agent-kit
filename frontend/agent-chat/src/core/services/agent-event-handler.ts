@@ -11,8 +11,7 @@ export class AgentEventHandler {
     private currentToolCallName?: string
     private currentToolCallArgs: string = ''
 
-    constructor(private readonly sessionManager: AgentSessionManager) {
-    }
+    constructor(private readonly sessionManager: AgentSessionManager) {}
 
 
     reset() {

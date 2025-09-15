@@ -1,7 +1,7 @@
 import { Send, Square } from 'lucide-react'
 import * as React from 'react'
 
-import type { MessageInputProps } from '@/core/types/agent-chat-component'
+import type { MessageInputProps } from '@/core/types/component-types'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 

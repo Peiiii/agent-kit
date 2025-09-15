@@ -4,7 +4,7 @@ import { MessageInput } from './message-input'
 import { MessageItem } from './message-item'
 import { useChatAutoScroll } from '../../core/hooks/use-chat-auto-scroll'
 import clsx from 'clsx'
-import type { ChatInterfaceProps } from '@/core/types/agent-chat-component'
+import type { ChatInterfaceProps } from '@/core/types/component-types'
 import { Prompts } from './prompts'
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({

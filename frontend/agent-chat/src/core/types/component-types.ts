@@ -1,4 +1,4 @@
-import type { Context, ToolDefinition, ToolResult } from '../types/agent';
+import type { Context, ToolDefinition, ToolResult } from './agent';
 import type { IAgent, Tool, ToolCall, ToolRenderer } from "./agent";
 import type { UIMessage } from "./ui-message";
 
@@ -37,8 +37,6 @@ export interface AgentChatRef {
     options?: { triggerAgent?: boolean },
   ) => Promise<void>
 }
-
-
 
 
 export interface UseAgentChatProps {
