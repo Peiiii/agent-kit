@@ -66,15 +66,18 @@ export interface ToolCallResultEvent extends BaseAgentEvent {
 
 export interface RunStartedEvent extends BaseAgentEvent {
     type: EventType.RUN_STARTED
+    threadId?: string
 }
 
 export interface RunFinishedEvent extends BaseAgentEvent {
     type: EventType.RUN_FINISHED
+    threadId?: string
 }
 
 export interface RunErrorEvent extends BaseAgentEvent {
     type: EventType.RUN_ERROR
     error?: string
+    threadId?: string
 }
 
 export type AgentEvent = TextStartEvent | TextDeltaEvent | TextEndEvent | ToolCallStartEvent | ToolCallArgsEvent | ToolCallArgsDeltaEvent | ToolCallEndEvent | ToolCallResultEvent | RunStartedEvent | RunFinishedEvent | RunErrorEvent
