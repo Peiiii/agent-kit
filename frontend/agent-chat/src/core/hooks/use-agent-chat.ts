@@ -1,8 +1,7 @@
-import { useContext, useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useValueFromBehaviorSubject } from '../hooks/use-value-from-behavior-subject'
 import { AgentSessionManager } from '../services/agent-session-manager'
-import type { UseAgentChatProps, UseAgentChatReturn } from '../types'
-import { AgentToolExecutorManagerContext } from './use-provide-agent-tool-executors'
+import type { Context, IAgent, ToolDefinition, ToolExecutor, UIMessage, UseAgentChatProps, UseAgentChatReturn } from '../types'
 
 
 export const useMemoizedFn = <T extends ((...args: any[]) => any)>(fn: T) => {
@@ -17,6 +16,29 @@ export const useMemoizedFn = <T extends ((...args: any[]) => any)>(fn: T) => {
   return ref.current!
 }
 
+export const useAgentSessionManager = (options: { agent: IAgent, getToolDefs: () => ToolDefinition[], getContexts: () => Context[], initialMessages: UIMessage[], getToolExecutor: (name: string) => ToolExecutor | undefined }) => {
+  const { agent, getToolDefs, getContexts, initialMessages, getToolExecutor } = options
+  const memoizedGetToolDefs = useMemoizedFn(getToolDefs)
+  const memoizedGetContexts = useMemoizedFn(getContexts)
+  const memoizedGetToolExecutor = useMemoizedFn(getToolExecutor)
+  const sessionManager = useRef(new AgentSessionManager({ agent, getToolDefs: memoizedGetToolDefs, getContexts: memoizedGetContexts, getToolExecutor: memoizedGetToolExecutor }, {
+    initialMessages
+  }))
+  return sessionManager.current
+}
+
+export const useAgentSessionManagerState = (sessionManager: AgentSessionManager) => {
+  const messages = useValueFromBehaviorSubject(sessionManager.messages$)
+  const isAgentResponding = useValueFromBehaviorSubject(sessionManager.isAgentResponding$)
+  const threadId = useValueFromBehaviorSubject(sessionManager.threadId$)
+  return {
+    messages,
+    isAgentResponding,
+    threadId,
+  }
+}
+
+
 export function useAgentChat({
   agent,
   toolDefs,
@@ -24,14 +46,7 @@ export function useAgentChat({
   contexts = [],
   initialMessages = [],
 }: UseAgentChatProps): UseAgentChatReturn {
-
-  const toolExecutorManager = useContext(AgentToolExecutorManagerContext)
-  const memoizedGetToolDefs = useMemoizedFn(() => toolDefs)
-  const memoizedGetContexts = useMemoizedFn(() => contexts)
-
-  const sessionManager = useRef(new AgentSessionManager({ agent, getToolDefs: memoizedGetToolDefs, getContexts: memoizedGetContexts }, {
-    initialMessages
-  }))
+  const sessionManager = useAgentSessionManager({ agent, getToolDefs: () => toolDefs, getContexts: () => contexts, initialMessages, getToolExecutor: (name: string) => toolExecutors?.[name] })
   const { reset,
     abortAgentRun,
     runAgent,
@@ -39,24 +54,10 @@ export function useAgentChat({
     handleAddMessages: addMessages,
     handleSendMessage: sendMessage,
     setMessages,
-    removeMessages } = sessionManager.current
-
-  const messages = useValueFromBehaviorSubject(sessionManager.current.messages$)
-  const isAgentResponding = useValueFromBehaviorSubject(sessionManager.current.isAgentResponding$)
-  const threadId = useValueFromBehaviorSubject(sessionManager.current.threadId$)
-
-  useEffect(() => {
-    if (toolExecutors && Object.keys(toolExecutors).length > 0) {
-      return toolExecutorManager.addToolExecutors(toolExecutors)
-    }
-  }, [toolExecutorManager, toolExecutors])
-
-  useEffect(() => sessionManager.current.connectToolExecutor(toolExecutorManager), [toolExecutorManager])
-
+    removeMessages } = sessionManager
+  const sessionManagerState = useAgentSessionManagerState(sessionManager)
   return {
-    messages,
-    isAgentResponding,
-    threadId,
+    ...sessionManagerState,
     sendMessage,
     addToolResult,
     addMessages,

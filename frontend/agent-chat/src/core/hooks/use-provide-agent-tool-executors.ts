@@ -8,7 +8,6 @@ export class AgentToolExecutorManager {
 
   addToolExecutors(toolExecutors: Record<string, ToolExecutor>): () => void {
     Object.assign(this.executors, toolExecutors)
-    // 返回移除函数
     return () => {
       for (const key of Object.keys(toolExecutors)) {
         delete this.executors[key]

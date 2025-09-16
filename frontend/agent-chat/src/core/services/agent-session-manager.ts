@@ -1,8 +1,7 @@
 import { createRef } from 'react'
 import { BehaviorSubject, Observable, Subject, type Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
-import type { AgentToolExecutorManager } from '../hooks'
-import { EventType, type AgentEvent, type IAgent } from '../types'
+import { EventType, type AgentEvent, type IAgent, type ToolExecutor } from '../types'
 import type { Context, ToolCall, ToolDefinition, ToolInvocationState, ToolResult } from '../types/agent'
 import type { UIMessage } from '../types/ui-message'
 import { AgentEventHandler } from './agent-event-handler'
@@ -12,9 +11,24 @@ export interface IAgentProvider {
   agent: IAgent,
   getToolDefs: () => ToolDefinition[],
   getContexts: () => Context[],
+  getToolExecutor: (name: string) => ToolExecutor | undefined
 }
 
-export class AgentSessionManager {
+export class Disposable {
+  private disposables: (() => void)[] = []
+
+
+  addDisposable = (disposable: () => void) => {
+    this.disposables.push(disposable)
+  }
+
+  dispose = () => {
+    this.disposables.forEach(disposable => disposable())
+    this.disposables = []
+  }
+}
+
+export class AgentSessionManager extends Disposable {
   messages$ = new BehaviorSubject<UIMessage[]>([])
 
   threadId$ = new BehaviorSubject<string | null>(null)
@@ -30,8 +44,10 @@ export class AgentSessionManager {
   constructor(private readonly agentProvider: IAgentProvider, options?: {
     initialMessages?: UIMessage[],
   }) {
+    super()
     const { initialMessages = [] } = options || {}
     this.messages$.next(initialMessages)
+    this.addDisposable(this.connectToolExecutor())
   }
 
 
@@ -181,9 +197,9 @@ export class AgentSessionManager {
     await this.runAgent()
   }
 
-  connectToolExecutor = (toolExecutorManager: AgentToolExecutorManager) => {
+  private connectToolExecutor = () => {
     const sub = this.toolCall$.subscribe(async ({ toolCall }) => {
-      const executor = toolExecutorManager.getToolExecutor(toolCall.function.name)
+      const executor = this.agentProvider.getToolExecutor(toolCall.function.name)
       if (executor) {
         try {
           const result = await executor(toolCall)
