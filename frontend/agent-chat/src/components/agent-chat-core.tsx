@@ -1,7 +1,6 @@
-import { getToolDefFromTool } from '../core/utils/tool'
 import * as React from 'react'
-import { useImperativeHandle, useMemo, useState } from 'react'
-import { useAgentChat } from '../core/hooks/use-agent-chat'
+import { useImperativeHandle, useState } from 'react'
+import { useAgentSessionManagerState } from '../core/hooks/use-agent-chat'
 import type {
   AgentChatProps,
   AgentChatRef,
@@ -12,10 +11,8 @@ import { ChatInterface } from './chat-interface'
 export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
   (
     {
-      agent,
-      tools = [],
-      contexts: defaultContexts = [],
-      initialMessages = [],
+      agentSessionManager,
+      toolRenderers,
       className,
       senderProps,
       promptsProps,
@@ -24,41 +21,13 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     ref,
   ) => {
     const [input, setInput] = useState('')
-    const toolDefs = useMemo(() => tools.map((tool) => {
-      return {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.parameters,
-      }
-    }), [])
-    const toolExecutors = useMemo(() => {
-      return Object.fromEntries(tools.filter((tool) => tool.execute).map((tool) => [tool.name, tool.execute!]))
-    }, [])
-    const renderers = useMemo(() => {
-      return Object.fromEntries(tools.filter((tool) => tool.render).map((tool) => [tool.name, {
-        render: tool.render!,
-        definition: getToolDefFromTool(tool),
-      }]))
-    }, [])
-    const {
-      messages,
-      isAgentResponding,
-      sendMessage,
-      addToolResult: sendToolResult,
-      addMessages,
-      reset,
-      abortAgentRun,
-    } = useAgentChat({
-      agent,
-      toolDefs,
-      toolExecutors,
-      contexts: defaultContexts,
-      initialMessages,
-    })
+
+    const { messages, isAgentResponding } = useAgentSessionManagerState(agentSessionManager)
+    const { handleSendMessage, handleAddToolResult, reset, addMessages, abortAgentRun, handleAddMessages } = agentSessionManager
 
     const handleSend = async () => {
       if (!isAgentResponding) {
-        await sendMessage(input)
+        await handleSendMessage(input)
         setInput('')
       }
     }
@@ -67,7 +36,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       ref,
       () => ({
         reset,
-        addMessages,
+        addMessages: handleAddMessages,
       }),
       [reset, addMessages],
     )
@@ -77,8 +46,8 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
         <ChatInterface
           senderProps={senderProps}
           uiMessages={messages}
-          toolRenderers={renderers}
-          onToolResult={sendToolResult}
+          toolRenderers={toolRenderers}
+          onToolResult={handleAddToolResult}
           input={input}
           onInputChange={setInput}
           onSend={handleSend}

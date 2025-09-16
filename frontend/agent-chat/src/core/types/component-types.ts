@@ -1,4 +1,5 @@
-import type { Context, IAgent, Tool, ToolCall, ToolDefinition, ToolRenderer, ToolResult } from './agent';
+import type { AgentSessionManager } from '../services/agent-session-manager';
+import type { Context, IAgent, ToolCall, ToolDefinition, ToolRenderer, ToolResult } from './agent';
 import type { UIMessage } from "./ui-message";
 
 export type ToolExecutor = (
@@ -20,10 +21,8 @@ export interface PromptsProps {
 }
 
 export interface AgentChatProps {
-  agent: IAgent
-  tools?: Tool[]
-  contexts?: Array<{ description: string; value: string }>
-  initialMessages?: UIMessage[]
+  agentSessionManager: AgentSessionManager
+  toolRenderers: Record<string, ToolRenderer>
   className?: string
   senderProps?: SenderProps
   promptsProps?: PromptsProps

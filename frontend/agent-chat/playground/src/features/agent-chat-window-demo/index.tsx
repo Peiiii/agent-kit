@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { AgentChatRef, AgentChatWindow } from '@agent-labs/agent-chat'
+import { AgentChatRef, AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
 import { Bot, MessageSquare, Settings, Users, Zap } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
@@ -114,6 +114,10 @@ export function AgentChatWindowDemo() {
         }
     }
 
+    const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
+
+    const agentSessionManager = useAgentSessionManager({ agent, getToolDefs: () => toolDefs, getContexts: () => contexts, initialMessages: [], getToolExecutor: (name: string) => toolExecutors?.[name] })
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
             {/* 头部信息 */}
@@ -205,14 +209,12 @@ export function AgentChatWindowDemo() {
             {/* Agent Chat Window 组件 */}
             <AgentChatWindow
                 ref={chatRef}
-                agent={agent}
-                tools={tools}
-                contexts={contexts}
+                agentSessionManager={agentSessionManager}
+                toolRenderers={toolRenderers}
                 className="z-50"
                 promptsProps={{
                     items: DEFAULT_PROMPTS,
                     onItemClick: (item) => {
-                        console.log('onItemClick', item)
                         chatRef.current?.addMessages([
                             {
                                 id: uuidv4(),
