@@ -86,6 +86,7 @@ export interface MessageInputProps {
   onSend: () => void
   isAgentResponding: boolean
   onAbort?: () => void
+  placeholder?: string
 }
 
 export interface MessageItemProps {
@@ -95,4 +96,3 @@ export interface MessageItemProps {
   className?: string
   showAvatar?: boolean
 }
-
