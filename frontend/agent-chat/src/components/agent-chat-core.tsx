@@ -17,6 +17,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       senderProps,
       promptsProps,
       messageItemProps,
+      aboveInputComponent,
     },
     ref,
   ) => {
@@ -55,6 +56,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
           onAbort={abortAgentRun}
           promptsProps={promptsProps}
           messageItemProps={messageItemProps}
+          aboveInputComponent={aboveInputComponent}
         />
       </div>
     )

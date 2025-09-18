@@ -19,6 +19,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onAbort,
   promptsProps,
   messageItemProps,
+  aboveInputComponent,
 }) => {
   const { containerRef, isSticky, scrollToBottom, setSticky } = useChatAutoScroll({
     deps: [uiMessages],
@@ -59,6 +60,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {promptsProps && uiMessages.length === 0 && (
         <div className="border-t p-4">
           <Prompts promptsProps={promptsProps} />
+        </div>
+      )}
+      {aboveInputComponent && (
+        <div className="border-t p-4">
+          {aboveInputComponent}
         </div>
       )}
       <div className="border-t p-4">

@@ -230,6 +230,40 @@ export function AgentChatWindowDemo() {
                 messageItemProps={{
                     showAvatar: false,
                 }}
+                aboveInputComponent={
+                    <div className="flex items-center justify-between px-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                            <span>AI 在线</span>
+                        </div>
+                        <div className="flex gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handlePoke}
+                                className="h-6 px-2 text-xs"
+                            >
+                                拍一拍
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleQuickGreeting}
+                                className="h-6 px-2 text-xs"
+                            >
+                                问候
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleTestTools}
+                                className="h-6 px-2 text-xs"
+                            >
+                                工具
+                            </Button>
+                        </div>
+                    </div>
+                }
             />
         </div>
     )

@@ -104,6 +104,64 @@ function AgentChatWithContext({
           )
         },
       }}
+      aboveInputComponent={
+        <div className="flex items-center justify-between px-3 py-1 text-xs text-muted-foreground border-b">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+            <span>快速操作</span>
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                agentChatRef.current?.addMessages(
+                  [
+                    {
+                      id: uuidv4(),
+                      role: 'user',
+                      parts: [
+                        {
+                          type: 'text',
+                          text: '帮我总结一下今天的待办事项',
+                        },
+                      ],
+                    },
+                  ],
+                  { triggerAgent: true },
+                )
+              }}
+              className="h-6 px-2 text-xs"
+            >
+              总结待办
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                agentChatRef.current?.addMessages(
+                  [
+                    {
+                      id: uuidv4(),
+                      role: 'user',
+                      parts: [
+                        {
+                          type: 'text',
+                          text: '帮我创建一个新的待办事项',
+                        },
+                      ],
+                    },
+                  ],
+                  { triggerAgent: true },
+                )
+              }}
+              className="h-6 px-2 text-xs"
+            >
+              新建待办
+            </Button>
+          </div>
+        </div>
+      }
     />
   )
 }

@@ -1,3 +1,4 @@
+import * as React from 'react'
 import type { AgentSessionManager } from '../services/agent-session-manager';
 import type { Context, IAgent, ToolCall, ToolDefinition, ToolRenderer, ToolResult } from './agent';
 import type { UIMessage } from "./ui-message";
@@ -27,6 +28,7 @@ export interface AgentChatProps {
   senderProps?: SenderProps
   promptsProps?: PromptsProps
   messageItemProps?: Partial<MessageItemProps>
+  aboveInputComponent?: React.ReactNode
 }
 
 export interface AgentChatRef {
@@ -78,6 +80,7 @@ export interface ChatInterfaceProps {
   onAbort?: () => void
   promptsProps?: PromptsProps
   messageItemProps?: Partial<MessageItemProps>
+  aboveInputComponent?: React.ReactNode
 }
 
 export interface MessageInputProps {
