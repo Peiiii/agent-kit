@@ -26,7 +26,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     >
       <div
         className={clsx(
-          'flex w-fit flex-col items-center gap-2',
+          'flex w-full flex-col items-center gap-2',
           isUser ? 'items-end' : 'items-start',
         )}
       >

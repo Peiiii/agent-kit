@@ -12,7 +12,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
 }) => {
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none">
+    <div className="prose prose-sm dark:prose-invert max-w-none w-full max-w-full min-w-0 overflow-hidden">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -24,12 +24,19 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 style={vscDarkPlus}
                 language={match[1]}
                 PreTag="div"
-                className="rounded-lg my-2"
+                className="rounded-lg my-2 overflow-auto w-full max-w-full min-w-0"
+                wrapLongLines
+                customStyle={{
+                  whiteSpace: 'pre',
+                  overflowX: 'auto',
+                  overflowY: 'auto',
+                  maxWidth: '100%',
+                }}
               >
                 {String(children).replace(/\n$/, '')}
               </SyntaxHighlighter>
             ) : (
-              <code className="bg-muted px-1.5 py-0.5 rounded text-sm">
+              <code className="bg-muted px-1.5 py-0.5 rounded text-sm break-all">
                 {children}
               </code>
             )

@@ -29,13 +29,16 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
   // 如果工具调用已经有结果，展示结果
   if (toolInvocation.state === 'result') {
     return (
-      <div className="rounded-lg border bg-background p-2">
+      <div className="rounded-lg border bg-background p-2 w-full max-w-full min-w-0 overflow-hidden">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm font-medium">工具调用结果</span>
           <span className="text-xs text-muted-foreground">{toolInvocation.toolName}</span>
         </div>
-        <div className="rounded-md bg-muted p-2">
-          <pre className="text-sm whitespace-pre-wrap break-words" style={{ maxHeight: '12rem', overflowY: 'auto' }}>
+        <div className="rounded-md bg-muted p-2 w-full max-w-full min-w-0 overflow-auto">
+          <pre
+            className="text-sm whitespace-pre-wrap break-all"
+            style={{ maxHeight: '12rem', overflowY: 'auto', overflowX: 'auto', wordBreak: 'break-word' }}
+          >
             {JSON.stringify(toolInvocation.result, null, 2)}
           </pre>
         </div>
@@ -45,7 +48,7 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
 
   // 工具信息，参数（包含流式参数和执行中状态）
   return (
-    <div className="rounded-lg border bg-background p-2">
+    <div className="rounded-lg border bg-background p-2 w-full max-w-full min-w-0 overflow-hidden">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium">
           工具调用
@@ -58,8 +61,11 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
         </span>
         <span className="text-xs text-muted-foreground">{toolInvocation.toolName}</span>
       </div>
-        <div className="rounded-md bg-muted p-2">
-          <pre className="text-sm whitespace-pre-wrap break-words" style={{ maxHeight: '12rem', overflowY: 'auto' }}>
+        <div className="rounded-md bg-muted p-2 w-full max-w-full min-w-0 overflow-auto">
+          <pre
+            className="text-sm whitespace-pre-wrap break-all"
+            style={{ maxHeight: '12rem', overflowY: 'auto', overflowX: 'auto', wordBreak: 'break-word' }}
+          >
             {typeof toolInvocation.args === 'string'
               ? toolInvocation.args
               : JSON.stringify(toolInvocation.args, null, 2)}

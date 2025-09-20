@@ -4,7 +4,7 @@ import { Bot, MessageSquare, Settings, Users, Zap } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { MappedHttpAgent } from '../../lib/mapped-http-agent'
-import { createCalculatorTool, createGreetingTool, createUserConfirmationTool, createWeatherTool, createHtmlGeneratorTool } from './tools'
+import { createCalculatorTool, createGreetingTool, createUserConfirmationTool, createWeatherTool, createHtmlGeneratorTool, createOverflowTesterTool, createCodeBlockTesterTool } from './tools'
 
 // 创建 HTTP 代理实例
 const agent = new MappedHttpAgent({
@@ -27,6 +27,8 @@ export function AgentChatWindowDemo() {
         createCalculatorTool(),
         createUserConfirmationTool(),
         createHtmlGeneratorTool(),
+        createOverflowTesterTool(),
+        createCodeBlockTesterTool(),
     ], [])
 
     // 定义上下文信息
