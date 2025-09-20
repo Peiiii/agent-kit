@@ -32,14 +32,15 @@ export const createCodeBlockTesterTool = (): Tool => ({
   render: (toolInvocation) => {
     const args = (toolInvocation.args || {}) as Args | string
     const isObj = typeof args === 'object' && args !== null
-    const lang = (isObj && (args as Args).language) || 'ts'
+    const langRaw = (isObj && (args as Args).language)
+    const lang = langRaw === '' ? '' : (langRaw || 'ts')
     const lineLength = (isObj && (args as Args).lineLength) || 2048
     const lines = (isObj && (args as Args).lines) || 4
     const ch = (isObj && (args as Args).contentChar) || 'X'
     const wait = (isObj && (args as Args).simulateDelayMs) || 0
 
     const contentLines = new Array(lines).fill(0).map((_, i) => `${i + 1}: ${makeLongLine(lineLength, ch)}`)
-    const md = `\n\n\u0060\u0060\u0060${lang}\n${contentLines.join('\n')}\n\u0060\u0060\u0060\n\n`
+    const md = `\n\n\u0060\u0060\u0060${lang ? lang : ''}\n${contentLines.join('\n')}\n\u0060\u0060\u0060\n\n`
 
     const [ready, setReady] = React.useState(wait === 0)
     React.useEffect(() => {
@@ -92,4 +93,3 @@ export const createCodeBlockTesterTool = (): Tool => ({
     )
   },
 })
-
