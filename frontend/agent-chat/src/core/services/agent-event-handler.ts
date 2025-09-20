@@ -1,5 +1,5 @@
 import { v4 } from "uuid"
-import { EventType, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallStartEvent } from "../types"
+import { EventType, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallStartEvent, type ToolCallArgsEvent } from "../types"
 import type { UIMessage } from "../types/ui-message"
 import { toolCallToToolInvocation } from "../utils"
 import { AgentSessionManager } from "./agent-session-manager"
@@ -10,6 +10,8 @@ export class AgentEventHandler {
     private currentToolCallId?: string
     private currentToolCallName?: string
     private currentToolCallArgs: string = ''
+    // Track which tool calls have been emitted to executors to avoid duplicates
+    private emittedToolCallIds = new Set<string>()
 
     constructor(private readonly sessionManager: AgentSessionManager) {}
 
@@ -20,6 +22,7 @@ export class AgentEventHandler {
         this.currentToolCallId = undefined
         this.currentToolCallName = undefined
         this.currentToolCallArgs = ''
+        this.emittedToolCallIds.clear()
     }
 
     // 推送工具调用事件到 toolCall$
@@ -28,14 +31,18 @@ export class AgentEventHandler {
         const lastMsg = currentMessages[currentMessages.length - 1]
         if (!lastMsg || lastMsg.role !== 'assistant' || !lastMsg.parts) return
         for (const part of lastMsg.parts) {
-            if (part.type === 'tool-invocation') {
+            if (part.type !== 'tool-invocation') continue
+            const inv = part.toolInvocation
+            // Only emit once when the tool call is finalized (state === 'call')
+            if (inv.state === 'call' && !this.emittedToolCallIds.has(inv.toolCallId)) {
+                this.emittedToolCallIds.add(inv.toolCallId)
                 this.sessionManager.toolCall$.next({
                     toolCall: {
-                        id: part.toolInvocation.toolCallId,
+                        id: inv.toolCallId,
                         type: 'function',
                         function: {
-                            name: part.toolInvocation.toolName,
-                            arguments: JSON.stringify(part.toolInvocation.args),
+                            name: inv.toolName,
+                            arguments: JSON.stringify(inv.args),
                         },
                     }
                 })
@@ -64,6 +71,9 @@ export class AgentEventHandler {
                 break
             case EventType.TOOL_CALL_ARGS_DELTA:
                 this.handleToolCallArgsDelta(event as ToolCallArgsDeltaEvent)
+                break
+            case EventType.TOOL_CALL_ARGS:
+                this.handleToolCallArgs(event as ToolCallArgsEvent)
                 break
             case EventType.TOOL_CALL_END:
                 this.handleToolCallEnd()
@@ -134,12 +144,92 @@ export class AgentEventHandler {
         this.currentToolCallId = event.toolCallId
         this.currentToolCallName = event.toolName
         this.currentToolCallArgs = ''
+
+        // Insert an early tool-invocation part so users see immediate feedback
+        const currentMessages = this.sessionManager.getMessages()
+        const lastMessage = currentMessages[currentMessages.length - 1]
+
+        const invocationPart = {
+            type: 'tool-invocation' as const,
+            toolInvocation: {
+                state: 'partial-call' as const,
+                toolCallId: this.currentToolCallId,
+                toolName: this.currentToolCallName,
+                // While args stream in, store raw string for preview; will be parsed on end
+                args: '' as unknown as Record<string, unknown>,
+            },
+        }
+
+        if (lastMessage && lastMessage.role === 'assistant') {
+            this.sessionManager.setMessages([
+                ...currentMessages.slice(0, -1),
+                {
+                    ...lastMessage,
+                    parts: [...(lastMessage.parts || []), invocationPart],
+                }
+            ])
+        } else {
+            this.sessionManager.setMessages([
+                ...currentMessages,
+                {
+                    id: v4(),
+                    role: 'assistant',
+                    parts: [invocationPart],
+                }
+            ])
+        }
     }
 
     private handleToolCallArgsDelta(event: ToolCallArgsDeltaEvent) {
-        if (this.currentToolCallId === event.toolCallId) {
-            this.currentToolCallArgs += event.argsDelta
+        if (this.currentToolCallId !== event.toolCallId) return
+        this.currentToolCallArgs += event.argsDelta
+
+        // Update the last tool-invocation part with streaming args
+        const currentMessages = this.sessionManager.getMessages()
+        const lastMessage = currentMessages[currentMessages.length - 1]
+        if (!lastMessage || lastMessage.role !== 'assistant' || !lastMessage.parts?.length) return
+
+        const updatedParts = [...lastMessage.parts]
+        for (let i = updatedParts.length - 1; i >= 0; i--) {
+            const part = updatedParts[i]
+            if (part.type === 'tool-invocation' && part.toolInvocation.toolCallId === event.toolCallId) {
+                // Try to parse the partial JSON; if it fails, keep showing the raw string
+                let parsed: any = part.toolInvocation.args
+                try {
+                    parsed = JSON.parse(this.currentToolCallArgs)
+                } catch {
+                    parsed = this.currentToolCallArgs as unknown as Record<string, unknown>
+                }
+                updatedParts[i] = {
+                    ...part,
+                    toolInvocation: {
+                        ...part.toolInvocation,
+                        state: 'partial-call',
+                        args: parsed,
+                    }
+                }
+                break
+            }
         }
+
+        this.sessionManager.setMessages([
+            ...currentMessages.slice(0, -1),
+            {
+                ...lastMessage,
+                parts: updatedParts,
+            }
+        ])
+    }
+
+    private handleToolCallArgs(event: ToolCallArgsEvent) {
+        if (this.currentToolCallId !== event.toolCallId) return
+        this.currentToolCallArgs = event.args
+        // Reuse delta handler logic to update UI
+        this.handleToolCallArgsDelta({
+            type: EventType.TOOL_CALL_ARGS_DELTA,
+            toolCallId: event.toolCallId,
+            argsDelta: '',
+        })
     }
 
     private handleToolCallEnd() {
@@ -159,21 +249,30 @@ export class AgentEventHandler {
             const lastMessage = currentMessages[currentMessages.length - 1]
 
             if (lastMessage && lastMessage.role === 'assistant') {
-                this.sessionManager.setMessages(
-                    currentMessages.map((msg, index) => {
-                        if (index === currentMessages.length - 1 && msg.role === 'assistant') {
-                            return {
-                                ...msg,
-                                parts: [...(msg.parts || []), {
-                                    type: 'tool-invocation',
-                                    toolInvocation: toolCallToToolInvocation(toolCall),
-                                }]
-                            }
+                // Update the existing invocation part to finalized 'call' state with parsed args
+                const updatedParts = [...(lastMessage.parts || [])]
+                for (let i = updatedParts.length - 1; i >= 0; i--) {
+                    const part = updatedParts[i]
+                    if (part.type === 'tool-invocation' && part.toolInvocation.toolCallId === this.currentToolCallId) {
+                        updatedParts[i] = {
+                            ...part,
+                            toolInvocation: {
+                                ...toolCallToToolInvocation(toolCall),
+                                state: 'call',
+                            },
                         }
-                        return msg
-                    })
-                )
+                        break
+                    }
+                }
+                this.sessionManager.setMessages([
+                    ...currentMessages.slice(0, -1),
+                    {
+                        ...lastMessage,
+                        parts: updatedParts,
+                    }
+                ])
             } else {
+                // Fallback: if no assistant message exists, create one
                 this.sessionManager.setMessages([
                     ...currentMessages,
                     {
@@ -181,7 +280,10 @@ export class AgentEventHandler {
                         role: 'assistant',
                         parts: [{
                             type: 'tool-invocation',
-                            toolInvocation: toolCallToToolInvocation(toolCall),
+                            toolInvocation: {
+                                ...toolCallToToolInvocation(toolCall),
+                                state: 'call',
+                            },
                         }],
                     }
                 ])

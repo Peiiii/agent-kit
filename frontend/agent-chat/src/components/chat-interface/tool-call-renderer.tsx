@@ -43,16 +43,26 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
     )
   }
 
-  // 工具信息，参数
+  // 工具信息，参数（包含流式参数和执行中状态）
   return (
     <div className="rounded-lg border bg-background p-2">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium">工具调用</span>
+        <span className="text-sm font-medium">
+          工具调用
+          {toolInvocation.state === 'partial-call' && (
+            <span className="ml-2 text-xs text-muted-foreground">准备参数中…</span>
+          )}
+          {toolInvocation.state === 'call' && (
+            <span className="ml-2 text-xs text-muted-foreground">执行中…</span>
+          )}
+        </span>
         <span className="text-xs text-muted-foreground">{toolInvocation.toolName}</span>
       </div>
         <div className="rounded-md bg-muted p-2">
           <pre className="text-sm whitespace-pre-wrap break-words" style={{ maxHeight: '12rem', overflowY: 'auto' }}>
-            {JSON.stringify(toolInvocation.args, null, 2)}
+            {typeof toolInvocation.args === 'string'
+              ? toolInvocation.args
+              : JSON.stringify(toolInvocation.args, null, 2)}
           </pre>
         </div>
     </div>
