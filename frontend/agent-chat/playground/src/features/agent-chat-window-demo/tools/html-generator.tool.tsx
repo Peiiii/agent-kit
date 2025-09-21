@@ -1,5 +1,7 @@
 import type { Tool, ToolCall, ToolInvocation } from "@agent-labs/agent-chat"
 import * as React from "react"
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 // A simple, high-quality HTML generator tool with preview support.
 // - Frontend-execution with intentional delay to simulate long-running tools
@@ -63,6 +65,63 @@ const buildFromSpec = (args: Required<Pick<Args, 'title'>> & Partial<Args>): str
   return ensureDocument(content, title, css, js)
 }
 
+const generateHtmlFromArgs = (args: Args): string => {
+  if (args.html && args.html.trim().length > 0) {
+    return ensureDocument(args.html, args.title, args.css, args.js)
+  }
+  return buildFromSpec({ title: args.title || 'Preview', spec: args.spec, css: args.css, js: args.js })
+}
+
+const extractHtmlFromArgsString = (raw: string): string | undefined => {
+  const cleaned = raw.trim()
+  if (!cleaned) return undefined
+
+  // Try to parse JSON if it looks complete enough
+  try {
+    const parsed = JSON.parse(cleaned)
+    if (typeof parsed === 'object' && parsed) {
+      return generateHtmlFromArgs(parsed as Args)
+    }
+  } catch {
+    // fall through to heuristic extraction
+  }
+
+  const htmlKeyIndex = cleaned.lastIndexOf('"html"')
+  if (htmlKeyIndex >= 0) {
+    const colonIndex = cleaned.indexOf(':', htmlKeyIndex)
+    if (colonIndex >= 0) {
+      const firstQuote = cleaned.indexOf('"', colonIndex + 1)
+      if (firstQuote >= 0) {
+        let cursor = firstQuote + 1
+        let htmlBuffer = ''
+        let escaped = false
+        while (cursor < cleaned.length) {
+          const ch = cleaned[cursor]
+          if (ch === '"' && !escaped) {
+            break
+          }
+          if (ch === '\\' && !escaped) {
+            escaped = true
+          } else {
+            escaped = false
+            htmlBuffer += ch
+          }
+          cursor += 1
+        }
+        if (htmlBuffer) {
+          return ensureDocument(htmlBuffer.replace(/\\n/g, '\n').replace(/\\"/g, '"'))
+        }
+      }
+    }
+  }
+
+  if (cleaned.includes('<')) {
+    return ensureDocument(cleaned.replace(/\\n/g, '\n').replace(/\\"/g, '"'))
+  }
+
+  return undefined
+}
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export const createHtmlGeneratorTool = (): Tool => ({
@@ -79,55 +138,34 @@ export const createHtmlGeneratorTool = (): Tool => ({
       simulateDelayMs: { type: 'number' as const, description: '模拟执行耗时（毫秒，默认 5000）' },
     },
   },
-  execute: async (toolCall: ToolCall) => {
-    try {
-      const args = JSON.parse(toolCall.function.arguments) as Args
-      const waitMs = Math.max(0, Math.min(120000, args.simulateDelayMs ?? 8000))
-
-      let html = ''
-      if (args.html && args.html.trim().length > 0) {
-        // User/AI provided full or partial HTML
-        html = ensureDocument(args.html, args.title, args.css, args.js)
-      } else {
-        // Build from spec
-        html = buildFromSpec({ title: args.title || 'Preview', spec: args.spec, css: args.css, js: args.js })
-      }
-
-      // Simulate long-running tool
-      await delay(waitMs)
-
-      const result: Result = {
-        html,
-        meta: {
-          title: args.title || 'Preview',
-          length: html.length,
-          hasScript: /<script[\s>]/i.test(html),
-        },
-        status: 'success',
-      }
-
-      return result as any
-    } catch (e) {
-      const err: Result = {
-        html: '',
-        meta: { title: 'Error', length: 0, hasScript: false },
-        status: 'error',
-        error: e instanceof Error ? e.message : String(e),
-      }
-      return err as any
-    }
-  },
   render: (toolInvocation: ToolInvocation) => {
     // Resolve preview content: prefer result.html; else try args.html when valid JSON
     const args = (toolInvocation.args || {}) as Args | string
     const isArgsObject = typeof args === 'object' && args !== null
-    const liveArgsHtml = isArgsObject && typeof (args as Args).html === 'string' ? (args as Args).html : undefined
-
+    const argsObject = isArgsObject ? (args as Args) : undefined
+    console.log('[createHtmlGeneratorTool] render', toolInvocation)
     const result = toolInvocation.result as Result | undefined
     const finalHtml = result?.html
-    const previewHtml = finalHtml || (liveArgsHtml && liveArgsHtml.trim().length > 0 ? ensureDocument(liveArgsHtml) : undefined)
+    let pendingHtml = finalHtml
+    if (!pendingHtml && argsObject) {
+      try {
+        pendingHtml = generateHtmlFromArgs({ ...argsObject })
+      } catch {
+        pendingHtml = undefined
+      }
+    }
 
-    const [tab, setTab] = React.useState<'preview' | 'source'>('preview')
+    if (!pendingHtml && typeof args === 'string') {
+      pendingHtml = extractHtmlFromArgsString(args)
+    }
+
+    const previewHtml = pendingHtml
+
+    const [tab, setTab] = React.useState<'preview' | 'source'>('source')
+
+    React.useEffect(() => {
+      setTab(toolInvocation.state === 'result' ? 'preview' : 'source')
+    }, [toolInvocation.toolCallId, toolInvocation.state])
 
     return (
       <div className="rounded-lg border bg-background">
@@ -153,6 +191,11 @@ export const createHtmlGeneratorTool = (): Tool => ({
                 <div>
                   { (args as Args).title && <div>标题: <code className="bg-muted px-1 rounded">{(args as Args).title}</code></div> }
                   { (args as Args).spec && <div className="mt-1">说明: <span className="whitespace-pre-wrap">{(args as Args).spec}</span></div> }
+                  {!result && pendingHtml && (
+                    <div className="mt-2 text-[10px] text-muted-foreground">
+                      预览基于当前参数实时生成，最终结果可能略有调整。
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -161,7 +204,8 @@ export const createHtmlGeneratorTool = (): Tool => ({
         <div className="px-3">
           <div className="flex gap-2 mb-2">
             <button
-              className={`text-xs px-2 py-1 rounded border ${tab === 'preview' ? 'bg-muted' : 'bg-background'}`}
+              className={`text-xs px-2 py-1 rounded border ${tab === 'preview' ? 'bg-muted' : 'bg-background'} ${toolInvocation.state !== 'result' ? 'opacity-60 cursor-not-allowed' : ''}`}
+              disabled={toolInvocation.state !== 'result'}
               onClick={() => setTab('preview')}
             >预览</button>
             <button
@@ -185,10 +229,27 @@ export const createHtmlGeneratorTool = (): Tool => ({
               )}
             </div>
           ) : (
-            <div className="rounded-md bg-muted p-2" style={{ maxHeight: 360, overflowY: 'auto' }}>
-              <pre className="text-xs whitespace-pre-wrap break-words">
-                {finalHtml || liveArgsHtml || '（暂无源码）'}
-              </pre>
+            <div className="rounded-md border" style={{ maxHeight: 360, overflow: 'hidden' }}>
+              {pendingHtml ? (
+                <SyntaxHighlighter
+                  language="html"
+                  style={vscDarkPlus}
+                  PreTag="div"
+                  wrapLongLines
+                  customStyle={{
+                    whiteSpace: 'pre',
+                    overflowX: 'auto',
+                    overflowY: 'auto',
+                    maxHeight: 360,
+                    margin: 0,
+                    padding: '0.75rem',
+                  }}
+                >
+                  {pendingHtml}
+                </SyntaxHighlighter>
+              ) : (
+                <div className="p-2 text-xs text-muted-foreground">等待 HTML 生成…</div>
+              )}
             </div>
           )}
         </div>

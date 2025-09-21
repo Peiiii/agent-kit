@@ -6,3 +6,4 @@ dist
 .eslintcache
 *.local.vscode/
 .vscode
+.env
