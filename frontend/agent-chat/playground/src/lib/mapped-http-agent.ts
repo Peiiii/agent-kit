@@ -10,8 +10,9 @@ import {
   ToolCallResultEvent,
   ToolCallStartEvent,
 } from '@ag-ui/client'
-import { AgentEvent, EventType as AgentEventType, convertUIMessagesToMessages, RunAgentInput } from '@agent-labs/agent-chat'
+import { AgentEvent, EventType as AgentEventType, RunAgentInput } from "@agent-labs/agent-chat"
 import { EMPTY, map, Subscribable } from 'rxjs'
+import { convertUIMessagesToMessages } from './ui-message'
 
 export class MappedHttpAgent {
   private agent: HttpAgent
