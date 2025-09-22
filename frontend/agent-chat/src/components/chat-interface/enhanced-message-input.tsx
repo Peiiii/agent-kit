@@ -39,7 +39,6 @@ export const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
 }) => {
     const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
     const isComposingRef = React.useRef(false)
-    const [isFocused, setIsFocused] = React.useState(false)
 
     const autosize = React.useCallback(() => {
         const el = textareaRef.current
@@ -134,7 +133,6 @@ export const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
                     'relative w-full rounded-xl border transition-all duration-200',
                     'max-h-[60vh] overflow-hidden flex flex-col',
                     getVariantStyles(),
-                    isFocused && 'ring-2 ring-ring/20 ring-offset-2',
                     getSizeStyles()
                 )}
             >
@@ -171,8 +169,6 @@ export const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
                         onKeyDown={handleKeyDown}
                         onCompositionStart={handleCompositionStart}
                         onCompositionEnd={handleCompositionEnd}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => setIsFocused(false)}
                         placeholder={placeholder}
                         rows={1}
                         aria-label="Message input"  
