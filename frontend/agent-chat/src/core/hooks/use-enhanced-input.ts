@@ -1,149 +1,103 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
-import type { SmartSuggestion } from '../../components/chat-interface/smart-suggestions'
-import { DEFAULT_SUGGESTIONS } from '../../components/chat-interface/smart-suggestions'
+import { useState, useCallback, useRef } from 'react'
+
+// NOTE: Keep this hook UI-agnostic. Do not import UI components or icons here.
 
 export interface Attachment {
   id: string
-  type: 'image' | 'file' | 'code'
+  type: 'image' | 'file'
   name: string
-  preview?: string
   size?: number
   file?: File
 }
 
 export interface EnhancedInputState {
-  // 基础状态
-  input: string
-  isFocused: boolean
-  isProcessing: boolean
-  
-  // 多模态状态
+  // Voice
   isVoiceRecording: boolean
-  voiceText: string
   audioBlob?: Blob
-  
-  // 文件状态
+  // Files
   attachments: Attachment[]
-  isDragOver: boolean
-  
-  // 智能建议状态
-  suggestions: SmartSuggestion[]
-  showSuggestions: boolean
-  selectedSuggestionIndex: number
-  
-  // 表情选择器状态
+  // Emoji
   showEmojiPicker: boolean
-  
-  // 高级功能状态
-  showAdvancedOptions: boolean
-  currentMode: 'text' | 'voice' | 'image' | 'file'
 }
 
 export interface EnhancedInputActions {
-  // 基础操作
-  setInput: (input: string) => void
-  setFocused: (focused: boolean) => void
-  setProcessing: (processing: boolean) => void
-  
-  // 多模态操作
+  // Voice
   startVoiceRecording: () => void
   stopVoiceRecording: () => void
-  setVoiceText: (text: string) => void
   setAudioBlob: (blob: Blob | undefined) => void
-  
-  // 文件操作
+  // Files
   addAttachments: (files: File[]) => void
   removeAttachment: (id: string) => void
-  setDragOver: (dragOver: boolean) => void
-  
-  // 智能建议操作
-  setSuggestions: (suggestions: SmartSuggestion[]) => void
-  setShowSuggestions: (show: boolean) => void
-  selectSuggestion: (index: number) => void
-  applySuggestion: (suggestion: SmartSuggestion) => void
-  
-  // 表情选择器操作
+  clearAttachments: () => void
+  // Emoji
   setShowEmojiPicker: (show: boolean) => void
   insertEmoji: (emoji: string) => void
-  
-  // 高级功能操作
-  setShowAdvancedOptions: (show: boolean) => void
-  setCurrentMode: (mode: 'text' | 'voice' | 'image' | 'file') => void
-  
-  // 工具操作
-  clearAll: () => void
+  // Reset
   reset: () => void
 }
 
+// Suggestions removed
+
 export interface UseEnhancedInputOptions {
-  initialInput?: string
   maxAttachments?: number
-  maxFileSize?: number
-  acceptedFileTypes?: string[]
-  enableVoiceRecording?: boolean
-  enableFileUpload?: boolean
-  enableSmartSuggestions?: boolean
-  enableEmojiPicker?: boolean
-  customSuggestions?: SmartSuggestion[]
+  // Optional validators to keep this hook generic
+  validateFile?: (file: File) => boolean
+  classifyAttachment?: (file: File) => Attachment['type']
+  // When inserting an emoji, append text to the host input
+  onAppendText?: (text: string) => void
 }
 
 export const useEnhancedInput = (options: UseEnhancedInputOptions = {}): [EnhancedInputState, EnhancedInputActions] => {
   const {
-    initialInput = '',
     maxAttachments = 5,
-    customSuggestions = DEFAULT_SUGGESTIONS
+    validateFile,
+    classifyAttachment,
+    onAppendText,
   } = options
 
-  // 基础状态
-  const [input, setInput] = useState(initialInput)
-  const [isFocused, setIsFocused] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  
-  // 多模态状态
+  // Voice
   const [isVoiceRecording, setIsVoiceRecording] = useState(false)
-  const [voiceText, setVoiceText] = useState('')
   const [audioBlob, setAudioBlob] = useState<Blob | undefined>()
-  
-  // 文件状态
-  const [attachments, setAttachments] = useState<Attachment[]>([])
-  const [isDragOver, setIsDragOver] = useState(false)
-  
-  // 智能建议状态
-  const [suggestions, setSuggestions] = useState<SmartSuggestion[]>(customSuggestions)
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
-  
-  // 表情选择器状态
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  
-  // 高级功能状态
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
-  const [currentMode, setCurrentMode] = useState<'text' | 'voice' | 'image' | 'file'>('text')
 
-  // 语音录制相关
+  // Files
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+
+  // Emoji
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
-  // 处理文件上传
+  // Add files (with optional validation/classification)
   const addAttachments = useCallback((files: File[]) => {
-    const newAttachments: Attachment[] = files.map(file => ({
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: file.type.startsWith('image/') ? 'image' : 
-            file.name.endsWith('.js') || file.name.endsWith('.ts') || file.name.endsWith('.tsx') || file.name.endsWith('.jsx') ? 'code' : 'file',
-      name: file.name,
-      size: file.size,
-      file
-    }))
+    const items: Attachment[] = []
+    for (const file of files) {
+      if (validateFile && !validateFile(file)) continue
+      const type: Attachment['type'] = classifyAttachment
+        ? classifyAttachment(file)
+        : file.type.startsWith('image/') ? 'image' : 'file'
+      items.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        type,
+        name: file.name,
+        size: file.size,
+        file,
+      })
+    }
+    if (items.length === 0) return
+    setAttachments(prev => [...prev, ...items].slice(0, maxAttachments))
+  }, [maxAttachments, validateFile, classifyAttachment])
 
-    setAttachments(prev => [...prev, ...newAttachments].slice(0, maxAttachments))
-  }, [maxAttachments])
-
-  // 删除附件
+  // Remove a file
   const removeAttachment = useCallback((id: string) => {
     setAttachments(prev => prev.filter(att => att.id !== id))
   }, [])
 
-  // 语音录制开始
+  const clearAttachments = useCallback(() => {
+    setAttachments([])
+  }, [])
+
+  // Voice: start
   const startVoiceRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -170,7 +124,7 @@ export const useEnhancedInput = (options: UseEnhancedInputOptions = {}): [Enhanc
     }
   }, [])
 
-  // 语音录制停止
+  // Voice: stop
   const stopVoiceRecording = useCallback(() => {
     if (mediaRecorderRef.current && isVoiceRecording) {
       mediaRecorderRef.current.stop()
@@ -178,99 +132,37 @@ export const useEnhancedInput = (options: UseEnhancedInputOptions = {}): [Enhanc
     }
   }, [isVoiceRecording])
 
-  // 应用智能建议
-  const applySuggestion = useCallback((suggestion: SmartSuggestion) => {
-    setInput(prev => prev + suggestion.text)
-    setShowSuggestions(false)
-    
-    // 更新建议使用频率
-    setSuggestions(prev => 
-      prev.map(s => 
-        s.id === suggestion.id 
-          ? { ...s, usage: (s.usage || 0) + 1 }
-          : s
-      )
-    )
-  }, [])
-
-  // 插入表情
+  // Emoji: append and close
   const insertEmoji = useCallback((emoji: string) => {
-    setInput(prev => prev + emoji)
+    if (onAppendText) onAppendText(emoji)
     setShowEmojiPicker(false)
-  }, [])
+  }, [onAppendText])
 
-  // 清空所有
-  const clearAll = useCallback(() => {
-    setInput('')
-    setAttachments([])
-    setVoiceText('')
-    setAudioBlob(undefined)
-    setShowSuggestions(false)
-    setShowEmojiPicker(false)
-  }, [])
-
-  // 重置
+  // Reset
   const reset = useCallback(() => {
-    setInput(initialInput)
     setAttachments([])
-    setVoiceText('')
     setAudioBlob(undefined)
-    setShowSuggestions(false)
     setShowEmojiPicker(false)
     setIsVoiceRecording(false)
-    setIsProcessing(false)
-    setCurrentMode('text')
-  }, [initialInput])
+  }, [])
 
-  // 自动显示建议
-  useEffect(() => {
-    if (input.length === 0 && isFocused) {
-      setShowSuggestions(true)
-    } else if (input.length > 0) {
-      setShowSuggestions(false)
-    }
-  }, [input, isFocused])
-
-  // 状态对象
   const state: EnhancedInputState = {
-    input,
-    isFocused,
-    isProcessing,
     isVoiceRecording,
-    voiceText,
     audioBlob,
     attachments,
-    isDragOver,
-    suggestions,
-    showSuggestions,
-    selectedSuggestionIndex,
     showEmojiPicker,
-    showAdvancedOptions,
-    currentMode
   }
 
-  // 操作对象
   const actions: EnhancedInputActions = {
-    setInput,
-    setFocused: setIsFocused,
-    setProcessing: setIsProcessing,
     startVoiceRecording,
     stopVoiceRecording,
-    setVoiceText,
     setAudioBlob,
     addAttachments,
     removeAttachment,
-    setDragOver: setIsDragOver,
-    setSuggestions,
-    setShowSuggestions,
-    selectSuggestion: setSelectedSuggestionIndex,
-    applySuggestion,
+    clearAttachments,
     setShowEmojiPicker,
     insertEmoji,
-    setShowAdvancedOptions,
-    setCurrentMode,
-    clearAll,
-    reset
+    reset,
   }
 
   return [state, actions]

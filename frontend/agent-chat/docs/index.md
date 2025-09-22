@@ -28,11 +28,13 @@ Agent Chat is a React library that enables you to create sophisticated AI chat i
 - **[API Reference](./api-reference.md)** - Complete API documentation
 - **[Types](./api-reference.md#types)** - TypeScript interfaces and types
 - **[Hooks](./api-reference.md#hooks)** - React hooks for chat functionality
+- **[Input Extensions](./input-extensions.md)** - Extensible input system documentation
 
 ### 🎯 Advanced Topics
 - **[Tool Patterns](./tutorial.md#tool-system)** - Frontend, backend, and user-interaction tools
 - **[Custom Rendering](./tutorial.md#custom-tool-renderers)** - Override default tool UI
 - **[Context Management](./tutorial.md#context-management)** - Provide additional agent context
+- **[Input Extensions](./input-extensions.md)** - Create custom input features and plugins
 
 ## Quick Examples
 

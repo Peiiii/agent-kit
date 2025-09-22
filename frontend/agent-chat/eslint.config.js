@@ -65,7 +65,7 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-interface': ['warn', {
         'allowSingleExtends': false
       }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
 )

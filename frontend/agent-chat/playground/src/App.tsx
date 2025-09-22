@@ -1,4 +1,4 @@
-import { AgentChatCore, AgentChatRef } from '@agent-labs/agent-chat'
+import { AgentChatCore, AgentChatRef, Tool, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
 import { VSCodeLayout } from 'composite-kit'
 import {
   Bell,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
+import { Button } from './components/ui/button'
 import { AgentChatWindowDemo } from './features/agent-chat-window-demo'
 import { EnhancedInputDemo } from './features/enhanced-input-demo'
 import { InstructionSettings } from './features/settings/components/instruction-settings'
@@ -37,10 +38,14 @@ const agent = new MappedHttpAgent({
 function AgentChatWithContext({
   allInstructions,
   agentChatRef,
+  tools,
 }: {
+  tools: Tool[]
   allInstructions: Array<{ description: string; value: string }>
   agentChatRef: React.RefObject<AgentChatRef | null>
 }) {
+  const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
+  const agentSessionManager = useAgentSessionManager({ agent, getToolDefs: () => toolDefs, getContexts: () => [...allInstructions, { description: '待办事项列表', value: JSON.stringify(todoListContext) }], initialMessages: [], getToolExecutor: (name: string) => toolExecutors?.[name] })
   const { state, addTodo, toggleTodo, deleteTodo, updateTodo } = useTodo()
   const todoListContext = useMemo(
     () => ({
@@ -71,15 +76,8 @@ function AgentChatWithContext({
   return (
     <AgentChatCore
       ref={agentChatRef}
-      agent={agent}
-      tools={todoTools}
-      contexts={[
-        ...allInstructions,
-        {
-          description: '待办事项列表',
-          value: JSON.stringify(todoListContext),
-        },
-      ]}
+      agentSessionManager={agentSessionManager}
+      toolRenderers={toolRenderers}
       className="flex-1 overflow-y-auto"
       promptsProps={{
         items: [
@@ -392,6 +390,7 @@ export function App() {
                               <AgentChatWithContext
                                 allInstructions={allInstructions}
                                 agentChatRef={agentChatRef}
+                                tools={[]}
                               />
                             </>
                           ) : activeDemo === 'window' ? (

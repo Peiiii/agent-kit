@@ -133,7 +133,6 @@ export function AgentChatWindowDemo() {
         getToolExecutor: (name: string) => toolExecutors?.[name]
     })
 
-    // 模型选择器：作为输入区扩展（inside-left 插槽）
     const modelSelectorExt = useMemo<ChatInputExtension>(() => ({
         id: 'model-selector',
         placement: 'bottom-left',
@@ -144,7 +143,7 @@ export function AgentChatWindowDemo() {
                     const v = e.target.value
                     setDraft(d => ({ ...d, meta: { ...(d.meta ?? {}), modelId: v } }))
                 }}
-                className="h-7 rounded-md border bg-background px-2 text-xs text-foreground shadow-sm hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-7 rounded-md border bg-background px-2 text-xs text-foreground shadow-sm hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring focus:bg-background active:bg-background"
                 aria-label="模型选择器"
                 title="选择模型"
             >
@@ -153,7 +152,6 @@ export function AgentChatWindowDemo() {
                 <option value="o3-mini">o3‑mini</option>
             </select>
         ),
-        // 可选的提交前处理：这里不改文本，仅示例
         beforeSend: (draft) => draft,
     }), [modelId])
 

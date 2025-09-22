@@ -14,7 +14,7 @@ export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => 
     args: JSON.parse(toolCall.function.arguments),
     state: "call",
   }
-} 
+}
 
 /**
  * 将 Message 数组转换为 UIMessage 数组
@@ -32,7 +32,7 @@ export const convertMessagesToUIMessages = (
     if (message.role === 'assistant') {
       const assistantMessage = message as AssistantMessage
       if (assistantMessage.toolCalls && assistantMessage.toolCalls.length > 0) {
-        assistantMessage.toolCalls.forEach((toolCall) => {
+        assistantMessage.toolCalls.forEach((toolCall: ToolCall) => {
           let parsedArgs: any = null;
           try {
             if (typeof toolCall.function.arguments === 'string') {
@@ -94,7 +94,7 @@ export const convertMessagesToUIMessages = (
       if (message.role === 'assistant') {
         const assistantMessage = message as AssistantMessage
         if (assistantMessage.toolCalls && assistantMessage.toolCalls.length > 0) {
-          assistantMessage.toolCalls.forEach((toolCall) => {
+          assistantMessage.toolCalls.forEach((toolCall: ToolCall) => {
             const toolInvocation = toolCallMap.get(toolCall.id)
             if (toolInvocation) {
               parts.push({

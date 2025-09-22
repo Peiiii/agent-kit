@@ -32,7 +32,6 @@ export type ChatInputExtensionPlacement =
 export interface ComposerDraft {
   text: string
   meta?: Record<string, unknown>
-  attachments?: Array<{ id: string; kind: 'file' | 'image'; name: string }>
 }
 
 export interface ChatInputExtensionContext {
@@ -154,31 +153,6 @@ export interface MessageInputProps {
   headerRightSlot?: React.ReactNode
   footerLeftSlot?: React.ReactNode
   footerRightSlot?: React.ReactNode
-  // Enhanced input features
-  onVoiceStart?: () => void
-  onVoiceStop?: () => void
-  onVoiceResult?: (text: string) => void
-  isVoiceRecording?: boolean
-  onFileUpload?: (files: File[]) => void
-  maxFileSize?: number
-  acceptedFileTypes?: string[]
-  suggestions?: Array<{
-    id: string
-    text: string
-    icon: React.ReactNode
-    category: string
-  }>
-  onSuggestionClick?: (suggestion: any) => void
-  attachments?: Array<{
-    id: string
-    type: 'image' | 'file' | 'code'
-    name: string
-    preview?: string
-    size?: number
-  }>
-  onAttachmentRemove?: (id: string) => void
-  showAdvancedOptions?: boolean
-  onAdvancedOptionClick?: (option: string) => void
   isProcessing?: boolean
   processingMessage?: string
   variant?: 'default' | 'minimal' | 'glass'
