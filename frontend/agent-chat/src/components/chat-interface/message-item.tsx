@@ -27,7 +27,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       <div
         className={clsx(
           'flex flex-col gap-2',
-          isUser ? 'items-end w-auto max-w-[80%]' : 'items-start w-full',
+          isUser ? 'items-end w-auto' : 'items-start w-full',
         )}
       >
         {showAvatar && (
