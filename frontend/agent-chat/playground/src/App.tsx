@@ -16,6 +16,7 @@ import {
 import { useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { AgentChatWindowDemo } from './features/agent-chat-window-demo'
+import { EnhancedInputDemo } from './features/enhanced-input-demo'
 import { InstructionSettings } from './features/settings/components/instruction-settings'
 import { TodoList } from './features/todo/components/todo-list'
 import { TodoProvider, useTodo } from './features/todo/hooks/use-todo'
@@ -174,7 +175,7 @@ export function App() {
 
   const [activeActivityItem, setActiveActivityItem] = useState('explorer')
   const [isActivityBarExpanded, setIsActivityBarExpanded] = useState(false)
-  const [activeDemo, setActiveDemo] = useState<'todo' | 'window'>('window')
+  const [activeDemo, setActiveDemo] = useState<'todo' | 'window' | 'input'>('input')
 
   // 定义系统指令和用户偏好
   const defaultInstructions = useMemo(
@@ -362,6 +363,11 @@ export function App() {
                               isActive={activeDemo === 'window'}
                               onClick={() => setActiveDemo('window')}
                             />
+                            <Editor.Tab
+                              title="增强输入 Demo"
+                              isActive={activeDemo === 'input'}
+                              onClick={() => setActiveDemo('input')}
+                            />
                           </div>
                           {activeDemo === 'todo' && (
                             <button
@@ -388,8 +394,10 @@ export function App() {
                                 agentChatRef={agentChatRef}
                               />
                             </>
-                          ) : (
+                          ) : activeDemo === 'window' ? (
                             <AgentChatWindowDemo />
+                          ) : (
+                            <EnhancedInputDemo />
                           )}
                         </div>
                       </Editor.Content>

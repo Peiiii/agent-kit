@@ -13,6 +13,44 @@ export interface SenderProps {
   placeholder?: string
 }
 
+// --- Composer extensibility (input area plugins) ---
+// Lightweight types to support pluggable input extensions without
+// introducing hard-coded business logic in the library.
+
+export type ChatInputExtensionPlacement =
+  | 'inside-left'      // tiny elements inside input (avoid for complex UI)
+  | 'inside-right'     // tiny elements near send/stop
+  | 'top-left'         // header toolbar inside composer (best for tools)
+  | 'top-right'        // header toolbar right area
+  | 'bottom-left'      // footer bar inside composer (best for model switch)
+  | 'bottom-right'     // footer bar right area (token, cost, counter)
+  | 'below'            // legacy: separate row below composer (maps to bottom-left)
+  | 'above'            // legacy: separate row above composer
+  | 'toolbar-left'     // legacy alias for top-left
+  | 'toolbar-right'    // legacy alias for top-right
+
+export interface ComposerDraft {
+  text: string
+  meta?: Record<string, unknown>
+  attachments?: Array<{ id: string; kind: 'file' | 'image'; name: string }>
+}
+
+export interface ChatInputExtensionContext {
+  draft: ComposerDraft
+  setDraft: (next: ComposerDraft | ((d: ComposerDraft) => ComposerDraft)) => void
+  isAgentResponding: boolean
+  requestAbort?: () => void
+}
+
+export interface ChatInputExtension {
+  id: string
+  placement?: ChatInputExtensionPlacement
+  render: (ctx: ChatInputExtensionContext) => React.ReactNode
+  beforeSend?: (
+    draft: ComposerDraft
+  ) => Promise<ComposerDraft | { abort: true }> | ComposerDraft | { abort: true }
+}
+
 export interface PromptsProps {
   items: Array<{
     id: string
@@ -29,6 +67,14 @@ export interface AgentChatProps {
   promptsProps?: PromptsProps
   messageItemProps?: Partial<MessageItemProps>
   aboveInputComponent?: React.ReactNode
+  // Extensibility hooks
+  inputExtensions?: ChatInputExtension[]
+  onBeforeSend?: (
+    draft: ComposerDraft,
+  ) => Promise<ComposerDraft | { abort: true }> | ComposerDraft | { abort: true }
+  // Optional external control of draft.meta if the host app wants to sync
+  meta?: Record<string, unknown>
+  onMetaChange?: (meta: Record<string, unknown>) => void
 }
 
 export interface AgentChatRef {
@@ -81,6 +127,16 @@ export interface ChatInterfaceProps {
   promptsProps?: PromptsProps
   messageItemProps?: Partial<MessageItemProps>
   aboveInputComponent?: React.ReactNode
+  // Extensibility hooks
+  inputExtensions?: ChatInputExtension[]
+  onBeforeSend?: (
+    draft: ComposerDraft,
+  ) => Promise<ComposerDraft | { abort: true }> | ComposerDraft | { abort: true }
+  // Allow ChatInterface to send a processed draft instead of plain text
+  onSendDraft?: (draft: ComposerDraft) => void
+  // Optional external control of draft.meta if the host app wants to sync
+  meta?: Record<string, unknown>
+  onMetaChange?: (meta: Record<string, unknown>) => void
 }
 
 export interface MessageInputProps {
@@ -90,6 +146,43 @@ export interface MessageInputProps {
   isAgentResponding: boolean
   onAbort?: () => void
   placeholder?: string
+  // Slots inside input container for extensions
+  insideLeftSlot?: React.ReactNode
+  insideRightSlot?: React.ReactNode
+  // Header/Footer rows inside the composer (tools/status)
+  headerLeftSlot?: React.ReactNode
+  headerRightSlot?: React.ReactNode
+  footerLeftSlot?: React.ReactNode
+  footerRightSlot?: React.ReactNode
+  // Enhanced input features
+  onVoiceStart?: () => void
+  onVoiceStop?: () => void
+  onVoiceResult?: (text: string) => void
+  isVoiceRecording?: boolean
+  onFileUpload?: (files: File[]) => void
+  maxFileSize?: number
+  acceptedFileTypes?: string[]
+  suggestions?: Array<{
+    id: string
+    text: string
+    icon: React.ReactNode
+    category: string
+  }>
+  onSuggestionClick?: (suggestion: any) => void
+  attachments?: Array<{
+    id: string
+    type: 'image' | 'file' | 'code'
+    name: string
+    preview?: string
+    size?: number
+  }>
+  onAttachmentRemove?: (id: string) => void
+  showAdvancedOptions?: boolean
+  onAdvancedOptionClick?: (option: string) => void
+  isProcessing?: boolean
+  processingMessage?: string
+  variant?: 'default' | 'minimal' | 'glass'
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export interface MessageItemProps {

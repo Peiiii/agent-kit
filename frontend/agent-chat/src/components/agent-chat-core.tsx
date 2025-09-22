@@ -4,6 +4,7 @@ import { useAgentSessionManagerState } from '../core/hooks/use-agent-chat'
 import type {
   AgentChatProps,
   AgentChatRef,
+  ComposerDraft,
 } from '../core/types/component-types'
 import '../styles/globals.css'
 import { ChatInterface } from './chat-interface'
@@ -18,6 +19,10 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
       promptsProps,
       messageItemProps,
       aboveInputComponent,
+      inputExtensions,
+      onBeforeSend,
+      meta,
+      onMetaChange,
     },
     ref,
   ) => {
@@ -29,6 +34,15 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
     const handleSend = async () => {
       if (!isAgentResponding) {
         await handleSendMessage(input)
+        setInput('')
+      }
+    }
+
+    const handleSendDraft = async (draft: ComposerDraft) => {
+      if (!isAgentResponding) {
+        const text = (draft?.text ?? '').toString()
+        if (text.trim().length === 0) return
+        await handleSendMessage(text)
         setInput('')
       }
     }
@@ -52,11 +66,16 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
           input={input}
           onInputChange={setInput}
           onSend={handleSend}
+          onSendDraft={handleSendDraft}
           isAgentResponding={isAgentResponding}
           onAbort={abortAgentRun}
           promptsProps={promptsProps}
           messageItemProps={messageItemProps}
           aboveInputComponent={aboveInputComponent}
+          inputExtensions={inputExtensions}
+          onBeforeSend={onBeforeSend}
+          meta={meta}
+          onMetaChange={onMetaChange}
         />
       </div>
     )

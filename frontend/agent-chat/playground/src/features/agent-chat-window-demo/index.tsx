@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
-import { AgentChatRef, AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import { AgentChatRef, AgentChatWindow, useAgentSessionManager, useParseTools, type ChatInputExtension } from '@agent-labs/agent-chat'
 import { Bot, MessageSquare, Settings, Users, Zap } from 'lucide-react'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { MappedHttpAgent } from '../../lib/mapped-http-agent'
 import { createCalculatorTool, createGreetingTool, createUserConfirmationTool, createWeatherTool, createHtmlGeneratorTool, createOverflowTesterTool, createCodeBlockTesterTool } from './tools'
@@ -19,6 +19,8 @@ const DEFAULT_PROMPTS = [
 
 export function AgentChatWindowDemo() {
     const chatRef = useRef<AgentChatRef | null>(null)
+    // 当前模型选择（示例），默认值可自定义
+    const [modelId, setModelId] = useState<string>('gpt-4o-mini')
 
     // 创建工具列表
     const tools = useMemo(() => [
@@ -32,7 +34,7 @@ export function AgentChatWindowDemo() {
     ], [])
 
     // 定义上下文信息
-    const contexts = useMemo(() => [
+    const baseContexts = useMemo(() => [
         {
             description: '用户信息',
             value: JSON.stringify({
@@ -119,7 +121,41 @@ export function AgentChatWindowDemo() {
 
     const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 
-    const agentSessionManager = useAgentSessionManager({ agent, getToolDefs: () => toolDefs, getContexts: () => contexts, initialMessages: [], getToolExecutor: (name: string) => toolExecutors?.[name] })
+    // 将模型选择通过上下文传给 Agent；库层不耦合供应商
+    const agentSessionManager = useAgentSessionManager({
+        agent,
+        getToolDefs: () => toolDefs,
+        getContexts: () => [
+            ...baseContexts,
+            { description: 'model', value: modelId },
+        ],
+        initialMessages: [],
+        getToolExecutor: (name: string) => toolExecutors?.[name]
+    })
+
+    // 模型选择器：作为输入区扩展（inside-left 插槽）
+    const modelSelectorExt = useMemo<ChatInputExtension>(() => ({
+        id: 'model-selector',
+        placement: 'bottom-left',
+        render: ({ draft, setDraft }) => (
+            <select
+                value={(draft.meta?.modelId as string) ?? modelId}
+                onChange={(e) => {
+                    const v = e.target.value
+                    setDraft(d => ({ ...d, meta: { ...(d.meta ?? {}), modelId: v } }))
+                }}
+                className="h-7 rounded-md border bg-background px-2 text-xs text-foreground shadow-sm hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="模型选择器"
+                title="选择模型"
+            >
+                <option value="gpt-4o">GPT‑4o</option>
+                <option value="gpt-4o-mini">GPT‑4o mini</option>
+                <option value="o3-mini">o3‑mini</option>
+            </select>
+        ),
+        // 可选的提交前处理：这里不改文本，仅示例
+        beforeSend: (draft) => draft,
+    }), [modelId])
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -215,6 +251,13 @@ export function AgentChatWindowDemo() {
                 agentSessionManager={agentSessionManager}
                 toolRenderers={toolRenderers}
                 className="z-50"
+                // 传入扩展与 meta 同步回调
+                inputExtensions={[modelSelectorExt]}
+                meta={{ modelId }}
+                onMetaChange={(m) => {
+                    const next = (m?.modelId as string) ?? modelId
+                    if (next !== modelId) setModelId(next)
+                }}
                 promptsProps={{
                     items: DEFAULT_PROMPTS,
                     onItemClick: (item) => {

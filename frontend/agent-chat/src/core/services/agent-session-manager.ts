@@ -149,7 +149,6 @@ export class AgentSessionManager extends Disposable {
       this.handleAgentResponse(response as unknown as Observable<AgentEvent>)
     } catch (error) {
       if ((error as Error)?.name === 'AbortError') {
-        // 用户主动终止
         console.info('Agent run aborted')
       } else {
         console.error('Error running agent:', error)
