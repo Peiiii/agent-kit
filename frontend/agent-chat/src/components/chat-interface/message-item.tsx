@@ -26,8 +26,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     >
       <div
         className={clsx(
-          'flex w-full flex-col items-center gap-2',
-          isUser ? 'items-end' : 'items-start',
+          'flex flex-col gap-2',
+          isUser ? 'items-end w-auto max-w-[80%]' : 'items-start w-full',
         )}
       >
         {showAvatar && (
@@ -47,10 +47,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </Avatar>
         )}
         <div
-          className={`min-w-0 w-full overflow-hidden rounded-lg p-3 ${
+          className={`min-w-0 overflow-hidden rounded-lg p-3 ${
             isUser
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-foreground'
+              ? 'bg-primary text-primary-foreground w-auto'
+              : 'bg-muted text-foreground w-full'
           }`}
         >
           {uiMessage.parts.map((part, index) => {
