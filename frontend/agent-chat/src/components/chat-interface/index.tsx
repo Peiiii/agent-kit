@@ -141,6 +141,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {...messageItemProps}
           />
         ))}
+        {isAgentResponding && uiMessages.length > 0 && uiMessages[uiMessages.length - 1].role !== 'assistant' && (
+          <MessageItem
+            key="generating-placeholder"
+            uiMessage={{
+              id: 'generating-placeholder',
+              role: 'assistant',
+              parts: []
+            }}
+            toolRenderers={toolRenderers}
+            onToolResult={onToolResult}
+            isPending={true}
+            {...messageItemProps}
+          />
+        )}
       </div>
       {promptsProps && uiMessages.length === 0 && (
         <div className="border-t border-border/50 bg-gradient-to-b from-muted/30 to-background/95 backdrop-blur-sm px-4 py-6">

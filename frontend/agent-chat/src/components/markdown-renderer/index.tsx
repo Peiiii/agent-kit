@@ -109,8 +109,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         </pre>
       )
     },
-    p({ children }) {
-      return <p className="mb-2 leading-relaxed break-words">{children}</p>
+    p({ children, ...props }) {
+      return <p className="mb-2 leading-relaxed break-words" {...props}>{children}</p>
     },
     h1({ children }) {
       return <h1 className="text-2xl font-bold mt-6 mb-4">{children}</h1>
@@ -172,6 +172,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none w-full max-w-full min-w-0 overflow-hidden">
+      <style>{`
+        .prose p:last-of-type { margin-bottom: 0 !important; }
+      `}</style>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {content}
       </ReactMarkdown>

@@ -165,4 +165,5 @@ export interface MessageItemProps {
   onToolResult?: (result: ToolResult) => void
   className?: string
   showAvatar?: boolean
+  isPending?: boolean
 }

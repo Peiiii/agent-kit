@@ -4,6 +4,7 @@ import * as React from 'react'
 import clsx from 'clsx'
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { AIGeneratingIndicator } from './ai-generating-indicator'
 import { ToolCallRenderer } from './tool-call-renderer'
 import type { MessageItemProps } from '../../core/types/component-types'
 
@@ -13,6 +14,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onToolResult,
   className,
   showAvatar = true,
+  isPending = false
 }) => {
   const isUser = uiMessage.role === 'user'
 
@@ -47,33 +49,39 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </Avatar>
         )}
         <div
-          className={`min-w-0 overflow-hidden rounded-lg p-3 ${
+          className={`min-w-0 overflow-hidden rounded-lg px-3 py-4 ${
             isUser
               ? 'bg-primary text-primary-foreground w-auto'
               : 'bg-muted text-foreground w-full'
           }`}
         >
-          {uiMessage.parts.map((part, index) => {
-            if (part.type === 'text') {
-              return (
-                <div key={index} className="break-words">
-                  <MarkdownRenderer content={part.text} />
-                </div>
-              )
-            }
-            if (part.type === 'tool-invocation') {
-              return (
-                <div key={index} className="mt-1">
-                  <ToolCallRenderer
-                    toolInvocation={part.toolInvocation}
-                    toolRenderers={toolRenderers}
-                    onToolResult={onToolResult}
-                  />
-                </div>
-              )
-            }
-            return null
-          })}
+          <div className="[&>*:last-child]:mb-0">
+            {isPending ? (
+              <AIGeneratingIndicator />
+            ) : (
+              uiMessage.parts.map((part, index) => {
+                if (part.type === 'text') {
+                  return (
+                    <div key={index} className="break-words">
+                      <MarkdownRenderer content={part.text} />
+                    </div>
+                  )
+                }
+                if (part.type === 'tool-invocation') {
+                  return (
+                    <div key={index} className="mt-1">
+                      <ToolCallRenderer
+                        toolInvocation={part.toolInvocation}
+                        toolRenderers={toolRenderers}
+                        onToolResult={onToolResult}
+                      />
+                    </div>
+                  )
+                }
+                return null
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
