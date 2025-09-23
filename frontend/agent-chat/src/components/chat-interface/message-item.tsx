@@ -29,7 +29,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       <div
         className={clsx(
           'flex flex-col gap-2',
-          isUser ? 'items-end w-auto' : 'items-start w-full',
+          isUser ? 'items-end w-auto' : 'items-start w-auto',
         )}
       >
         {showAvatar && (
@@ -52,7 +52,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           className={`min-w-0 overflow-hidden rounded-lg px-3 py-4 ${
             isUser
               ? 'bg-primary text-primary-foreground w-auto'
-              : 'bg-muted text-foreground w-full'
+              : 'bg-muted text-foreground w-auto'
           }`}
         >
           <div className="[&>*:last-child]:mb-0">
