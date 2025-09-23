@@ -16,6 +16,7 @@ import {
 import { useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from './components/ui/button'
+import { ThemeToggle } from './components/theme-toggle'
 import { AgentChatWindowDemo } from './features/agent-chat-window-demo'
 import { EnhancedInputDemo } from './features/enhanced-input-demo'
 import { InstructionSettings } from './features/settings/components/instruction-settings'
@@ -367,17 +368,20 @@ export function App() {
                               onClick={() => setActiveDemo('input')}
                             />
                           </div>
-                          {activeDemo === 'todo' && (
-                            <button
-                              onClick={handlePoke}
-                              className="ml-auto flex items-center gap-1 px-2 py-1 rounded text-xs border border-muted bg-muted hover:bg-accent transition-colors"
-                              title="拍一拍唤醒 AI 助手"
-                              style={{ lineHeight: 1 }}
-                            >
-                              <Zap className="h-4 w-4 text-yellow-500" />
-                              <span>拍一拍</span>
-                            </button>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <ThemeToggle />
+                            {activeDemo === 'todo' && (
+                              <button
+                                onClick={handlePoke}
+                                className="flex items-center gap-1 px-2 py-1 rounded text-xs border border-muted bg-muted hover:bg-accent transition-colors"
+                                title="拍一拍唤醒 AI 助手"
+                                style={{ lineHeight: 1 }}
+                              >
+                                <Zap className="h-4 w-4 text-yellow-500" />
+                                <span>拍一拍</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </Editor.Header>
                       <Editor.Content>

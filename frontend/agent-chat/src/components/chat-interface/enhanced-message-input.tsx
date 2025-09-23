@@ -108,9 +108,9 @@ export const EnhancedMessageInput: React.FC<EnhancedMessageInputProps> = ({
             case 'minimal':
                 return 'border-0 bg-transparent shadow-none focus-within:ring-0'
             case 'glass':
-                return 'bg-background/80 backdrop-blur-md border-border/50 shadow-lg'
+                return 'bg-background/80 backdrop-blur-md border-border/70 shadow-lg'
             default:
-                return 'bg-background/95 backdrop-blur-sm border-border shadow-sm'
+                return 'bg-background/95 backdrop-blur-sm border-border/80 shadow-sm'
         }
     }
 
