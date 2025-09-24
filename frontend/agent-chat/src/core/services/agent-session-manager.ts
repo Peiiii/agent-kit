@@ -5,6 +5,7 @@ import { EventType, type AgentEvent, type IAgent, type ToolExecutor } from '../t
 import type { Context, ToolCall, ToolDefinition, ToolInvocationState, ToolResult } from '../types/agent'
 import type { UIMessage } from '../types/ui-message'
 import { AgentEventHandler } from './agent-event-handler'
+import { finalizePendingToolInvocations } from '../utils/ui-message'
 
 
 export interface IAgentProvider {
@@ -139,10 +140,12 @@ export class AgentSessionManager extends Disposable {
   runAgent = async () => {
     this.isAgentResponding$.next(true)
     try {
+      // Repair incomplete tool calls to satisfy providers that require tool results
+      const safeMessages = finalizePendingToolInvocations(this.getMessages())
       const response = await this.agentProvider.agent.run({
         threadId: this.threadId$.getValue() ?? "",
         runId: v4(),
-        messages: this.getMessages(),
+        messages: safeMessages,
         tools: this.agentProvider.getToolDefs(),
         context: this.agentProvider.getContexts(),
       })
