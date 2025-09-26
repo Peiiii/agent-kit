@@ -127,10 +127,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         ref={containerRef}
         className={
           clsx(
-            'flex-1 overflow-y-auto px-4 py-2',
+            'flex-1 overflow-y-auto overflow-x-hidden px-4 py-2',
             isSticky ? ' sticky-bottom' : '',
           )
         }
+        style={{ overflowX: 'hidden', maxWidth: '100%' }}
       >
         {uiMessages.map((uiMessage, index) => (
           <MessageItem

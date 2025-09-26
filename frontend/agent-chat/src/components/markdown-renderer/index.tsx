@@ -46,14 +46,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         }
 
         return (
-          <pre className="rounded-lg my-2 overflow-auto w-full max-w-full min-w-0 bg-muted p-2">
-            <code className="text-sm whitespace-pre break-normal">{raw}</code>
+          <pre className="rounded-lg my-2 overflow-x-auto overflow-y-auto w-full max-w-full min-w-0 bg-muted p-2" style={{ maxWidth: '100%', overflowX: 'auto' }}>
+            <code className="text-sm whitespace-pre break-normal" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{raw}</code>
           </pre>
         )
       }
 
       return (
-        <pre className="rounded-lg my-2 overflow-auto w-full max-w-full min-w-0 bg-muted p-2">
+        <pre className="rounded-lg my-2 overflow-x-auto overflow-y-auto w-full max-w-full min-w-0 bg-muted p-2" style={{ maxWidth: '100%', overflowX: 'auto' }}>
           {children}
         </pre>
       )
@@ -103,11 +103,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         )
       }
 
-      return (
-        <pre className="rounded-lg my-2 overflow-auto w-full max-w-full min-w-0 bg-muted p-2">
-          <code className="text-sm whitespace-pre break-normal">{raw}</code>
-        </pre>
-      )
+        return (
+          <pre className="rounded-lg my-2 overflow-x-auto overflow-y-auto w-full max-w-full min-w-0 bg-muted p-2" style={{ maxWidth: '100%', overflowX: 'auto' }}>
+            <code className="text-sm whitespace-pre break-normal" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{raw}</code>
+          </pre>
+        )
     },
     p({ children, ...props }) {
       return <p className="mb-2 leading-relaxed break-words" {...props}>{children}</p>
@@ -184,9 +184,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   }), [])
 
   return (
-    <div className="prose prose-sm dark:prose-invert max-w-none w-full max-w-full min-w-0 overflow-hidden">
+    <div className="prose prose-sm dark:prose-invert max-w-none w-full max-w-full min-w-0 overflow-hidden" style={{ overflowX: 'hidden' }}>
       <style>{`
         .prose p:last-of-type { margin-bottom: 0 !important; }
+        .prose pre { overflow-x: auto !important; max-width: 100% !important; }
+        .prose code { overflow-wrap: anywhere !important; word-break: break-word !important; }
       `}</style>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {content}

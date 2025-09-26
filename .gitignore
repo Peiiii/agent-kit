@@ -7,3 +7,4 @@ dist
 *.local.vscode/
 .vscode
 .env
+tmp

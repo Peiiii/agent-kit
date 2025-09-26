@@ -21,16 +21,18 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   return (
     <div
       className={clsx(
-        `flex w-full p-2`,
+        `flex w-full p-2 min-w-0`,
         isUser ? 'justify-end' : 'justify-start',
         className,
       )}
+      style={{ overflowX: 'hidden', maxWidth: '100%' }}
     >
       <div
         className={clsx(
-          'flex flex-col gap-2',
+          'flex flex-col gap-2 min-w-0',
           isUser ? 'items-end w-auto' : 'items-start w-auto',
         )}
+        style={{ maxWidth: '100%', overflowX: 'hidden' }}
       >
         {showAvatar && (
           <Avatar className="h-10 w-10 shrink-0">
@@ -54,6 +56,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               ? 'bg-primary text-primary-foreground w-auto'
               : 'bg-muted text-foreground w-auto'
           }`}
+          style={{ overflowX: 'hidden', maxWidth: '100%' }}
         >
           <div className="[&>*:last-child]:mb-0">
             {isPending ? (
@@ -62,7 +65,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               uiMessage.parts.map((part, index) => {
                 if (part.type === 'text') {
                   return (
-                    <div key={index} className="break-words">
+                    <div key={index} className="break-words min-w-0" style={{ overflowX: 'hidden', maxWidth: '100%' }}>
                       <MarkdownRenderer content={part.text} />
                     </div>
                   )
