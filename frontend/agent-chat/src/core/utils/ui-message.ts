@@ -17,6 +17,7 @@ export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => 
  *
  * - For any tool-invocation with state !== 'result', mark it as 'result' with a stub payload.
  * - This is safe: if a real result arrives later, it will overwrite the stub via addToolResult().
+ * - Handles partial-call states where args might be incomplete JSON strings.
  */
 export function finalizePendingToolInvocations(
   messages: UIMessage[],
@@ -30,10 +31,25 @@ export function finalizePendingToolInvocations(
       parts: msg.parts.map((part) => {
         if (part.type !== 'tool-invocation') return part
         if (part.toolInvocation.state === 'result') return part
+        
+        // For partial-call or call states, ensure args are properly formatted
+        let safeArgs = part.toolInvocation.args
+        
+        // If args is a string (from partial-call), try to parse it
+        if (typeof part.toolInvocation.args === 'string') {
+          try {
+            safeArgs = JSON.parse(part.toolInvocation.args)
+          } catch {
+            // If parsing fails, use a safe default object
+            safeArgs = { error: 'invalid_args', raw: part.toolInvocation.args }
+          }
+        }
+        
         return {
           ...part,
           toolInvocation: {
             ...part.toolInvocation,
+            args: safeArgs,
             state: 'result',
             result: stub,
           },

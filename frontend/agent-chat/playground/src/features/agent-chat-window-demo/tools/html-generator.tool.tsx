@@ -91,36 +91,36 @@ export const createHtmlGeneratorTool = (): Tool => ({
       },
     },
   },
-  execute: async (toolCall: ToolCall) => {
-    try {
-      const args = JSON.parse(toolCall.function.arguments) as Args
-      const waitMs = Math.max(0, Math.min(120000, args.simulateDelayMs ?? 8000))
+  // execute: async (toolCall: ToolCall) => {
+  //   try {
+  //     const args = JSON.parse(toolCall.function.arguments) as Args
+  //     const waitMs = Math.max(0, Math.min(120000, args.simulateDelayMs ?? 8000))
 
-      const html = typeof args.html === 'string' ? args.html : ''
+  //     const html = typeof args.html === 'string' ? args.html : ''
 
-      await delay(waitMs)
+  //     await delay(waitMs)
 
-      const result: Result = {
-        html,
-        meta: {
-          title: 'Preview',
-          length: html.length,
-          hasScript: /<script[\s>]/i.test(html),
-        },
-        status: 'success',
-      }
+  //     const result: Result = {
+  //       html,
+  //       meta: {
+  //         title: 'Preview',
+  //         length: html.length,
+  //         hasScript: /<script[\s>]/i.test(html),
+  //       },
+  //       status: 'success',
+  //     }
 
-      return result as any
-    } catch (error) {
-      const err: Result = {
-        html: '',
-        meta: { title: 'Error', length: 0, hasScript: false },
-        status: 'error',
-        error: error instanceof Error ? error.message : String(error),
-      }
-      return err as any
-    }
-  },
+  //     return result as any
+  //   } catch (error) {
+  //     const err: Result = {
+  //       html: '',
+  //       meta: { title: 'Error', length: 0, hasScript: false },
+  //       status: 'error',
+  //       error: error instanceof Error ? error.message : String(error),
+  //     }
+  //     return err as any
+  //   }
+  // },
   render: (toolInvocation: ToolInvocation) => {
     // Resolve preview content: prefer result.html; else try args.html when valid JSON
     const args = (toolInvocation.args || {}) as Args | string

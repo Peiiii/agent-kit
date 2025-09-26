@@ -36,13 +36,29 @@ export class AgentEventHandler {
             // Only emit once when the tool call is finalized (state === 'call')
             if (inv.state === 'call' && !this.emittedToolCallIds.has(inv.toolCallId)) {
                 this.emittedToolCallIds.add(inv.toolCallId)
+                
+                // Ensure args can be safely stringified
+                let safeArgs = inv.args
+                try {
+                    // If args is already an object, stringify it
+                    if (typeof inv.args === 'object' && inv.args !== null) {
+                        JSON.stringify(inv.args) // Test if it's serializable
+                    } else if (typeof inv.args === 'string') {
+                        // If it's a string, try to parse it first
+                        safeArgs = JSON.parse(inv.args)
+                    }
+                } catch (error) {
+                    console.warn(`Tool call ${inv.toolCallId} has invalid args, using empty object:`, error)
+                    safeArgs = {}
+                }
+                
                 this.sessionManager.toolCall$.next({
                     toolCall: {
                         id: inv.toolCallId,
                         type: 'function',
                         function: {
                             name: inv.toolName,
-                            arguments: JSON.stringify(inv.args),
+                            arguments: JSON.stringify(safeArgs),
                         },
                     }
                 })
