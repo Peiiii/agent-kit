@@ -1,4 +1,4 @@
-import type { Tool, ToolCall, ToolInvocation } from '@agent-labs/agent-chat'
+import type { Tool, ToolInvocation } from '@agent-labs/agent-chat'
 import * as React from 'react'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -73,8 +73,6 @@ const repairJsonStructure = (raw: string): string | undefined => {
   }
 }
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
 export const createHtmlGeneratorTool = (): Tool => ({
   name: 'generate_html',
   description: '生成 HTML 页面并即时展示源码预览',
@@ -91,36 +89,6 @@ export const createHtmlGeneratorTool = (): Tool => ({
       },
     },
   },
-  // execute: async (toolCall: ToolCall) => {
-  //   try {
-  //     const args = JSON.parse(toolCall.function.arguments) as Args
-  //     const waitMs = Math.max(0, Math.min(120000, args.simulateDelayMs ?? 8000))
-
-  //     const html = typeof args.html === 'string' ? args.html : ''
-
-  //     await delay(waitMs)
-
-  //     const result: Result = {
-  //       html,
-  //       meta: {
-  //         title: 'Preview',
-  //         length: html.length,
-  //         hasScript: /<script[\s>]/i.test(html),
-  //       },
-  //       status: 'success',
-  //     }
-
-  //     return result as any
-  //   } catch (error) {
-  //     const err: Result = {
-  //       html: '',
-  //       meta: { title: 'Error', length: 0, hasScript: false },
-  //       status: 'error',
-  //       error: error instanceof Error ? error.message : String(error),
-  //     }
-  //     return err as any
-  //   }
-  // },
   render: (toolInvocation: ToolInvocation) => {
     // Resolve preview content: prefer result.html; else try args.html when valid JSON
     const args = (toolInvocation.args || {}) as Args | string
