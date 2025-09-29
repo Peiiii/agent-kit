@@ -1,1380 +1,454 @@
-# @agent-labs/agent-chat 使用教程
+# @agent-labs/agent-chat 使用教程（更新版）
 
-@agent-labs/agent-chat 是一个功能强大的 React 组件库，用于快速构建 AI 助手聊天界面。本教程将帮助你了解如何安装和使用这个库。
+本教程基于当前代码结构重写，移除了过时的 Provider 与 Hook（如 useProvideAgentToolDefs 等）。你将看到如何用最小心智负担把 Agent 与工具接入现有 UI。
 
-## 目录
-
-- [安装](#安装)
-- [快速开始](#快速开始)
-- [使用方式](#使用方式)
-  - [基础组件 (AgentChatCore)](#基础组件-agentchatcore)
-  - [窗口组件 (AgentChatWindow)](#窗口组件-agentchatwindow)
-- [Context Provider 架构](#context-provider-架构)
-- [典型场景](#典型场景)
-  - [基础聊天界面](#基础聊天界面)
-  - [动态上下文管理](#动态上下文管理)
-  - [插件式工具系统](#插件式工具系统)
-  - [动态注册工具执行器](#动态注册工具执行器)
-  - [自定义工具界面](#自定义工具界面)
-  - [组合使用场景](#组合使用场景)
-  - [预加载消息](#预加载消息)
-  - [程序化消息管理](#程序化消息管理)
-- [高级功能](#高级功能)
-  - [Ref API](#ref-api)
-  - [useAgentChat Hook](#useagentchat-hook)
-- [API 参考](#api-参考)
-- [Hooks 参考](#hooks-参考)
+目录
+- 安装
+- 快速开始（最简上手）
+- 推荐用法（完整能力）
+  - 构造 AgentSessionManager
+  - 提供工具：定义、执行器、渲染器
+  - 渲染 UI 并接通工具
+- API 摘要
+  - 关键类型与组件
+  - 常用 Hooks
+  - addMessages 用法
 
 ## 安装
 
-使用 npm 或 yarn 安装必要的依赖：
+使用 npm 安装必要依赖：
 
 ```bash
-# 安装 agent-chat 组件库
-npm install @agent-labs/agent-chat
-# 安装 HTTP Agent 客户端
-npm install @ag-ui/client
-
-# 或者使用 yarn
-yarn add @agent-labs/agent-chat @ag-ui/client
+# 组件库
+npm i @agent-labs/agent-chat
+# 可选：HTTP Agent 客户端（示例里演示如何对接 HTTP 服务）
+npm i @ag-ui/client
 ```
 
-注意：`@ag-ui/client` 是必需的依赖，用于创建 HTTP Agent 实例与后端服务通信。
+说明：你可以对接任意实现了 IAgent 接口的 Agent。若使用 @ag-ui/client，建议封装一个适配器（参考 playground/mapped-http-agent.ts）。
 
-## 快速开始
+## 快速开始（最简上手）
 
-首先，创建一个 Agent 实例：
+下面演示如何用一个空工具集启动窗口版聊天：
 
 ```tsx
+import { AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import type { Tool } from '@agent-labs/agent-chat'
 import { HttpAgent } from '@ag-ui/client'
 
-// 创建一个全局的 Agent 实例
-export const agent = new HttpAgent({
-  url: 'http://localhost:8000/openai-agent',
+const agent = new HttpAgent({ url: 'http://localhost:8000/openai-agent' })
+const tools: Tool[] = []
+
+export default function App() {
+  const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
+  const sessionManager = useAgentSessionManager({
+    agent,
+    getToolDefs: () => toolDefs,
+    getContexts: () => [],
+    initialMessages: [],
+    getToolExecutor: (name) => toolExecutors[name],
+  })
+  return (
+    <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+  )
+}
+```
+
+提示：库不内置任何工具，需由宿主应用自行提供（定义、执行器、渲染器）。
+
+## 推荐用法（完整能力）
+
+三种工具类型一览（详见 docs/tools.md 工具系统指南）：
+- 后端执行（Backend-Only）：仅实现 render 用于展示信息（可选，未实现则使用默认渲染器）；不实现 execute。执行与结果完全由后端/Provider 产生；UI 在 partial-call/call 阶段显示“准备参数中/执行中…”，待结果事件到达后展示结果。
+- 前端执行 + 渲染（Frontend-Execution + Render）：同时实现 execute 与 render。execute 负责前端逻辑与结果，render 用于在执行前后展示参数/状态/结果或补充交互。
+- 纯交互（User-Interaction）：仅实现 render，不实现 execute；在 UI 中收集用户输入，点击后调用 onResult 回传结果。
+
+### 三种类型的独立示例（严格对应）
+
+以下分别给出每一种类型的最小可运行示例，便于对照与对接。
+
+1) 后端执行 Backend-Only（仅 render，不 execute）
+
+```tsx
+import { AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import type { Tool } from '@agent-labs/agent-chat'
+import { HttpAgent } from '@ag-ui/client'
+
+const agent = new HttpAgent({ url: 'http://localhost:8000/openai-agent' })
+
+const tools: Tool[] = [
+  {
+    name: 'serverTime',
+    description: '由后端返回当前时间（后端/Provider 执行）',
+    parameters: { type: 'object', properties: {}, required: [] },
+    // 不实现 execute；仅实现 render 用于展示状态/结果
+    render: (invocation) => {
+      if (invocation.state !== 'result') return <div className="text-sm text-muted-foreground">后端执行中…</div>
+      return <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify(invocation.result, null, 2)}</pre>
+    },
+  },
+]
+
+export default function BackendOnlyDemo() {
+  const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
+  const sessionManager = useAgentSessionManager({
+    agent,
+    getToolDefs: () => toolDefs,
+    getContexts: () => [],
+    initialMessages: [],
+    getToolExecutor: (name) => toolExecutors[name], // 这里不会被调用，因为无 execute
+  })
+  return <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+}
+```
+
+说明：如果你不实现 render，也会使用默认 ToolCallRenderer 展示“准备参数中/执行中/结果”。
+
+2) 前端执行 + 渲染 Frontend-Execution + Render（同时实现 execute 与 render）
+
+```tsx
+const tools: Tool[] = [
+  {
+    name: 'webSearch',
+    description: '前端执行并渲染搜索结果',
+    parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
+    execute: async (toolCall) => {
+      const { query } = JSON.parse(toolCall.function.arguments)
+      await new Promise(r => setTimeout(r, 600))
+      return { items: [`关于 ${query} 的结果 A`, `结果 B`] }
+    },
+    render: (invocation) => {
+      if (invocation.state !== 'result') {
+        const args = typeof invocation.args === 'string' ? invocation.args : JSON.stringify(invocation.args)
+        return <div className="text-sm text-muted-foreground">搜索中… 参数: {args}</div>
+      }
+      return <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify(invocation.result, null, 2)}</pre>
+    },
+  },
+]
+```
+
+3) 纯交互 User-Interaction（仅 render，通过 onResult 回传）
+
+```tsx
+import * as React from 'react'
+
+// 将交互组件独立出来，避免每次 render 返回新组件导致状态重置
+const CalculatorUI = ({ invocation, onResult }: { invocation: any; onResult: (r: any) => void }) => {
+  const [a, setA] = React.useState(0)
+  const [b, setB] = React.useState(0)
+  return (
+    <div className="flex gap-2 items-center">
+      <input type="number" value={a} onChange={e => setA(Number(e.target.value))} className="border px-2 py-1 rounded" />
+      <span>+</span>
+      <input type="number" value={b} onChange={e => setB(Number(e.target.value))} className="border px-2 py-1 rounded" />
+      <button
+        className="px-3 py-1 rounded bg-blue-600 text-white"
+        onClick={() => onResult({ toolCallId: invocation.toolCallId, result: { sum: a + b }, state: 'result' })}
+      >
+        计算
+      </button>
+    </div>
+  )
+}
+
+const tools: Tool[] = [
+  {
+    name: 'calculator',
+    description: '计算两个数的和（交互式）',
+    parameters: { type: 'object', properties: { a: { type: 'number' }, b: { type: 'number' } }, required: ['a', 'b'] },
+    render: (invocation, onResult) => (
+      <CalculatorUI invocation={invocation} onResult={onResult} />
+    ),
+  },
+]
+```
+
+### 1) 定义工具（可选 execute 与 render）
+
+```tsx
+import type { Tool } from '@agent-labs/agent-chat'
+
+const tools: Tool[] = [
+  {
+    name: 'search',
+    description: '搜索网络信息',
+    parameters: {
+      type: 'object',
+      properties: { query: { type: 'string', description: '关键词' } },
+      required: ['query'],
+    },
+    execute: async (toolCall) => {
+      const { query } = JSON.parse(toolCall.function.arguments)
+      // 调用你的后端/第三方 API
+      return { results: [`关于 ${query} 的结果 A`, `结果 B`] }
+    },
+    // 可选：自定义 UI 渲染（如需要交互）
+    // render: (invocation, onResult) => { ...; onResult({ toolCallId, result, state: 'result' }) }
+  },
+]
+```
+
+### 2) 解析工具，得到三件事：definitions / executors / renderers
+
+```tsx
+import { useParseTools } from '@agent-labs/agent-chat'
+
+const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
+```
+
+### 3) 创建会话管理器（AgentSessionManager），并渲染 UI
+
+```tsx
+import { useAgentSessionManager, AgentChatWindow } from '@agent-labs/agent-chat'
+import { agent } from './agent'
+
+const sessionManager = useAgentSessionManager({
+  agent,                               // 你的 Agent（实现 IAgent）
+  getToolDefs: () => toolDefs,         // 工具定义（供模型选择工具）
+  getContexts: () => [],               // 上下文数组（可选）
+  initialMessages: [],                 // 初始消息（可选）
+  getToolExecutor: (name) => toolExecutors[name], // 执行器（本地执行）
+})
+
+return (
+  <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+)
+```
+
+### 动态上下文管理（示例）
+
+推荐把 contexts 通过 `useAgentSessionManager` 的 `getContexts` 提供：
+
+```tsx
+const [user, setUser] = useState({ name: '张三', role: 'dev' })
+const sessionManager = useAgentSessionManager({
+  agent,
+  getToolDefs: () => toolDefs,
+  getContexts: () => [
+    { description: '用户信息', value: JSON.stringify(user) },
+  ],
+  initialMessages: [],
+  getToolExecutor: (name) => toolExecutors[name],
 })
 ```
 
-然后，在你的应用中使用它：
+### 完整示例：三种工具类型（后端渲染/前端执行+渲染/交互式）
+
+以下示例同时包含三类工具：
+- getTime：仅 execute（前端直接返回结果）
+- webSearch：execute + 异步模拟（延时返回）
+- calculator：仅 render（交互式 UI，点击后通过 onResult 回传）
 
 ```tsx
-import { AgentChatWindow } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-
-function App() {
-  return (
-    <AgentChatWindow
-      agent={agent}
-    />
-  )
-}
-```
-
-就这么简单！
-
-**注意**: 本库不提供任何默认工具，所有工具都需要用户自己定义和提供。这样可以确保组件的通用性和灵活性。
-
-## 使用方式
-
-### 基础组件 (AgentChatCore)
-
-`AgentChatCore` 是一个基础的聊天组件，提供了核心的聊天功能，适合需要自定义 UI 的场景：
-
-```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-
-function BasicExample() {
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto p-4">
-        <AgentChatCore
-          agent={agent}
-          className="h-[600px]"
-        />
-      </div>
-    </div>
-  )
-}
-```
-
-### 窗口组件 (AgentChatWindow)
-
-`AgentChatWindow` 是一个完整的窗口组件，提供了开箱即用的聊天窗口体验：
-
-```tsx
-import { AgentChatWindow } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-
-function WindowExample() {
-  return (
-    <AgentChatWindow
-      agent={agent}
-      className="fixed bottom-4 right-4"
-    />
-  )
-}
-```
-
-## Context Provider 架构
-
-所有 hooks 默认使用全局实例，无需配置 Provider，只有多实例隔离时才需要。
-
-你可以通过 AgentContextManagerContext、AgentToolDefManagerContext、AgentToolExecutorManagerContext、AgentToolRendererManagerContext 这些 Provider 进行自定义隔离，绝大多数场景下无需配置，默认全局实例即可。
-
-**推荐写法：**
-
-```tsx
-import { AgentToolDefManagerContext, AgentToolDefManager, AgentChatWindow } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useMemo } from 'react'
-
-function IsolatedChat() {
-  // 保证 manager 实例稳定
-  const customToolDefManager = useMemo(() => new AgentToolDefManager(), [])
-
-  return (
-    <AgentToolDefManagerContext.Provider value={customToolDefManager}>
-      <AgentChatWindow agent={agent} />
-    </AgentToolDefManagerContext.Provider>
-  )
-}
-```
-
-**多实例隔离：**
-
-```tsx
-function MultiChat() {
-  const managerA = useMemo(() => new AgentToolDefManager(), [])
-  const managerB = useMemo(() => new AgentToolDefManager(), [])
-
-  return (
-    <>
-      <AgentToolDefManagerContext.Provider value={managerA}>
-        <ChatA />
-      </AgentToolDefManagerContext.Provider>
-      <AgentToolDefManagerContext.Provider value={managerB}>
-        <ChatB />
-      </AgentToolDefManagerContext.Provider>
-    </>
-  )
-}
-```
-
-**所有 Provider 分别自定义的例子：**
-
-```tsx
-import {
-  AgentContextManagerContext, AgentContextManager,
-  AgentToolDefManagerContext, AgentToolDefManager,
-  AgentToolExecutorManagerContext, AgentToolExecutorManager,
-  AgentToolRendererManagerContext, AgentToolRendererManager,
-  AgentChatWindow
-} from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useMemo } from 'react'
-
-function FullyIsolatedChat() {
-  const contextManager = useMemo(() => new AgentContextManager(), [])
-  const toolDefManager = useMemo(() => new AgentToolDefManager(), [])
-  const toolExecutorManager = useMemo(() => new AgentToolExecutorManager(), [])
-  const toolRendererManager = useMemo(() => new AgentToolRendererManager(), [])
-
-  return (
-    <AgentContextManagerContext.Provider value={contextManager}>
-      <AgentToolDefManagerContext.Provider value={toolDefManager}>
-        <AgentToolExecutorManagerContext.Provider value={toolExecutorManager}>
-          <AgentToolRendererManagerContext.Provider value={toolRendererManager}>
-            <AgentChatWindow agent={agent} />
-          </AgentToolRendererManagerContext.Provider>
-        </AgentToolExecutorManagerContext.Provider>
-      </AgentToolDefManagerContext.Provider>
-    </AgentContextManagerContext.Provider>
-  )
-}
-```
-
-## 典型场景
-
-### 基础聊天界面
-
-使用 `AgentChatCore` 构建基础聊天界面：
-
-```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-
-function BasicChat() {
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto p-4">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold">AI 助手</h1>
-        </header>
-        <div className="bg-white rounded-lg shadow-lg">
-          <AgentChatCore
-            agent={agent}
-            className="h-[600px]"
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-```
-
-### 动态上下文管理
-
-使用 hooks 来管理动态上下文，默认情况下无需额外配置：
-
-```tsx
-import { AgentChatWindow } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useEffect, useState } from 'react'
-import { useProvideAgentContexts } from '@agent-labs/agent-chat'
-
-// 直接使用动态上下文 - 使用默认全局实例
-function DynamicContextChat() {
-  // 用户信息状态
-  const [userInfo, setUserInfo] = useState({
-    name: '张三',
-    role: 'developer',
-    lastActive: new Date().toISOString(),
-  })
-
-  // 使用 hook 提供上下文 - 自动使用默认全局实例
-  useProvideAgentContexts([
-    {
-      description: '用户信息',
-      value: JSON.stringify(userInfo),
-    },
-  ])
-
-  // 定期更新用户活跃时间
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setUserInfo(prev => ({
-        ...prev,
-        lastActive: new Date().toISOString(),
-      }))
-    }, 60000)
-
-    return () => clearInterval(timer)
-  }, [])
-
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto p-4">
-        <header className="mb-4">
-          <h1 className="text-2xl font-bold">动态上下文聊天</h1>
-          <p className="text-gray-600">
-            当前用户: {userInfo.name} ({userInfo.role})
-          </p>
-        </header>
-        <AgentChatWindow agent={agent} />
-      </div>
-    </div>
-  )
-}
-
-// 如果需要多实例隔离，可以使用Provider包装：
-function IsolatedDynamicContextApp() {
-  return (
-    <AgentProvidersProvider>
-      <DynamicContextChat />
-    </AgentProvidersProvider>
-  )
-}
-
-export default DynamicContextChat
-```
-
-### 插件式工具系统
-
-使用 hooks 来管理动态工具，默认情况下无需额外配置：
-
-```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useState } from 'react'
-import type { ToolDefinition } from '@agent-labs/agent-chat'
-import { useProvideAgentToolDefs } from '@agent-labs/agent-chat'
-
-// 插件管理组件 - 直接使用默认全局实例
-function PluginSystemChat() {
-  // 基础工具
-  const baseTools: ToolDefinition[] = [
-    {
-      name: 'search',
-      description: '搜索网络信息',
-      parameters: {
-        type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: '搜索关键词',
-          },
-        },
-        required: ['query'],
-      },
-    },
-  ]
-
-  // 动态工具列表
-  const [dynamicTools, setDynamicTools] = useState<ToolDefinition[]>([])
-
-  // 使用 hook 提供工具定义 - 自动使用默认全局实例
-  useProvideAgentToolDefs([...baseTools, ...dynamicTools])
-
-  // 添加新工具的函数
-  const addNewTool = () => {
-    const newTool: ToolDefinition = {
-      name: 'getTime',
-      description: '获取当前时间',
-      parameters: {
-        type: 'object',
-        properties: {},
-        required: [],
-      },
-    }
-    setDynamicTools(prev => [...prev, newTool])
-  }
-
-  // 移除工具的函数
-  const removeLastTool = () => {
-    setDynamicTools(prev => prev.slice(0, -1))
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto p-4">
-        <header className="mb-4">
-          <h1 className="text-2xl font-bold">插件式工具系统</h1>
-          <p className="text-gray-600">
-            当前工具数量: {baseTools.length + dynamicTools.length}
-          </p>
-        </header>
-        
-        <div className="bg-white rounded-lg shadow-lg">
-          <AgentChatCore
-            agent={agent}
-            className="h-[600px]"
-          />
-        </div>
-        
-        <div className="mt-4 flex gap-2">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-            onClick={addNewTool}
-            disabled={dynamicTools.some(t => t.name === 'getTime')}
-          >
-            添加时间工具
-          </button>
-          <button
-            className="px-4 py-2 bg-red-500 text-white rounded"
-            onClick={removeLastTool}
-            disabled={dynamicTools.length === 0}
-          >
-            移除最后一个工具
-          </button>
-        </div>
-        
-        {/* 工具列表显示 */}
-        <div className="mt-4 p-4 bg-gray-50 rounded">
-          <h3 className="font-semibold mb-2">当前可用工具:</h3>
-          <ul className="space-y-1">
-            {[...baseTools, ...dynamicTools].map((tool, index) => (
-              <li key={index} className="text-sm">
-                <span className="font-mono bg-gray-200 px-2 py-1 rounded">
-                  {tool.name}
-                </span>
-                - {tool.description}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// 如果需要插件隔离，可以使用Provider包装：
-function IsolatedPluginSystemApp() {
-  return (
-    <AgentProvidersProvider>
-      <PluginSystemChat />
-    </AgentProvidersProvider>
-  )
-}
-
-export default PluginSystemChat
-```
-
-### 动态注册工具执行器
-
-`useProvideAgentToolExecutors` 用于在组件中动态注册工具执行器（ToolExecutor），实现自动工具调用和结果推送。支持同步和异步函数，配合 `useAgentChat` 可实现自动工具链路。
-
-#### 典型用法
-
-```tsx
-import { useProvideAgentToolExecutors } from '@agent-labs/agent-chat'
-import type { ToolCall, ToolResult } from '@agent-labs/agent-chat'
-
-function ToolExecutorProvider() {
-  // 注册工具执行器
-  useProvideAgentToolExecutors({
-    search: async (toolCall: ToolCall) => {
-      const args = JSON.parse(toolCall.function.arguments)
-      // 这里可以调用实际的搜索 API
-      return {
-        title: '搜索结果',
-        content: `你搜索了：${args.query}`,
-      }
-    },
-    getTime: () => {
-      // 同步返回
-      return { now: new Date().toISOString() }
-    },
-  })
-  return null
-}
-```
-
-#### ToolExecutor 类型签名
-
-```typescript
-export type ToolExecutor = (
-  toolCall: ToolCall,
-  context?: any
-) => ToolResult | Promise<ToolResult>
-```
-- `toolCall`：工具调用的详细信息
-- `context`：可选上下文参数
-- 返回值：可以是同步 ToolResult，也可以是 Promise<ToolResult>
-
-#### 自动工具执行链路
-
-- 只需注册 ToolExecutor，`useAgentChat` 会自动监听工具调用事件，自动查找并执行对应的 executor，执行结果自动推送到消息流并可自动触发 agent。
-- 你无需手动管理工具调用和结果推送，极大简化业务代码。
-
-#### 场景说明
-
-- 适用于插件式工具、动态扩展工具、自动化工具链等场景。
-- 支持在任意组件中动态注册/移除工具执行器，适合微前端、插件化架构。
-
-### 自定义工具界面
-
-使用 hooks 来管理工具渲染器，默认情况下无需额外配置：
-
-```tsx
-import { AgentChatWindow } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import type { ToolRenderer } from '@agent-labs/agent-chat'
-import { 
-  useProvideAgentToolRenderers,
-  useProvideAgentToolDefs 
-} from '@agent-labs/agent-chat'
-
-// 自定义工具界面组件 - 直接使用默认全局实例
-function CustomToolUI() {
-  // 工具定义 - 需要同时提供工具定义和渲染器
-  const toolDefinitions = [
-    {
-      name: 'search',
-      description: '搜索网络信息',
-      parameters: {
-        type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: '搜索关键词',
-          },
-        },
-        required: ['query'],
-      },
-    },
-  ]
-
-  // 自定义工具渲染器
-  const customRenderers: ToolRenderer[] = [
-    {
-      render: (toolCall, onResult) => {
-        const args = JSON.parse(toolCall.function.arguments)
+import * as React from 'react'
+import { AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import type { Tool } from '@agent-labs/agent-chat'
+import { HttpAgent } from '@ag-ui/client'
+
+const agent = new HttpAgent({ url: 'http://localhost:8000/openai-agent' })
+
+// 1) 定义三种不同形态的工具
+const tools: Tool[] = [
+  {
+    // 后端执行（Backend-Only）：不实现 execute，仅实现 render 用于展示工具信息/状态
+    name: 'serverTime',
+    description: '由后端返回当前时间',
+    parameters: { type: 'object', properties: {}, required: [] },
+    render: (invocation) => {
+      if (invocation.state !== 'result') {
         return (
-          <div className="p-4 border rounded-lg bg-blue-50">
-            <h3 className="font-bold mb-2 text-blue-800">🔍 高级搜索</h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                defaultValue={args.query}
-                className="w-full p-2 border rounded"
-                placeholder="输入搜索关键词"
-                id={`search-input-${toolCall.id}`}
-              />
-              <div className="flex gap-2">
-                <button
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  onClick={() => {
-                    const input = document.getElementById(`search-input-${toolCall.id}`) as HTMLInputElement
-                    const query = input?.value || args.query
-                    
-                    onResult({
-                      toolCallId: toolCall.id,
-                      result: {
-                        title: '搜索结果',
-                        content: `已完成对 "${query}" 的搜索，找到了相关信息...`,
-                        results: [
-                          `关于 ${query} 的结果 1`,
-                          `关于 ${query} 的结果 2`,
-                          `关于 ${query} 的结果 3`,
-                        ]
-                      },
-                      status: 'success',
-                    })
-                  }}
-                >
-                  🔍 开始搜索
-                </button>
-                <button
-                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                  onClick={() => {
-                    onResult({
-                      toolCallId: toolCall.id,
-                      result: null,
-                      status: 'cancelled',
-                    })
-                  }}
-                >
-                  ❌ 取消
-                </button>
-              </div>
-            </div>
+          <div className="p-3 border rounded-md text-sm">
+            <div className="text-muted-foreground">后端执行中…（等待 Provider 返回结果）</div>
           </div>
         )
-      },
-      definition: toolDefinitions[0],
-    },
-  ]
-
-  // 使用 hooks 提供工具定义和渲染器 - 自动使用默认全局实例
-  useProvideAgentToolDefs(toolDefinitions)
-  useProvideAgentToolRenderers(customRenderers)
-
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto p-4">
-        <header className="mb-4">
-          <h1 className="text-2xl font-bold">自定义工具界面</h1>
-          <p className="text-gray-600">
-            展示自定义的工具渲染器，提供更丰富的交互体验
-          </p>
-        </header>
-        <div className="bg-white rounded-lg shadow-lg">
-          <AgentChatWindow agent={agent} />
+      }
+      return (
+        <div className="p-3 border rounded-md text-sm">
+          <div className="font-medium mb-1">后端结果</div>
+          <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify(invocation.result, null, 2)}</pre>
         </div>
-      </div>
-    </div>
-  )
-}
-
-// 如果需要渲染器隔离，可以使用Provider包装：
-function IsolatedCustomToolUIApp() {
-  return (
-    <AgentProvidersProvider>
-      <CustomToolUI />
-    </AgentProvidersProvider>
-  )
-}
-
-export default CustomToolUI
-```
-
-### 组合使用场景
-
-在实际应用中，通常需要组合使用多个功能，以下是一个完整的示例：
-
-```tsx
-import { AgentChatWindow, AgentProvidersProvider } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useEffect, useState } from 'react'
-import type { ToolDefinition, ToolRenderer } from '@agent-labs/agent-chat'
-import {
-  useProvideAgentContexts,
-  useProvideAgentToolDefs,
-  useProvideAgentToolRenderers,
-  useProvideAgentToolExecutors,
-} from '@agent-labs/agent-chat'
-
-// 主应用组件 - 使用Provider是为了演示完整功能组合
-// 在实际应用中，如果不需要隔离，可以直接使用默认全局实例
-function AdvancedChatApp() {
-  return (
-    <AgentProvidersProvider>
-      <AdvancedChat />
-    </AgentProvidersProvider>
-  )
-}
-
-// 高级聊天组件 - 组合使用多个功能
-function AdvancedChat() {
-  // 1. 状态管理
-  const [userInfo, setUserInfo] = useState({
-    name: '张三',
-    role: 'developer',
-    preferences: {
-      theme: 'dark',
-      language: 'zh-CN',
+      )
     },
-  })
-
-  // 2. 动态工具
-  const [tools, setTools] = useState<ToolDefinition[]>([
-    {
-      name: 'search',
-      description: '搜索网络信息',
-      parameters: {
-        type: 'object',
-        properties: {
-          query: {
-            type: 'string',
-            description: '搜索关键词',
-          },
-        },
-        required: ['query'],
-      },
+  },
+  {
+    // 前端执行 + 渲染（Frontend-Execution + Render）
+    name: 'webSearch',
+    description: '模拟搜索（异步）',
+    parameters: {
+      type: 'object',
+      properties: { query: { type: 'string', description: '关键词' } },
+      required: ['query'],
     },
-  ])
-
-  // 3. 自定义渲染器
-  const toolRenderers: ToolRenderer[] = [
-    {
-      render: (toolCall, onResult) => {
-        const args = JSON.parse(toolCall.function.arguments)
+    execute: async (toolCall) => {
+      const { query } = JSON.parse(toolCall.function.arguments)
+      await new Promise(r => setTimeout(r, 800))
+      return { items: [`“${query}” 的搜索结果 A`, `结果 B`, `结果 C`] }
+    },
+    // 渲染器：在执行前后显示状态或结果（不强制调用 onResult）
+    render: (invocation) => {
+      const state = invocation.state
+      if (state !== 'result') {
+        const args = typeof invocation.args === 'string' ? invocation.args : JSON.stringify(invocation.args)
         return (
-          <div className="p-4 border rounded-lg">
-            <h3 className="font-bold mb-2">搜索结果</h3>
-            <p>正在搜索: {args.query}</p>
-            <button
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => {
-                onResult({
-                  toolCallId: toolCall.id,
-                  result: {
-                    title: '搜索结果',
-                    content: `这是关于 ${args.query} 的搜索结果...`,
-                  },
-                  status: 'success',
-                })
-              }}
-            >
-              搜索
-            </button>
+          <div className="p-3 border rounded-md text-sm">
+            <div className="text-muted-foreground mb-1">搜索中…</div>
+            <div className="text-xs break-all">参数: {args}</div>
           </div>
         )
-      },
-      definition: tools[0],
-    },
-  ]
-
-  // 4. 工具执行器
-  useProvideAgentToolExecutors({
-    search: async (toolCall) => {
-      const args = JSON.parse(toolCall.function.arguments)
-      // 模拟搜索 API 调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      return {
-        title: '搜索结果',
-        content: `已找到关于 "${args.query}" 的信息`,
-        results: [
-          `结果 1: ${args.query} 的定义`,
-          `结果 2: ${args.query} 的应用场景`,
-          `结果 3: ${args.query} 的最新发展`,
-        ]
       }
-    },
-    getTime: () => {
-      return {
-        currentTime: new Date().toISOString(),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      }
-    },
-  })
-
-  // 5. 使用 hooks 提供各种资源 - 需要在 Provider 内部使用
-  useProvideAgentContexts([
-    {
-      description: '用户信息',
-      value: JSON.stringify(userInfo),
-    },
-    {
-      description: '应用状态',
-      value: JSON.stringify({
-        theme: userInfo.preferences.theme,
-        activeFeatures: ['search', 'time', 'chat'],
-        sessionStartTime: new Date().toISOString(),
-      }),
-    },
-  ])
-  useProvideAgentToolDefs(tools)
-  useProvideAgentToolRenderers(toolRenderers)
-
-  // 6. 动态更新和生命周期管理
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setUserInfo(prev => ({
-        ...prev,
-        lastActive: new Date().toISOString(),
-      }))
-    }, 60000)
-
-    return () => clearInterval(timer)
-  }, [])
-
-  // 7. 工具管理函数
-  const addTimeTool = () => {
-    const newTool: ToolDefinition = {
-      name: 'getTime',
-      description: '获取当前时间',
-      parameters: {
-        type: 'object',
-        properties: {},
-        required: [],
-      },
-    }
-    setTools(prev => [...prev, newTool])
-  }
-
-  const toggleTheme = () => {
-    setUserInfo(prev => ({
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        theme: prev.preferences.theme === 'dark' ? 'light' : 'dark',
-      },
-    }))
-  }
-
-  return (
-    <div className={`min-h-screen transition-colors ${
-      userInfo.preferences.theme === 'dark' 
-        ? 'bg-gray-900 text-white' 
-        : 'bg-gray-100 text-gray-900'
-    }`}>
-      <div className="container mx-auto p-4">
-        <header className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">
-                高级 AI 助手
-              </h1>
-              <p className="text-sm opacity-75 mt-1">
-                用户: {userInfo.name} | 角色: {userInfo.role} | 
-                主题: {userInfo.preferences.theme}
-              </p>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
-            >
-              切换主题
-            </button>
-          </div>
-        </header>
-
-        <div className={`rounded-lg shadow-lg ${
-          userInfo.preferences.theme === 'dark' 
-            ? 'bg-gray-800' 
-            : 'bg-white'
-        }`}>
-          <AgentChatWindow agent={agent} />
+      return (
+        <div className="p-3 border rounded-md text-sm">
+          <div className="font-medium mb-1">搜索结果</div>
+          <pre className="text-xs whitespace-pre-wrap break-all">{JSON.stringify(invocation.result, null, 2)}</pre>
         </div>
-
-        <div className="mt-4 flex gap-4 flex-wrap">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-            onClick={addTimeTool}
-            disabled={tools.some(t => t.name === 'getTime')}
-          >
-            {tools.some(t => t.name === 'getTime') ? '时间工具已添加' : '添加时间工具'}
-          </button>
-          
-          <div className="text-sm bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded">
-            当前工具数量: {tools.length}
-          </div>
-        </div>
-
-        {/* 状态显示面板 */}
-        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded">
-          <h3 className="font-semibold mb-2">系统状态</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <strong>用户信息:</strong>
-              <ul className="mt-1 space-y-1">
-                <li>姓名: {userInfo.name}</li>
-                <li>角色: {userInfo.role}</li>
-                <li>最后活跃: {new Date(userInfo.lastActive).toLocaleTimeString()}</li>
-              </ul>
-            </div>
-            <div>
-              <strong>可用工具:</strong>
-              <ul className="mt-1 space-y-1">
-                {tools.map((tool, index) => (
-                  <li key={index} className="font-mono text-xs">
-                    {tool.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <strong>偏好设置:</strong>
-              <ul className="mt-1 space-y-1">
-                <li>主题: {userInfo.preferences.theme}</li>
-                <li>语言: {userInfo.preferences.language}</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// 注意：在这个示例中，我们使用了Provider是为了演示完整的功能组合
-// 在实际应用中，如果不需要隔离，可以移除Provider直接使用默认全局实例
-
-export default AdvancedChatApp
-```
-
-### 预加载消息
-
-使用 `initialMessages` 属性可以在聊天界面初始化时预加载消息：
-
-```tsx
-import { AgentChatWindow } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import type { Message } from '@ag-ui/client'
-
-function PreloadedChat() {
-  // 预加载的消息
-  const initialMessages: Message[] = [
-    {
-      id: '1',
-      role: 'system',
-      content: '欢迎使用 AI 助手！',
+      )
     },
-    {
-      id: '2',
-      role: 'assistant',
-      content: '你好！我是你的 AI 助手，有什么我可以帮助你的吗？',
+  },
+  {
+    // 纯交互（User-Interaction）：仅 render，在 UI 中收集输入并通过 onResult 回传
+    name: 'calculator',
+    description: '计算两个数的和（交互式）',
+    parameters: {
+      type: 'object',
+      properties: { a: { type: 'number' }, b: { type: 'number' } },
+      required: ['a', 'b'],
     },
-  ]
+    // 仅提供 render，用于用户交互；完成后通过 onResult 回传结果
+    render: (invocation, onResult) => (
+      <CalculatorUI invocation={invocation} onResult={onResult} />
+    ),
+  },
+]
 
-  return (
-    <AgentChatWindow
-      agent={agent}
-      initialMessages={initialMessages}
-    />
-  )
-}
-```
+// 2) 解析为 definitions / executors / renderers
+const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 
-这个功能在以下场景特别有用：
-- 显示欢迎消息
-- 恢复之前的对话
-- 提供使用指南
-- 设置初始上下文
-
-### 程序化消息管理
-
-使用 `addMessages` API 可以程序化地添加消息到聊天界面：
-
-```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useRef } from 'react'
-import type { AgentChatRef, Message } from '@agent-labs/agent-chat'
-
-function ProgrammaticChat() {
-  const chatRef = useRef<AgentChatRef>(null)
-
-  // 添加批量历史消息（不触发 AI 响应）
-  const loadHistory = async () => {
-    const historyMessages: Message[] = [
-      {
-        id: '1',
-        role: 'user',
-        content: '你好，我是张三',
-      },
-      {
-        id: '2',
-        role: 'assistant',
-        content: '你好张三！很高兴认识你。有什么我可以帮助你的吗？',
-      },
-      {
-        id: '3',
-        role: 'user',
-        content: '我想了解一下你的功能',
-      },
-    ]
-
-    await chatRef.current?.addMessages(historyMessages, { triggerAgent: false })
-  }
-
-  // 模拟用户输入（触发 AI 响应）
-  const simulateUserInput = async () => {
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: '请介绍一下你自己',
-    }
-
-    await chatRef.current?.addMessages([userMessage], { triggerAgent: true })
-  }
-
-  // 注入系统消息
-  const injectSystemMessage = async () => {
-    const systemMessage: Message = {
-      id: Date.now().toString(),
-      role: 'system',
-      content: '用户当前在移动设备上，请简化你的回答',
-    }
-
-    await chatRef.current?.addMessages([systemMessage], { triggerAgent: false })
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto p-4">
-        <div className="mb-4 flex gap-2">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-            onClick={loadHistory}
-          >
-            加载历史记录
-          </button>
-          <button
-            className="px-4 py-2 bg-green-500 text-white rounded"
-            onClick={simulateUserInput}
-          >
-            模拟用户输入
-          </button>
-          <button
-            className="px-4 py-2 bg-orange-500 text-white rounded"
-            onClick={injectSystemMessage}
-          >
-            注入系统消息
-          </button>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-lg">
-          <AgentChatCore
-            ref={chatRef}
-            agent={agent}
-            className="h-[600px]"
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-```
-
-## 高级功能
-
-### Ref API
-
-通过 ref 可以获取到 AgentChat 组件的实例方法：
-
-```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useRef } from 'react'
-import type { AgentChatRef } from '@agent-labs/agent-chat'
-
-function RefExample() {
-  const chatRef = useRef<AgentChatRef>(null)
-
-  const handleReset = () => {
-    // 重置聊天记录
-    chatRef.current?.reset()
-  }
-
-  const handleAddMessages = async () => {
-    // 添加消息
-    await chatRef.current?.addMessages([
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        content: '这是通过 ref 添加的消息',
-      }
-    ])
-  }
-
-  return (
-    <div>
-      <div className="mb-4 flex gap-2">
-        <button
-          className="px-4 py-2 bg-red-500 text-white rounded"
-          onClick={handleReset}
-        >
-          重置对话
-        </button>
-        <button
-          className="px-4 py-2 bg-blue-500 text-white rounded"
-          onClick={handleAddMessages}
-        >
-          添加消息
-        </button>
-      </div>
-      
-      <AgentChatCore
-        ref={chatRef}
-        agent={agent}
-        className="h-[600px]"
-      />
-    </div>
-  )
-}
-```
-
-#### AgentChatRef 方法
-
-| 方法 | 参数 | 返回值 | 描述 |
-|------|------|--------|------|
-| reset | - | void | 重置聊天记录，清空所有消息 |
-| addMessages | messages: Message[], options?: { triggerAgent?: boolean } | Promise<void> | 添加消息到聊天界面 |
-
-### useAgentChat Hook
-
-如果你需要更细粒度的控制，可以直接使用 `useAgentChat` hook：
-
-```tsx
-import { useAgentChat } from '@agent-labs/agent-chat'
-import { agent } from './agent'
-import { useState } from 'react'
-
-function CustomChatInterface() {
-  const [input, setInput] = useState('')
-  const {
-    uiMessages,
-    isLoading,
-    sendMessage,
-    addMessages,
-    addToolResult,
-    reset,
-  } = useAgentChat({
+// 3) 建立会话管理器并渲染窗口
+export default function FullToolsExample() {
+  const sessionManager = useAgentSessionManager({
     agent,
-    defaultToolDefs: [],
-    defaultContexts: [],
+    getToolDefs: () => toolDefs,
+    getContexts: () => [],
+    initialMessages: [],
+    getToolExecutor: (name) => toolExecutors[name],
   })
-
-  const handleSend = async () => {
-    if (!input.trim()) return
-    await sendMessage(input)
-    setInput('')
-  }
-
-  const handleAddBatchMessages = async () => {
-    const messages = [
-      {
-        id: '1',
-        role: 'user' as const,
-        content: '批量消息 1',
-      },
-      {
-        id: '2',
-        role: 'user' as const,
-        content: '批量消息 2',
-      },
-    ]
-    
-    // 添加消息但不触发 AI 响应
-    await addMessages(messages, { triggerAgent: false })
-  }
-
   return (
-    <div className="flex flex-col h-[600px]">
-      <div className="flex-1 overflow-y-auto p-4">
-        {uiMessages.map((message, index) => (
-          <div key={index} className="mb-4">
-            <div className="font-semibold">{message.role}:</div>
-            <div>{message.content}</div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="border-t p-4">
-        <div className="flex gap-2 mb-2">
-          <button
-            className="px-3 py-1 bg-gray-500 text-white rounded text-sm"
-            onClick={reset}
-          >
-            重置
-          </button>
-          <button
-            className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
-            onClick={handleAddBatchMessages}
-          >
-            批量添加
-          </button>
-        </div>
-        
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSend()
-              }
-            }}
-            placeholder="输入消息..."
-            disabled={isLoading}
-            className="flex-1 p-2 border rounded"
-          />
-          <button
-            onClick={handleSend}
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            {isLoading ? '发送中...' : '发送'}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
   )
 }
 ```
 
-#### useAgentChat 返回值
+### 流式参数预览（HTML 生成器）
 
-| 属性 | 类型 | 描述 |
-|------|------|------|
-| messages | Message[] | 原始消息数组 |
-| uiMessages | UIMessage[] | 用于 UI 渲染的消息数组 |
-| isLoading | boolean | 是否正在加载中 |
-| threadId | string \| null | 当前对话线程 ID |
-| sendMessage | (content: string) => Promise<void> | 发送消息函数 |
-| addMessages | (messages: Message[], options?: { triggerAgent?: boolean }) => Promise<void> | 添加消息函数 |
-| addToolResult | (result: ToolResult, options?: { triggerAgent?: boolean }) => Promise<void> | 添加工具结果函数 |
-| reset | () => void | 重置聊天记录函数 |
+有些工具（例如 htmlGenerator）会以“参数流式输出（TOOL_CALL_ARGS_DELTA）→ 执行 → 返回结果”的节奏工作。为了让用户尽快看到效果，可以在 `partial-call`/`call` 阶段就渲染预览，即使参数仍不完整。
 
-## API 参考
-
-### AgentChatCore Props
-
-| 属性 | 类型 | 必填 | 描述 |
-|------|------|------|------|
-| agent | HttpAgent | 是 | HTTP Agent 实例 |
-| defaultToolDefs | ToolDefinition[] | 否 | 默认工具定义数组 |
-| defaultToolRenderers | Record<string, ToolRenderer> | 否 | 默认工具渲染器映射 |
-| defaultToolExecutors | Record<string, ToolExecutor> | 否 | 默认工具执行器映射 |
-| defaultContexts | Array<{description: string, value: string}> | 否 | 默认上下文信息 |
-| className | string | 否 | 自定义 CSS 类名 |
-| initialMessages | Message[] | 否 | 初始化时预加载的消息数组 |
-
-### AgentChatWindow Props
-
-| 属性 | 类型 | 必填 | 描述 |
-|------|------|------|------|
-| agent | HttpAgent | 是 | HTTP Agent 实例 |
-| defaultToolDefs | ToolDefinition[] | 否 | 默认工具定义数组 |
-| defaultToolRenderers | Record<string, ToolRenderer> | 否 | 默认工具渲染器映射 |
-| defaultToolExecutors | Record<string, ToolExecutor> | 否 | 默认工具执行器映射 |
-| defaultContexts | Array<{description: string, value: string}> | 否 | 默认上下文信息 |
-| className | string | 否 | 自定义 CSS 类名 |
-| initialMessages | Message[] | 否 | 初始化时预加载的消息数组 |
-
-### addMessages API
-
-`addMessages` 函数允许你程序化地添加消息到聊天界面：
-
-#### 参数
-
-| 参数 | 类型 | 必填 | 描述 |
-|------|------|------|------|
-| messages | Message[] | 是 | 要添加的消息数组 |
-| options | { triggerAgent?: boolean } | 否 | 配置选项 |
-| options.triggerAgent | boolean | 否 | 是否触发 AI 响应，默认为 true |
-
-#### 使用场景
-
-1. **加载历史记录**: 设置 `triggerAgent: false`，仅添加消息不触发 AI
-2. **模拟用户输入**: 设置 `triggerAgent: true`，模拟用户发送消息
-3. **批量导入对话**: 一次性添加多条历史消息
-4. **注入上下文**: 动态添加系统消息或背景信息
-
-#### 示例
+下面示例展示：在参数流式阶段实时把 `invocation.args` 当作 HTML 预览；当进入 `result` 阶段，改用 `invocation.result.html`。
 
 ```tsx
-// 添加单条消息并触发 AI 响应
-await addMessages([{
-  id: '1',
-  role: 'user',
-  content: '你好'
-}])
+import * as React from 'react'
+
+const toolRenderers = {
+  htmlGenerator: {
+    definition: toolDefs.find(d => d.name === 'htmlGenerator')!,
+    render: (invocation) => {
+      const [html, setHtml] = React.useState('')
+
+      React.useEffect(() => {
+        // 在参数流式阶段（partial-call / call），尝试从 args 中提取 HTML
+        // args 可能是字符串（原始/部分 JSON/直接 HTML），也可能是对象
+        const a = invocation.args as unknown
+        let next = ''
+        if (typeof a === 'string') {
+          // 如果后端直接把局部 HTML 作为字符串流式输出，这里可以立即预览
+          next = a
+        } else if (a && typeof (a as any).html === 'string') {
+          next = (a as any).html
+        }
+
+        // 进入 result 阶段后，优先使用最终结果中的 html 字段
+        if (invocation.state === 'result') {
+          const r = invocation.result as any
+          if (r && typeof r.html === 'string') next = r.html
+        }
+        if (next) setHtml(next)
+      }, [invocation.args, invocation.state, invocation.result])
+
+      return (
+        <div className="rounded border">
+          <div className="px-2 py-1 text-xs text-muted-foreground border-b">
+            {invocation.state === 'partial-call' && '生成中（预览）…'}
+            {invocation.state === 'call' && '执行中…'}
+            {invocation.state === 'result' && '已生成'}
+          </div>
+          {/* 生产环境请务必进行 HTML 消毒（如 DOMPurify），并开启 sandbox */}
+          <iframe
+            title="html-preview"
+            sandbox="allow-same-origin"
+            style={{ width: '100%', height: 260, background: 'white', border: '0' }}
+            srcDoc={html}
+          />
+        </div>
+      )
+    },
+  },
+}
+```
+
+要点：
+- `AgentEventHandler` 在参数流入时会把 tool-invocation 的 `state` 设为 `partial-call`，并不断更新 `args`；`ToolCallRenderer`/自定义渲染器据此可做“边生成边预览”。
+- `args` 解析失败时库会保留原始字符串，你仍可展示部分内容；当解析成功或结果返回时再替换为更完整的预览。
+- 预览 HTML 存在 XSS 风险；请使用 DOMPurify 等库进行消毒，且给 iframe 开 sandbox。
+
+## API 摘要
+
+### 关键组件
+- `AgentChatWindow`: 聊天窗口（需传入 `agentSessionManager` 与 `toolRenderers`）
+- `AgentChatCore`: 去壳的聊天核心（同上）
+- `ChatInterface`: 仅包含消息列表与输入区（库内使用）
+
+### 关键类型（简化）
+- `ToolDefinition`: `{ name, description, parameters }`
+- `Tool`: `ToolDefinition & { execute?: (toolCall) => ToolResult | Promise; render?: (invocation, onResult) => ReactNode }`
+- `ToolRenderer`: `{ definition: ToolDefinition; render: (invocation, onResult) => ReactNode }`
+- `ToolExecutor`: `(toolCall, context?) => ToolResult | Promise`
+
+### 常用 Hooks
+- `useParseTools(tools: Tool[])`: `{ toolDefs, toolExecutors, toolRenderers }`
+- `useAgentSessionManager({ agent, getToolDefs, getContexts, initialMessages, getToolExecutor })`
+- `useAgentSessionManagerState(sessionManager)`: `{ messages, isAgentResponding, threadId }`
+- `useAgentChat`: 更贴近数据面的封装（如不使用 UI 组件，可用它驱动自定义界面）
+
+### addMessages API（通过 AgentChatRef 或 useAgentChat）
+
+```ts
+addMessages(
+  messages: UIMessage[],
+  options?: { triggerAgent?: boolean },
+): Promise<void>
+```
+
+示例：
+```tsx
+// 添加单条消息并触发 AI 响应（UIMessage 结构）
+await addMessages([
+  { id: '1', role: 'user', parts: [{ type: 'text', text: '你好' }] },
+])
 
 // 批量添加历史消息，不触发 AI 响应
 await addMessages([
-  { id: '1', role: 'user', content: '历史消息 1' },
-  { id: '2', role: 'assistant', content: '历史回复 1' },
-  { id: '3', role: 'user', content: '历史消息 2' },
+  { id: '1', role: 'user', parts: [{ type: 'text', text: '历史消息 1' }] },
+  { id: '2', role: 'assistant', parts: [{ type: 'text', text: '历史回复 1' }] },
 ], { triggerAgent: false })
 
 // 注入系统消息
-await addMessages([{
-  id: Date.now().toString(),
-  role: 'system',
-  content: '请用简洁的语言回答'
-}], { triggerAgent: false })
+await addMessages([
+  { id: Date.now().toString(), role: 'system', parts: [{ type: 'text', text: '请用简洁的语言回答' }] }
+], { triggerAgent: false })
 ```
 
-### 工具定义
+---
 
-工具定义需要符合以下格式：
-
-```typescript
-interface ToolDefinition {
-  name: string
-  description: string
-  parameters: {
-    type: 'object'
-    properties: Record<string, any>
-    required: string[]
-  }
-}
-```
-
-### 工具渲染器
-
-工具渲染器需要符合以下格式：
-
-```typescript
-interface ToolRenderer {
-  render: (toolCall: ToolCall, onResult: (result: ToolResult) => void) => ReactNode
-  definition: ToolDefinition
-}
-```
-
-## Hooks 参考
-
-### useProvideAgentContexts
-
-用于提供动态上下文：
-
-```typescript
-function useProvideAgentContexts(contexts: Context[]): void
-```
-
-这个 hook 允许你在组件中动态提供上下文信息。当 contexts 数组发生变化时，上下文会自动更新。
-
-**说明**: 默认使用全局实例，如需隔离可使用Provider。
-
-### useProvideAgentToolDefs
-
-用于提供动态工具定义：
-
-```typescript
-function useProvideAgentToolDefs(toolDefs: ToolDefinition[]): void
-```
-
-这个 hook 允许你在组件中动态提供工具定义。当 toolDefs 数组发生变化时，工具定义会自动更新。
-
-**说明**: 默认使用全局实例，如需隔离可使用Provider。
-
-### useProvideAgentToolRenderers
-
-用于提供动态工具渲染器：
-
-```typescript
-function useProvideAgentToolRenderers(toolRenderers: ToolRenderer[]): void
-```
-
-这个 hook 允许你在组件中动态提供工具渲染器。当 toolRenderers 数组发生变化时，工具渲染器会自动更新。
-
-**说明**: 默认使用全局实例，如需隔离可使用Provider。
-
-### useProvideAgentToolExecutors
-
-用于动态注册工具执行器：
-
-```typescript
-function useProvideAgentToolExecutors(toolExecutors: Record<string, ToolExecutor>): void
-```
-
-**参数说明**:
-- `toolExecutors`：工具名到执行器的映射
-- 支持同步和异步函数
-- 组件卸载时自动移除
-
-**说明**: 默认使用全局实例，如需隔离可使用Provider。
-
-详见[动态注册工具执行器](#动态注册工具执行器)小节。
-
-所有hooks默认使用全局实例，无需额外配置。只有在需要多实例隔离时才使用Provider。
-
-## 故障排除
-
-
-### 常见问题
-
-#### 1. 动态资源不生效
-
-**问题**: 使用 `useProvideAgent*` hooks 但工具或上下文没有生效
-
-**解决方法**: 
-- 检查传入的数据格式是否正确
-- 验证工具名称是否与执行器名称完全匹配
-- 确认 hooks 在组件的正确位置调用
-
-#### 2. 工具执行器不响应
-
-**问题**: 注册了工具执行器但工具调用没有自动执行
-
-**解决方法**:
-- 确保工具名称与执行器名称完全匹配
-- 检查执行器函数是否正确返回 ToolResult
-- 验证是否在正确的 Provider 范围内
-
-#### 3. 多实例冲突
-
-**问题**: 多个聊天实例之间工具或上下文互相影响
-
-**解决方法**: 为每个聊天实例提供独立的 AgentProvidersProvider
-
-### 技术问题
-
-如果遇到其他问题，请检查：
-
-1. **后端服务**: 确保 Agent 服务正常运行并可访问
-2. **Agent URL**: 验证 HttpAgent 的 URL 配置是否正确
-3. **工具定义**: 检查 ToolDefinition 是否符合 JSON Schema 规范
-4. **网络连接**: 确认客户端与服务器之间的网络连通性
-5. **依赖版本**: 确认 `@agent-labs/agent-chat` 和 `@ag-ui/client` 版本兼容
-
-### 调试技巧
-
-1. **开启浏览器开发者工具**: 查看控制台错误和网络请求
-2. **使用 React DevTools**: 检查 Context 的值是否正确传递
-3. **添加日志**: 在关键函数中添加 console.log 来跟踪执行流程
-
-```tsx
-function DebugExample() {
-  useProvideAgentToolExecutors({
-    debug: (toolCall) => {
-      console.log('Tool called:', toolCall)
-      return { debug: 'success' }
-    }
-  })
-  
-  return <AgentChatCore agent={agent} />
-}
-```
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request 来帮助改进这个项目。
-
-## 许可证
-
-MIT 
+补充说明：
+- 库会在发送消息到 Provider 前自动补全未完成的工具调用（将其标记为 result 并附带占位结果），以满足 OpenAI 等 API 每个 tool call 后必须跟随一个 tool 结果消息的约束；真实结果到达后会覆盖占位结果。
+- 工具调用在 UI 中的“准备参数中/执行中/已完成”状态由内置的 ToolCallRenderer 负责展示，详见《工具系统指南》。
