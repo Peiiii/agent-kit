@@ -168,7 +168,7 @@ export class AgentEventHandler {
         const invocationPart = {
             type: 'tool-invocation' as const,
             toolInvocation: {
-                state: 'partial-call' as const,
+                status: 'partial-call' as const,
                 toolCallId: this.currentToolCallId,
                 toolName: this.currentToolCallName,
                 // While args stream in, store raw string for preview; will be parsed on end
