@@ -1,7 +1,7 @@
 import { createRef } from 'react'
 import { BehaviorSubject, Observable, Subject, type Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
-import { EventType, type AgentEvent, type IAgent, type ToolExecutor } from '../types'
+import { EventType, ToolInvocationStatus, type AgentEvent, type IAgent, type ToolExecutor } from '../types'
 import type { Context, ToolCall, ToolDefinition, ToolResult } from '../types/agent'
 import type { UIMessage } from '../types/ui-message'
 import { finalizePendingToolInvocations } from '../utils/ui-message'
@@ -205,10 +205,10 @@ export class AgentSessionManager extends Disposable {
       if (executor) {
         try {
           const result = await executor(toolCall)
-          this.addToolResult({ toolCallId: toolCall.id, result, status: "result" })
+            this.addToolResult({ toolCallId: toolCall.id, result, status: ToolInvocationStatus.RESULT })
           this.runAgent()
         } catch (err) {
-          this.addToolResult({ toolCallId: toolCall.id, error: err instanceof Error ? err.message : String(err), status: "error" })
+          this.addToolResult({ toolCallId: toolCall.id, error: err instanceof Error ? err.message : String(err), status: ToolInvocationStatus.ERROR })
           this.runAgent()
         }
       }

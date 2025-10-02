@@ -1,5 +1,5 @@
-import type { ToolCall } from '../types/agent'
-import type { UIMessage, ToolInvocation } from '../types/ui-message'
+import { ToolInvocationStatus, type ToolCall } from '../types/agent'
+import type { ToolInvocation, UIMessage } from '../types/ui-message'
 
 
 export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => {
@@ -7,7 +7,7 @@ export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => 
     toolCallId: toolCall.id,
     toolName: toolCall.function.name,
     args: JSON.parse(toolCall.function.arguments),
-    status: "call",
+    status: ToolInvocationStatus.CALL,
   }
 }
 
@@ -30,7 +30,7 @@ export function finalizePendingToolInvocations(
       ...msg,
       parts: msg.parts.map((part) => {
         if (part.type !== 'tool-invocation') return part
-        if (part.toolInvocation.status === 'result') return part
+        if (part.toolInvocation.status === ToolInvocationStatus.RESULT) return part
         
         // For partial-call or call states, ensure args are properly formatted
         let safeArgs = part.toolInvocation.args
@@ -50,7 +50,7 @@ export function finalizePendingToolInvocations(
           toolInvocation: {
             ...part.toolInvocation,
             args: safeArgs,
-            status: 'result',
+            status: ToolInvocationStatus.RESULT,
             result: stub,
           },
         }

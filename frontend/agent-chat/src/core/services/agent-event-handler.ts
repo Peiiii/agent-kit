@@ -1,5 +1,5 @@
 import { v4 } from "uuid"
-import { EventType, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallStartEvent, type ToolCallArgsEvent } from "../types"
+import { EventType, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallStartEvent, type ToolCallArgsEvent, ToolInvocationStatus } from "../types"
 import type { UIMessage } from "../types/ui-message"
 import { toolCallToToolInvocation } from "../utils"
 import { AgentSessionManager } from "./agent-session-manager"
@@ -34,7 +34,7 @@ export class AgentEventHandler {
             if (part.type !== 'tool-invocation') continue
             const inv = part.toolInvocation
             // Only emit once when the tool call is finalized (state === 'call')
-            if (inv.status === 'call' && !this.emittedToolCallIds.has(inv.toolCallId)) {
+            if (inv.status === ToolInvocationStatus.CALL && !this.emittedToolCallIds.has(inv.toolCallId)) {
                 this.emittedToolCallIds.add(inv.toolCallId)
                 
                 // Ensure args can be safely stringified
@@ -168,7 +168,7 @@ export class AgentEventHandler {
         const invocationPart = {
             type: 'tool-invocation' as const,
             toolInvocation: {
-                status: 'partial-call' as const,
+                status: ToolInvocationStatus.PARTIAL_CALL,
                 toolCallId: this.currentToolCallId,
                 toolName: this.currentToolCallName,
                 // While args stream in, store raw string for preview; will be parsed on end
@@ -220,7 +220,7 @@ export class AgentEventHandler {
                     ...part,
                     toolInvocation: {
                         ...part.toolInvocation,
-                        status: 'partial-call',
+                        status: ToolInvocationStatus.PARTIAL_CALL,
                         args: parsed,
                     }
                 }
@@ -274,7 +274,7 @@ export class AgentEventHandler {
                             ...part,
                             toolInvocation: {
                                 ...toolCallToToolInvocation(toolCall),
-                                status: 'call',
+                                status: ToolInvocationStatus.CALL,
                             },
                         }
                         break
@@ -298,7 +298,7 @@ export class AgentEventHandler {
                             type: 'tool-invocation',
                             toolInvocation: {
                                 ...toolCallToToolInvocation(toolCall),
-                                status: 'call',
+                                status: ToolInvocationStatus.CALL,
                             },
                         }],
                     }

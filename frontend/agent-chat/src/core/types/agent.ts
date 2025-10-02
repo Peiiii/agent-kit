@@ -11,7 +11,12 @@ import type { Subscribable } from 'rxjs'
 import type { AgentEvent } from './agent-event'
 import type { ToolInvocation, UIMessage } from './ui-message'
 
-export type ToolInvocationStatus = 'call' | 'result' | 'partial-call' | 'error'
+export enum ToolInvocationStatus {
+  CALL = 'call',
+  RESULT = 'result',
+  PARTIAL_CALL = 'partial-call',
+  ERROR = 'error',
+}
 
 export interface ToolCall {
   id: string
