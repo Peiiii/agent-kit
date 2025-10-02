@@ -11,7 +11,7 @@ import type { Subscribable } from 'rxjs'
 import type { AgentEvent } from './agent-event'
 import type { ToolInvocation, UIMessage } from './ui-message'
 
-export type ToolInvocationState = 'call' | 'result' | 'partial-call' | 'error'
+export type ToolInvocationStatus = 'call' | 'result' | 'partial-call' | 'error'
 
 export interface ToolCall {
   id: string
@@ -22,19 +22,19 @@ export interface ToolCall {
   }
 }
 
-export interface ToolResult {
+export interface ToolResult <RESULT = ToolExecutionResult>{
   toolCallId: string
-  result: string | boolean | number | object
-  state: ToolInvocationState
+  result?: RESULT
+  status: ToolInvocationStatus
   error?: string
 }
 
 export type ToolExecutionResult = string | boolean | number | object
 
-export type ToolExecutor = (
+export type ToolExecutor<RESULT = ToolExecutionResult> = (
   toolCall: ToolCall,
   context?: Record<string, unknown>,
-) => ToolExecutionResult | Promise<ToolExecutionResult>;
+) => RESULT | Promise<RESULT>;
 
 
 export interface ToolDefinition {

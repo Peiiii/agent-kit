@@ -27,7 +27,7 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
   }
 
   // 如果工具调用已经有结果，展示结果
-  if (toolInvocation.state === 'result') {
+  if (toolInvocation.status === 'result') {
     return (
       <div className="rounded-lg border bg-background p-2 w-full max-w-full min-w-0 overflow-hidden">
         <div className="mb-2 flex items-center justify-between">
@@ -52,10 +52,10 @@ export const ToolCallRenderer: React.FC<ToolCallRendererProps> = ({
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium">
           工具调用
-          {toolInvocation.state === 'partial-call' && (
+          {toolInvocation.status === 'partial-call' && (
             <span className="ml-2 text-xs text-muted-foreground">准备参数中…</span>
           )}
-          {toolInvocation.state === 'call' && (
+          {toolInvocation.status === 'call' && (
             <span className="ml-2 text-xs text-muted-foreground">执行中…</span>
           )}
         </span>

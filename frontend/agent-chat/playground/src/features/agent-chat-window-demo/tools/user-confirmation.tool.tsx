@@ -1,5 +1,4 @@
-import { Tool, ToolResult } from "@agent-labs/agent-chat";
-import { ToolInvocation } from "@ai-sdk/ui-utils";
+import { Tool, ToolInvocation, ToolResult } from "@agent-labs/agent-chat";
 import { useState } from "react";
 
 export const createUserConfirmationTool = (): Tool => ({
@@ -39,7 +38,7 @@ export const createUserConfirmationTool = (): Tool => ({
                 onResult({
                     toolCallId: toolInvocation.toolCallId,
                     result: `用户已确认操作：${params.action}`,
-                    status: 'success',
+                    status: 'result',
                 })
                 setIsConfirmed(true)
             } catch (error) {
@@ -63,7 +62,7 @@ export const createUserConfirmationTool = (): Tool => ({
                 onResult({
                     toolCallId: toolInvocation.toolCallId,
                     result: `用户已拒绝操作：${params.action}`,
-                    status: 'success',
+                    status: 'result',
                 })
                 setIsConfirmed(false)
             } catch (error) {

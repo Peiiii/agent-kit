@@ -7,7 +7,7 @@ export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => 
     toolCallId: toolCall.id,
     toolName: toolCall.function.name,
     args: JSON.parse(toolCall.function.arguments),
-    state: "call",
+    status: "call",
   }
 }
 
@@ -30,7 +30,7 @@ export function finalizePendingToolInvocations(
       ...msg,
       parts: msg.parts.map((part) => {
         if (part.type !== 'tool-invocation') return part
-        if (part.toolInvocation.state === 'result') return part
+        if (part.toolInvocation.status === 'result') return part
         
         // For partial-call or call states, ensure args are properly formatted
         let safeArgs = part.toolInvocation.args
@@ -50,7 +50,7 @@ export function finalizePendingToolInvocations(
           toolInvocation: {
             ...part.toolInvocation,
             args: safeArgs,
-            state: 'result',
+            status: 'result',
             result: stub,
           },
         }

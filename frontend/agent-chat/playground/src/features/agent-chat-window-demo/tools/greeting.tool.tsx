@@ -1,6 +1,4 @@
-import { Tool, ToolCall, ToolResult } from "@agent-labs/agent-chat";
-import { ToolInvocation } from "@ai-sdk/ui-utils";
-import React from "react";
+import { Tool, ToolCall, ToolInvocation, ToolResult } from "@agent-labs/agent-chat";
 
 export const createGreetingTool = (): Tool => ({
     name: 'greeting',

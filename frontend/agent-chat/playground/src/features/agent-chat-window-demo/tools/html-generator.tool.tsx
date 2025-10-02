@@ -142,30 +142,30 @@ export const createHtmlGeneratorTool = (): Tool => ({
       }
     }
 
-    const previewHtml = toolInvocation.state === 'result' ? pendingHtml : undefined
+    const previewHtml = toolInvocation.status === 'result' ? pendingHtml : undefined
 
     const [tab, setTab] = React.useState<'preview' | 'source'>('source')
 
     React.useEffect(() => {
-      setTab(toolInvocation.state === 'result' ? 'preview' : 'source')
-    }, [toolInvocation.toolCallId, toolInvocation.state])
+      setTab(toolInvocation.status === 'result' ? 'preview' : 'source')
+    }, [toolInvocation.toolCallId, toolInvocation.status])
 
     return (
       <div className="rounded-lg border bg-background">
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <div className="text-sm font-medium">
             HTML 生成与预览
-            {toolInvocation.state === 'partial-call' && (
+            {toolInvocation.status === 'partial-call' && (
               <span className="ml-2 text-xs text-muted-foreground">
                 准备参数中…
               </span>
             )}
-            {toolInvocation.state === 'call' && (
+            {toolInvocation.status === 'call' && (
               <span className="ml-2 text-xs text-muted-foreground">
                 执行中…
               </span>
             )}
-            {toolInvocation.state === 'result' && (
+            {toolInvocation.status === 'result' && (
               <span className="ml-2 text-xs text-muted-foreground">已完成</span>
             )}
           </div>
@@ -181,8 +181,8 @@ export const createHtmlGeneratorTool = (): Tool => ({
         <div className="px-3">
           <div className="flex gap-2 mb-2">
             <button
-              className={`text-xs px-2 py-1 rounded border ${tab === 'preview' ? 'bg-muted' : 'bg-background'} ${toolInvocation.state !== 'result' ? 'opacity-60 cursor-not-allowed' : ''}`}
-              disabled={toolInvocation.state !== 'result'}
+              className={`text-xs px-2 py-1 rounded border ${tab === 'preview' ? 'bg-muted' : 'bg-background'} ${toolInvocation.status !== 'result' ? 'opacity-60 cursor-not-allowed' : ''}`}
+              disabled={toolInvocation.status !== 'result'}
               onClick={() => setTab('preview')}
             >
               预览
@@ -208,7 +208,7 @@ export const createHtmlGeneratorTool = (): Tool => ({
                 />
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-                  {toolInvocation.state === 'result'
+                  {toolInvocation.status === 'result'
                     ? '无可预览内容'
                     : '等待生成预览…'}
                 </div>

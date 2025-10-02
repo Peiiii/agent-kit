@@ -6,7 +6,7 @@ export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => 
         toolCallId: toolCall.id,
         toolName: toolCall.function.name,
         args: JSON.parse(toolCall.function.arguments),
-        state: "call",
+        status: "call",
     }
 }
 
@@ -38,7 +38,7 @@ export const convertMessagesToUIMessages = (
                         parsedArgs = { error: 'Invalid JSON', raw: toolCall.function.arguments };
                     }
                     toolCallMap.set(toolCall.id, {
-                        state: 'call' as const,
+                        status: 'call' as const,
                         toolCallId: toolCall.id,
                         toolName: toolCall.function.name,
                         args: parsedArgs,
@@ -63,7 +63,7 @@ export const convertMessagesToUIMessages = (
                 }
                 toolCallMap.set(toolMessage.toolCallId, {
                     ...toolInvocation,
-                    state: 'result' as const,
+                    status: 'result' as const,
                     result: parsedResult,
                 })
             }
@@ -155,7 +155,7 @@ export const convertMessageToMessages = (
                 },
             ],
         }
-        if (part.toolInvocation.state !== "result") {
+        if (part.toolInvocation.status !== "result") {
             messages.push(toolCallMessage)
         } else {
             const toolResultMessage: ToolMessage = {

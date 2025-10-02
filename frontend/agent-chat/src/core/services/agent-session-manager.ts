@@ -2,10 +2,10 @@ import { createRef } from 'react'
 import { BehaviorSubject, Observable, Subject, type Unsubscribable } from 'rxjs'
 import { v4 } from 'uuid'
 import { EventType, type AgentEvent, type IAgent, type ToolExecutor } from '../types'
-import type { Context, ToolCall, ToolDefinition, ToolInvocationState, ToolResult } from '../types/agent'
+import type { Context, ToolCall, ToolDefinition, ToolResult } from '../types/agent'
 import type { UIMessage } from '../types/ui-message'
-import { AgentEventHandler } from './agent-event-handler'
 import { finalizePendingToolInvocations } from '../utils/ui-message'
+import { AgentEventHandler } from './agent-event-handler'
 
 
 export interface IAgentProvider {
@@ -83,10 +83,10 @@ export class AgentSessionManager extends Disposable {
 
   /**
    * 添加 tool result 消息
-   * @param result { toolCallId, result, status, error? }
+   * @param result { toolCallId, result, state, error? }
    * @param options { triggerAgent?: boolean }
    */
-  addToolResult = (result: { toolCallId: string, result?: unknown, error?: string, state: ToolInvocationState }, _options?: { triggerAgent?: boolean }): void => {
+  addToolResult = (result: ToolResult, _options?: { triggerAgent?: boolean }): void => {
     const targetMessage = this.getMessages().find(msg => msg.parts.find(part => part.type === "tool-invocation" && part.toolInvocation.toolCallId === result.toolCallId))
     if (!targetMessage) {
       return
@@ -101,7 +101,7 @@ export class AgentSessionManager extends Disposable {
             toolInvocation: {
               ...part.toolInvocation,
               result: result.result ?? undefined,
-              state: result.state,
+              status: result.status,
               error: result.error ?? undefined,
             },
           }
@@ -205,10 +205,10 @@ export class AgentSessionManager extends Disposable {
       if (executor) {
         try {
           const result = await executor(toolCall)
-          this.addToolResult({ toolCallId: toolCall.id, result, state: "result" })
+          this.addToolResult({ toolCallId: toolCall.id, result, status: "result" })
           this.runAgent()
         } catch (err) {
-          this.addToolResult({ toolCallId: toolCall.id, error: err instanceof Error ? err.message : String(err), state: "error" })
+          this.addToolResult({ toolCallId: toolCall.id, error: err instanceof Error ? err.message : String(err), status: "error" })
           this.runAgent()
         }
       }

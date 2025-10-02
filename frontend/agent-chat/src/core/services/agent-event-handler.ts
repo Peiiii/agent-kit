@@ -34,7 +34,7 @@ export class AgentEventHandler {
             if (part.type !== 'tool-invocation') continue
             const inv = part.toolInvocation
             // Only emit once when the tool call is finalized (state === 'call')
-            if (inv.state === 'call' && !this.emittedToolCallIds.has(inv.toolCallId)) {
+            if (inv.status === 'call' && !this.emittedToolCallIds.has(inv.toolCallId)) {
                 this.emittedToolCallIds.add(inv.toolCallId)
                 
                 // Ensure args can be safely stringified
@@ -220,7 +220,7 @@ export class AgentEventHandler {
                     ...part,
                     toolInvocation: {
                         ...part.toolInvocation,
-                        state: 'partial-call',
+                        status: 'partial-call',
                         args: parsed,
                     }
                 }
@@ -274,7 +274,7 @@ export class AgentEventHandler {
                             ...part,
                             toolInvocation: {
                                 ...toolCallToToolInvocation(toolCall),
-                                state: 'call',
+                                status: 'call',
                             },
                         }
                         break
@@ -298,7 +298,7 @@ export class AgentEventHandler {
                             type: 'tool-invocation',
                             toolInvocation: {
                                 ...toolCallToToolInvocation(toolCall),
-                                state: 'call',
+                                status: 'call',
                             },
                         }],
                     }
