@@ -1,3 +1,5 @@
+import type { ToolInvocationState } from "./agent";
+
 type JSONValue = null | string | number | boolean | JSONObject | JSONArray;
 type JSONObject = {
     [key: string]: JSONValue;
@@ -35,7 +37,7 @@ type LanguageModelV1Source = {
 
 
 export interface ToolInvocation<ARGS = any, RESULT = any> {
-    state: 'partial-call' | 'call' | 'result';
+    state: ToolInvocationState;
     toolCallId: string;
     toolName: string;
     args: ARGS;

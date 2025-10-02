@@ -86,7 +86,7 @@ export class AgentSessionManager extends Disposable {
    * @param result { toolCallId, result, status, error? }
    * @param options { triggerAgent?: boolean }
    */
-  addToolResult = (result: { toolCallId: string, result: unknown, state: ToolInvocationState, error?: string }, _options?: { triggerAgent?: boolean }): void => {
+  addToolResult = (result: { toolCallId: string, result?: unknown, error?: string, state: ToolInvocationState }, _options?: { triggerAgent?: boolean }): void => {
     const targetMessage = this.getMessages().find(msg => msg.parts.find(part => part.type === "tool-invocation" && part.toolInvocation.toolCallId === result.toolCallId))
     if (!targetMessage) {
       return
@@ -100,9 +100,9 @@ export class AgentSessionManager extends Disposable {
             ...part,
             toolInvocation: {
               ...part.toolInvocation,
-              result: result.result,
+              result: result.result ?? undefined,
               state: result.state,
-              error: result.error,
+              error: result.error ?? undefined,
             },
           }
         }
@@ -208,7 +208,7 @@ export class AgentSessionManager extends Disposable {
           this.addToolResult({ toolCallId: toolCall.id, result, state: "result" })
           this.runAgent()
         } catch (err) {
-          this.addToolResult({ toolCallId: toolCall.id, result: { error: err instanceof Error ? err.message : String(err) }, state: "result" })
+          this.addToolResult({ toolCallId: toolCall.id, error: err instanceof Error ? err.message : String(err), state: "error" })
           this.runAgent()
         }
       }

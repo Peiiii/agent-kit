@@ -1,13 +1,7 @@
 import * as React from 'react'
 import type { AgentSessionManager } from '../services/agent-session-manager';
-import type { Context, IAgent, ToolCall, ToolDefinition, ToolRenderer, ToolResult } from './agent';
+import type { Context, IAgent, ToolDefinition, ToolExecutor, ToolRenderer, ToolResult } from './agent';
 import type { UIMessage } from "./ui-message";
-
-export type ToolExecutor = (
-  toolCall: ToolCall,
-  context?: Record<string, unknown>
-) => ToolResult | Promise<ToolResult>
-
 
 export interface SenderProps {
   placeholder?: string
