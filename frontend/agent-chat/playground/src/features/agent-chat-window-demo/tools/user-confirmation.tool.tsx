@@ -1,7 +1,12 @@
-import { Tool, ToolInvocation, ToolInvocationStatus, ToolResult } from "@agent-labs/agent-chat";
+import { Tool, ToolInvocationStatus, ToolResult } from "@agent-labs/agent-chat";
 import { useState } from "react";
 
-export const createUserConfirmationTool = (): Tool => ({
+export interface UserConfirmationToolArgs {
+    action: string
+    importance?: 'low' | 'medium' | 'high' | 'critical'
+}
+
+export const createUserConfirmationTool = (): Tool<UserConfirmationToolArgs, string> => ({
     name: 'userConfirmation',
     description: '请求用户确认某个操作',
     parameters: {
@@ -20,11 +25,8 @@ export const createUserConfirmationTool = (): Tool => ({
         required: ['action']
     },
     // 注意：这个工具没有 execute 函数，因为需要用户介入
-    render: (toolInvocation: ToolInvocation, onResult: (result: ToolResult) => void) => {
-        const params = toolInvocation.args as {
-            action: string
-            importance?: 'low' | 'medium' | 'high' | 'critical'
-        }
+    render: (toolInvocation, onResult: (result: ToolResult<string>) => void) => {
+        const params = toolInvocation.args
 
         const [isConfirmed, setIsConfirmed] = useState<boolean | null>(null)
         const [isLoading, setIsLoading] = useState(false)

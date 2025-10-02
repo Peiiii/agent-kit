@@ -1,6 +1,11 @@
-import { Tool, ToolCall, ToolInvocation, ToolResult } from "@agent-labs/agent-chat";
+import { Tool } from "@agent-labs/agent-chat";
 
-export const createGreetingTool = (): Tool => ({
+export interface GreetingToolArgs {
+    name: string
+    time?: string
+}
+
+export const createGreetingTool = (): Tool<GreetingToolArgs, string> => ({
     name: 'greeting',
     description: '生成友好的问候语',
     parameters: {
@@ -17,34 +22,20 @@ export const createGreetingTool = (): Tool => ({
         },
         required: ['name']
     },
-    execute: async (toolCall: ToolCall) => {
+    execute: async (toolCallArgs: GreetingToolArgs) => {
         try {
-            const args = JSON.parse(toolCall.function.arguments)
-            const { name, time } = args
+            const { name, time } = toolCallArgs
 
             const currentTime = time || getCurrentTimeOfDay()
             const greeting = generateGreeting(name, currentTime)
 
-            return {
-                toolCallId: toolCall.id,
-                result: greeting,
-                status: 'success' as const
-            }
+            return greeting
         } catch (error) {
-            return {
-                toolCallId: toolCall.id,
-                result: '问候语生成失败',
-                status: 'error' as const,
-                error: String(error)
-            }
+            throw new Error('问候语生成失败')
         }
     },
-    render: (toolInvocation: ToolInvocation, onResult: (result: ToolResult) => void) => {
-        const params = toolInvocation.args as {
-            name: string
-            time?: string
-        }
-
+    render: (toolInvocation) => {
+        const params = toolInvocation.args
         return (
             <div className="p-4 border rounded-lg bg-yellow-50">
                 <h3 className="font-bold mb-2 text-yellow-800">👋 问候语生成</h3>

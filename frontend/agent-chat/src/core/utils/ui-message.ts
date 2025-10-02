@@ -3,6 +3,7 @@ import type { ToolInvocation, UIMessage } from '../types/ui-message'
 
 
 export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => {
+  console.log('[toolCallToToolInvocation] toolCall', toolCall)
   return {
     toolCallId: toolCall.id,
     toolName: toolCall.function.name,

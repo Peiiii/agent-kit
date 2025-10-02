@@ -34,10 +34,10 @@ export interface ToolResult <RESULT = ToolExecutionResult>{
   error?: string
 }
 
-export type ToolExecutionResult = string | boolean | number | object
+export type ToolExecutionResult = unknown
 
-export type ToolExecutor<RESULT = ToolExecutionResult> = (
-  toolCall: ToolCall,
+export type ToolExecutor<ARGS = any, RESULT = ToolExecutionResult> = (
+  toolCallArgs: ARGS,
   context?: Record<string, unknown>,
 ) => RESULT | Promise<RESULT>;
 
@@ -53,8 +53,8 @@ export interface ToolDefinition {
  * Used when you want to provide custom rendering logic for tools
  * without modifying the original tool definition
  */
-export interface ToolRenderer {
-  render: ToolRenderFn
+export interface ToolRenderer<ARGS = any, RESULT = ToolExecutionResult> {
+  render: ToolRenderFn<ARGS, RESULT>
   definition: ToolDefinition
 }
 
@@ -69,7 +69,7 @@ export interface ToolRenderer {
  * For user-interaction tools, this is where you implement the execution logic
  * and call onResult() when the user completes the interaction.
  */
-export type ToolRenderFn = (tool: ToolInvocation, onResult: (result: ToolResult) => void) => ReactNode
+export type ToolRenderFn<ARGS = any, RESULT = ToolExecutionResult> = (tool: ToolInvocation<ARGS, RESULT>, onResult: (result: ToolResult<RESULT>) => void) => ReactNode
 
 /**
  * Tool interface that supports three different execution patterns:
@@ -96,13 +96,13 @@ export type ToolRenderFn = (tool: ToolInvocation, onResult: (result: ToolResult)
  * - Where the execution should happen (frontend vs backend)
  * - Performance requirements and security considerations
  */
-export interface Tool extends ToolDefinition {
+export interface Tool<ARGS = any, RESULT = ToolExecutionResult> extends ToolDefinition {
   /**
    * Optional execute function for frontend-execution tools
    * Executes the tool logic and returns the result
    * Should not be implemented for backend-only or user-interaction tools
    */
-  execute?: ToolExecutor
+  execute?: ToolExecutor<ARGS, RESULT>
 
   /**
    * Optional render function for all tool types
@@ -110,7 +110,7 @@ export interface Tool extends ToolDefinition {
    * - Frontend-execution tools: Display execution status
    * - User-interaction tools: Display UI and handle user input
    */
-  render?: ToolRenderFn
+  render?: ToolRenderFn<ARGS, RESULT>
 }
 
 export interface Context {

@@ -1,6 +1,10 @@
-import { Tool, ToolCall, ToolInvocation, ToolResult } from "@agent-labs/agent-chat";
+import { Tool, ToolInvocation, ToolResult } from "@agent-labs/agent-chat";
 
-export const createCalculatorTool = (): Tool => ({
+export interface CalculatorToolArgs {
+    expression: string
+}
+
+export const createCalculatorTool = (): Tool<CalculatorToolArgs, string> => ({
     name: 'calculate',
     description: '执行基本的数学计算',
     parameters: {
@@ -13,11 +17,9 @@ export const createCalculatorTool = (): Tool => ({
         },
         required: ['expression']
     },
-    execute: async (toolCall: ToolCall) => {
+    execute: async (toolCallArgs: CalculatorToolArgs) => {
         try {
-            const args = JSON.parse(toolCall.function.arguments)
-            const { expression } = args
-
+            const { expression } = toolCallArgs
             // 使用 Function 构造函数来安全地执行数学表达式
             const sanitizedExpression = expression.replace(/[^0-9+\-*/().\s]/g, '')
             const calculateFunction = new Function(`return ${sanitizedExpression}`)
@@ -26,25 +28,13 @@ export const createCalculatorTool = (): Tool => ({
             if (typeof result !== 'number' || !isFinite(result)) {
                 throw new Error('计算结果无效')
             }
-
-            return {
-                toolCallId: toolCall.id,
-                result: `计算结果：${expression} = ${result}`,
-                status: 'success' as const
-            }
+            return result.toString()
         } catch (error) {
-            return {
-                toolCallId: toolCall.id,
-                result: '计算失败',
-                status: 'error' as const,
-                error: String(error)
-            }
+            throw new Error('计算失败')
         }
     },
-    render: (toolInvocation: ToolInvocation, onResult: (result: ToolResult) => void) => {
-        const params = toolInvocation.args as {
-            expression: string
-        }
+    render: (toolInvocation: ToolInvocation<CalculatorToolArgs, string>, _onResult: (result: ToolResult<string>) => void) => {
+        const params = toolInvocation.args
 
         return (
             <div className="p-4 border rounded-lg bg-blue-50">

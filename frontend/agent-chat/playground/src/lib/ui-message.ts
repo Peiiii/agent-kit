@@ -1,12 +1,12 @@
 import type { AssistantMessage, Message, ToolCall, ToolMessage } from '@ag-ui/client'
-import type { TextUIPart, ToolInvocation, ToolInvocationUIPart, UIMessage } from '@agent-labs/agent-chat'
+import { ToolInvocationStatus, type TextUIPart, type ToolInvocation, type ToolInvocationUIPart, type UIMessage } from '@agent-labs/agent-chat'
 
 export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => {
     return {
         toolCallId: toolCall.id,
         toolName: toolCall.function.name,
         args: JSON.parse(toolCall.function.arguments),
-        status: "call",
+        status: ToolInvocationStatus.CALL,
     }
 }
 
@@ -38,7 +38,7 @@ export const convertMessagesToUIMessages = (
                         parsedArgs = { error: 'Invalid JSON', raw: toolCall.function.arguments };
                     }
                     toolCallMap.set(toolCall.id, {
-                        status: 'call' as const,
+                        status: ToolInvocationStatus.CALL,
                         toolCallId: toolCall.id,
                         toolName: toolCall.function.name,
                         args: parsedArgs,
@@ -63,7 +63,7 @@ export const convertMessagesToUIMessages = (
                 }
                 toolCallMap.set(toolMessage.toolCallId, {
                     ...toolInvocation,
-                    status: 'result' as const,
+                    status: ToolInvocationStatus.RESULT,
                     result: parsedResult,
                 })
             }

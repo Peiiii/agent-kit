@@ -1,8 +1,10 @@
-import { Tool, ToolCall, ToolResult } from "@agent-labs/agent-chat";
-import { ToolInvocation } from "@ai-sdk/ui-utils";
-import React from "react";
+import { Tool } from "@agent-labs/agent-chat";
 
-export const createWeatherTool = (): Tool => ({
+export interface WeatherToolArgs {
+    city: string
+}
+
+export const createWeatherTool = (): Tool<WeatherToolArgs, string> => ({
     name: 'getWeather',
     description: '获取指定城市的天气信息',
     parameters: {
@@ -15,10 +17,9 @@ export const createWeatherTool = (): Tool => ({
         },
         required: ['city']
     },
-    execute: async (toolCall: ToolCall) => {
+    execute: async (toolCallArgs) => {
         try {
-            const args = JSON.parse(toolCall.function.arguments)
-            const { city } = args
+            const { city } = toolCallArgs
 
             // 模拟天气数据
             const weatherData = {
@@ -30,25 +31,13 @@ export const createWeatherTool = (): Tool => ({
 
             const weather = weatherData[city as keyof typeof weatherData] || { temperature: '20°C', condition: '未知', humidity: '50%' }
             const result = `${city}的天气：${weather.condition}，温度${weather.temperature}，湿度${weather.humidity}`
-
-            return {
-                toolCallId: toolCall.id,
-                result,
-                status: 'success' as const
-            }
+            return result
         } catch (error) {
-            return {
-                toolCallId: toolCall.id,
-                result: '天气查询失败',
-                status: 'error' as const,
-                error: String(error)
-            }
+            throw new Error('天气查询失败')
         }
     },
-    render: (toolInvocation: ToolInvocation, onResult: (result: ToolResult) => void) => {
-        const params = toolInvocation.args as {
-            city: string
-        }
+    render: (toolInvocation, _onResult) => {
+        const params = toolInvocation.args
 
         return (
             <div className="p-4 border rounded-lg bg-green-50">
