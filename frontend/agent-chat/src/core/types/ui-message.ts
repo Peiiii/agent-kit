@@ -40,7 +40,10 @@ export interface ToolInvocation<ARGS = any, RESULT = any> {
     status: ToolInvocationStatus;
     toolCallId: string;
     toolName: string;
-    args: ARGS;
+    /** maybe incomplete json string */
+    args: string;
+    /** parsed args from complete json string */
+    parsedArgs?: ARGS;
     result?: RESULT;
 }
 

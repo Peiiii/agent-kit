@@ -35,7 +35,8 @@ export const createGreetingTool = (): Tool<GreetingToolArgs, string> => ({
         }
     },
     render: (toolInvocation) => {
-        const params = toolInvocation.args
+        if (!toolInvocation.parsedArgs) return 
+        const params = toolInvocation.parsedArgs
         return (
             <div className="p-4 border rounded-lg bg-yellow-50">
                 <h3 className="font-bold mb-2 text-yellow-800">👋 问候语生成</h3>

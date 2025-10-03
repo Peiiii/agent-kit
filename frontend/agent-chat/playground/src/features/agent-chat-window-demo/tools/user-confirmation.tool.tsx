@@ -26,7 +26,7 @@ export const createUserConfirmationTool = (): Tool<UserConfirmationToolArgs, str
     },
     // 注意：这个工具没有 execute 函数，因为需要用户介入
     render: (toolInvocation, onResult: (result: ToolResult<string>) => void) => {
-        const params = toolInvocation.args
+        const params = toolInvocation.parsedArgs
 
         const [isConfirmed, setIsConfirmed] = useState<boolean | null>(null)
         const [isLoading, setIsLoading] = useState(false)
@@ -39,7 +39,7 @@ export const createUserConfirmationTool = (): Tool<UserConfirmationToolArgs, str
 
                 onResult({
                     toolCallId: toolInvocation.toolCallId,
-                    result: `用户已确认操作：${params.action}`,
+                    result: `用户已确认操作：${params?.action}`,
                     status: ToolInvocationStatus.RESULT,
                 })
                 setIsConfirmed(true)
@@ -63,7 +63,7 @@ export const createUserConfirmationTool = (): Tool<UserConfirmationToolArgs, str
 
                 onResult({
                     toolCallId: toolInvocation.toolCallId,
-                    result: `用户已拒绝操作：${params.action}`,
+                    result: `用户已拒绝操作：${params?.action}`,
                     status: ToolInvocationStatus.RESULT,
                 })
                 setIsConfirmed(false)
@@ -85,7 +85,7 @@ export const createUserConfirmationTool = (): Tool<UserConfirmationToolArgs, str
                 <div className="p-4 border rounded-lg bg-gray-50">
                     <h3 className="font-bold mb-2 text-gray-800">✅ 用户确认工具</h3>
                     <div className="mb-4 space-y-2">
-                        <p><strong>操作:</strong> <code className="bg-gray-100 px-2 py-1 rounded">{params.action}</code></p>
+                        <p><strong>操作:</strong> <code className="bg-gray-100 px-2 py-1 rounded">{params?.action}</code></p>
                         <p><strong>状态:</strong>
                             <span className={`ml-2 px-2 py-1 rounded text-sm ${isConfirmed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                 }`}>
@@ -102,13 +102,13 @@ export const createUserConfirmationTool = (): Tool<UserConfirmationToolArgs, str
             <div className="p-4 border rounded-lg bg-orange-50">
                 <h3 className="font-bold mb-2 text-orange-800">⚠️ 需要用户确认</h3>
                 <div className="mb-4 space-y-2">
-                    <p><strong>操作:</strong> <code className="bg-orange-100 px-2 py-1 rounded">{params.action}</code></p>
-                    {params.importance && (
+                    <p><strong>操作:</strong> <code className="bg-orange-100 px-2 py-1 rounded">{params?.action}</code></p>
+                    { params && params.importance && (
                         <p><strong>重要程度:</strong>
                             <span className={`ml-2 px-2 py-1 rounded text-sm ${params.importance === 'critical' ? 'bg-red-100 text-red-800' :
-                                    params.importance === 'high' ? 'bg-orange-100 text-orange-800' :
-                                        params.importance === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-green-100 text-green-800'
+                                params.importance === 'high' ? 'bg-orange-100 text-orange-800' :
+                                    params.importance === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-green-100 text-green-800'
                                 }`}>
                                 {params.importance === 'critical' ? '关键' :
                                     params.importance === 'high' ? '高' :

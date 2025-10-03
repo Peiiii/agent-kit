@@ -37,7 +37,8 @@ export const createWeatherTool = (): Tool<WeatherToolArgs, string> => ({
         }
     },
     render: (toolInvocation, _onResult) => {
-        const params = toolInvocation.args
+        if (!toolInvocation.parsedArgs) return 
+        const params = toolInvocation.parsedArgs
 
         return (
             <div className="p-4 border rounded-lg bg-green-50">

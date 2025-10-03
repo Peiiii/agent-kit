@@ -34,7 +34,8 @@ export const createCalculatorTool = (): Tool<CalculatorToolArgs, string> => ({
         }
     },
     render: (toolInvocation: ToolInvocation<CalculatorToolArgs, string>, _onResult: (result: ToolResult<string>) => void) => {
-        const params = toolInvocation.args
+        if (!toolInvocation.parsedArgs) return 
+        const params = toolInvocation.parsedArgs
 
         return (
             <div className="p-4 border rounded-lg bg-blue-50">

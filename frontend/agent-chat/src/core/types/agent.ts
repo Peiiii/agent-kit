@@ -34,7 +34,7 @@ export interface ToolResult <RESULT = ToolExecutionResult>{
   error?: string
 }
 
-export type ToolExecutionResult = unknown
+export type ToolExecutionResult = any
 
 export type ToolExecutor<ARGS = any, RESULT = ToolExecutionResult> = (
   toolCallArgs: ARGS,

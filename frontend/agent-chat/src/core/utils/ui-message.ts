@@ -1,13 +1,20 @@
 import { ToolInvocationStatus, type ToolCall } from '../types/agent'
 import type { ToolInvocation, UIMessage } from '../types/ui-message'
 
+const tryParseJson = (jsonString: string) => {
+  try {
+    return JSON.parse(jsonString)
+  } catch {
+    return undefined
+  }
+}
 
 export const toolCallToToolInvocation = (toolCall: ToolCall): ToolInvocation => {
-  console.log('[toolCallToToolInvocation] toolCall', toolCall)
   return {
     toolCallId: toolCall.id,
     toolName: toolCall.function.name,
-    args: JSON.parse(toolCall.function.arguments),
+    args: toolCall.function.arguments,
+    parsedArgs: tryParseJson(toolCall.function.arguments),
     status: ToolInvocationStatus.CALL,
   }
 }
@@ -32,25 +39,25 @@ export function finalizePendingToolInvocations(
       parts: msg.parts.map((part) => {
         if (part.type !== 'tool-invocation') return part
         if (part.toolInvocation.status === ToolInvocationStatus.RESULT) return part
-        
+
         // For partial-call or call states, ensure args are properly formatted
-        let safeArgs = part.toolInvocation.args
-        
+        let parsedArgs;
+
         // If args is a string (from partial-call), try to parse it
         if (typeof part.toolInvocation.args === 'string') {
           try {
-            safeArgs = JSON.parse(part.toolInvocation.args)
+            parsedArgs = JSON.parse(part.toolInvocation.args)
           } catch {
-            // If parsing fails, use a safe default object
-            safeArgs = { error: 'invalid_args', raw: part.toolInvocation.args }
+
           }
         }
-        
+
         return {
           ...part,
           toolInvocation: {
             ...part.toolInvocation,
-            args: safeArgs,
+            args: part.toolInvocation.args,
+            parsedArgs: parsedArgs,
             status: ToolInvocationStatus.RESULT,
             result: stub,
           },

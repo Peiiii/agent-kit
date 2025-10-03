@@ -1,6 +1,6 @@
 import { v4 } from "uuid"
-import { EventType, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallStartEvent, type ToolCallArgsEvent, ToolInvocationStatus } from "../types"
-import type { UIMessage } from "../types/ui-message"
+import { EventType, ToolInvocationStatus, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallArgsEvent, type ToolCallStartEvent } from "../types"
+import type { ToolInvocationUIPart, UIMessage } from "../types/ui-message"
 import { toolCallToToolInvocation } from "../utils"
 import { AgentSessionManager } from "./agent-session-manager"
 
@@ -36,29 +36,13 @@ export class AgentEventHandler {
             // Only emit once when the tool call is finalized (state === 'call')
             if (inv.status === ToolInvocationStatus.CALL && !this.emittedToolCallIds.has(inv.toolCallId)) {
                 this.emittedToolCallIds.add(inv.toolCallId)
-                
-                // Ensure args can be safely stringified
-                let safeArgs = inv.args
-                try {
-                    // If args is already an object, stringify it
-                    if (typeof inv.args === 'object' && inv.args !== null) {
-                        JSON.stringify(inv.args) // Test if it's serializable
-                    } else if (typeof inv.args === 'string') {
-                        // If it's a string, try to parse it first
-                        safeArgs = JSON.parse(inv.args)
-                    }
-                } catch (error) {
-                    console.warn(`Tool call ${inv.toolCallId} has invalid args, using empty object:`, error)
-                    safeArgs = {}
-                }
-                
                 this.sessionManager.toolCall$.next({
                     toolCall: {
                         id: inv.toolCallId,
                         type: 'function',
                         function: {
                             name: inv.toolName,
-                            arguments: JSON.stringify(safeArgs),
+                            arguments: inv.args,
                         },
                     }
                 })
@@ -165,14 +149,14 @@ export class AgentEventHandler {
         const currentMessages = this.sessionManager.getMessages()
         const lastMessage = currentMessages[currentMessages.length - 1]
 
-        const invocationPart = {
+        const invocationPart: ToolInvocationUIPart = {
             type: 'tool-invocation' as const,
             toolInvocation: {
                 status: ToolInvocationStatus.PARTIAL_CALL,
                 toolCallId: this.currentToolCallId,
                 toolName: this.currentToolCallName,
                 // While args stream in, store raw string for preview; will be parsed on end
-                args: '' as unknown as Record<string, unknown>,
+                args: '',
             },
         }
 
@@ -210,18 +194,18 @@ export class AgentEventHandler {
             const part = updatedParts[i]
             if (part.type === 'tool-invocation' && part.toolInvocation.toolCallId === event.toolCallId) {
                 // Try to parse the partial JSON; if it fails, keep showing the raw string
-                let parsed: any = part.toolInvocation.args
+                let parsed;
                 try {
                     parsed = JSON.parse(this.currentToolCallArgs)
                 } catch {
-                    parsed = this.currentToolCallArgs as unknown as Record<string, unknown>
                 }
                 updatedParts[i] = {
                     ...part,
                     toolInvocation: {
                         ...part.toolInvocation,
                         status: ToolInvocationStatus.PARTIAL_CALL,
-                        args: parsed,
+                        args: this.currentToolCallArgs,
+                        parsedArgs: parsed,
                     }
                 }
                 break
