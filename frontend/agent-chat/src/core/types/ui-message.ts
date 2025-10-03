@@ -45,6 +45,7 @@ export interface ToolInvocation<ARGS = any, RESULT = any> {
     /** parsed args from complete json string */
     parsedArgs?: ARGS;
     result?: RESULT;
+    error?: string;
 }
 
 
