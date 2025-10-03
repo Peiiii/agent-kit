@@ -103,6 +103,7 @@ export class AgentSessionManager extends Disposable {
               result: result.result ?? undefined,
               status: result.status,
               error: result.error ?? undefined,
+              cancelled: result.cancelled ?? undefined,
             },
           }
         }

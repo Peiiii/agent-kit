@@ -16,6 +16,7 @@ export enum ToolInvocationStatus {
   RESULT = 'result',
   PARTIAL_CALL = 'partial-call',
   ERROR = 'error',
+  CANCELLED = 'cancelled',
 }
 
 export interface ToolCall {
@@ -32,6 +33,7 @@ export interface ToolResult <RESULT = ToolExecutionResult>{
   result?: RESULT
   status: ToolInvocationStatus
   error?: string
+  cancelled?: boolean
 }
 
 export type ToolExecutionResult = any
