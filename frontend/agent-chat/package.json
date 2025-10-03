@@ -1,6 +1,6 @@
 {
   "name": "@agent-labs/agent-chat",
-  "version": "1.20.20",
+  "version": "1.20.21",
   "packageManager": "pnpm@10.10.0",
   "description": "A React component library for building AI agent chat interfaces.",
   "type": "module",
