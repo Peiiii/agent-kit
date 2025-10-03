@@ -162,7 +162,7 @@ export class AgentSessionManager extends Disposable {
   }
 
   handleAddToolResult = async (result: ToolResult, options?: { triggerAgent?: boolean }) => {
-    const { triggerAgent } = options || {}
+    const { triggerAgent = true } = options || {}
     await this.addToolResult(result, { triggerAgent })
     if (triggerAgent) {
       await this.runAgent()
@@ -207,7 +207,7 @@ export class AgentSessionManager extends Disposable {
         try {
           const toolCallArgs = JSON.parse(toolCall.function.arguments)
           const result = await executor(toolCallArgs)
-            this.addToolResult({ toolCallId: toolCall.id, result, status: ToolInvocationStatus.RESULT })
+          this.addToolResult({ toolCallId: toolCall.id, result, status: ToolInvocationStatus.RESULT })
           this.runAgent()
         } catch (err) {
           console.error('[AgentSessionManager] handleAddToolResult error', err)
