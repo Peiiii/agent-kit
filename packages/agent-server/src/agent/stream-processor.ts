@@ -1,11 +1,10 @@
-import { EventEncoder } from '@ag-ui/encoder';
-import { EventType } from '@ag-ui/core';
-import { v4 as uuidv4 } from 'uuid';
-import { StreamHandler, StreamContext, StateSnapshot, EventData, StreamProcessor as IStreamProcessor } from './types';
-import { TextMessageHandler } from './handlers/text-message.handler';
-import { ToolCallHandler } from './handlers/tool-call.handler';
 import type { RunAgentInput } from '@ag-ui/core';
+import { EventType } from '@ag-ui/core';
+import { EventEncoder } from '@ag-ui/encoder';
 import OpenAI from 'openai';
+import { v4 as uuidv4 } from 'uuid';
+import { TextMessageHandler } from './handlers/text-message.handler';
+import { EventData, StreamProcessor as IStreamProcessor, StreamContext, StreamHandler } from './types';
 
 export class StreamProcessor implements IStreamProcessor {
   private handlers: Map<string, StreamHandler> = new Map();

@@ -38,7 +38,7 @@ export function finalizePendingToolInvocations(
       ...msg,
       parts: msg.parts.map((part) => {
         if (part.type !== 'tool-invocation') return part
-        if (part.toolInvocation.status === ToolInvocationStatus.RESULT) return part
+        if (![ToolInvocationStatus.CALL, ToolInvocationStatus.PARTIAL_CALL].includes(part.toolInvocation.status)) return part
 
         // For partial-call or call states, ensure args are properly formatted
         let parsedArgs;
