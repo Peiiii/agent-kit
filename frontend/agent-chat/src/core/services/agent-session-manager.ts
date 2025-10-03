@@ -204,7 +204,6 @@ export class AgentSessionManager extends Disposable {
       const executor = this.agentProvider.getToolExecutor(toolCall.function.name)
       if (executor) {
         try {
-          console.log('[AgentSessionManager] handleAddToolResult', toolCall)
           const toolCallArgs = JSON.parse(toolCall.function.arguments)
           const result = await executor(toolCallArgs)
             this.addToolResult({ toolCallId: toolCall.id, result, status: ToolInvocationStatus.RESULT })
