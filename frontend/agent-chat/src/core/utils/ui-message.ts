@@ -48,6 +48,16 @@ export function finalizePendingToolInvocations(
           try {
             parsedArgs = JSON.parse(part.toolInvocation.args)
           } catch {
+            return {
+              ...part,
+              toolInvocation: {
+                ...part.toolInvocation,
+                args: JSON.stringify({}),
+                parsedArgs: parsedArgs,
+                status: ToolInvocationStatus.RESULT,
+                result: { error: 'invalid_args', raw: part.toolInvocation.args },
+              },
+            }
 
           }
         }
