@@ -6,7 +6,7 @@ interface UseChatAutoScrollOptions {
 }
 
 export function useChatAutoScroll<T extends HTMLElement = HTMLDivElement>({
-  threshold = 30,
+  threshold = 10,
   deps = [],
 }: UseChatAutoScrollOptions = {}) {
   const containerRef = useRef<T | null>(null)
