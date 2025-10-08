@@ -70,6 +70,7 @@ export class AgentSessionManager extends Disposable {
     this.eventHandler.reset()
     this.threadId$.next(null)
     this.isAgentResponding$.next(false)
+    this.abortAgentRun()
   }
 
   addMessages = (messages: UIMessage[]) => {
