@@ -131,6 +131,7 @@ export class AgentSessionManager extends Disposable {
   }
 
   abortAgentRun = () => {
+    this.agentProvider.agent.abortRun?.()
     if (this.agentRunSubscriptionRef.current) {
       this.agentRunSubscriptionRef.current.unsubscribe()
       this.agentRunSubscriptionRef.current = null

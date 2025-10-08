@@ -131,4 +131,5 @@ export interface RunAgentInput {
 
 export interface IAgent {
   run: (input: RunAgentInput) => Subscribable<AgentEvent>
+  abortRun?: () => void
 }
