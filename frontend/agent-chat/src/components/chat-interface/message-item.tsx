@@ -4,9 +4,11 @@ import * as React from 'react'
 import clsx from 'clsx'
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { CopyButton } from '../ui/copy-button'
 import { AIGeneratingIndicator } from './ai-generating-indicator'
 import { ToolCallRenderer } from './tool-call-renderer'
 import type { MessageItemProps } from '../../core/types/component-types'
+import { extractTextFromMessage, hasCopyableText } from '../../core/utils/message-utils'
 
 export const MessageItem: React.FC<MessageItemProps> = ({
   uiMessage,
@@ -17,6 +19,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   isPending = false
 }) => {
   const isUser = uiMessage.role === 'user'
+  const [showCopyButton, setShowCopyButton] = React.useState(false)
+  const canCopy = !isUser && !isPending && hasCopyableText(uiMessage)
+  const messageText = extractTextFromMessage(uiMessage)
 
   return (
     <div
@@ -51,13 +56,27 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </Avatar>
         )}
         <div
-          className={`min-w-0 overflow-hidden rounded-lg px-3 py-4 ${
+          className={`relative min-w-0 overflow-hidden rounded-lg px-3 py-4 ${
             isUser
               ? 'bg-primary text-primary-foreground w-auto'
               : 'bg-muted text-foreground w-auto'
           }`}
           style={{ overflowX: 'hidden', maxWidth: '100%' }}
+          onMouseEnter={() => canCopy && setShowCopyButton(true)}
+          onMouseLeave={() => setShowCopyButton(false)}
         >
+          {/* 复制按钮 - 只在AI消息且悬停时显示 */}
+          {canCopy && showCopyButton && (
+            <div className="absolute top-2 right-2 z-10">
+              <CopyButton
+                text={messageText}
+                size="sm"
+                variant="ghost"
+                className="opacity-70 hover:opacity-100 bg-background/80 backdrop-blur-sm"
+              />
+            </div>
+          )}
+          
           <div className="[&>*:last-child]:mb-0">
             {isPending ? (
               <AIGeneratingIndicator />
