@@ -160,4 +160,9 @@ export interface MessageItemProps {
   className?: string
   showAvatar?: boolean
   isPending?: boolean
+  onMessageCopy?: (text: string) => void
+  onMessageRegenerate?: (messageId: string) => void
+  onMessageLike?: (messageId: string) => void
+  onMessageDislike?: (messageId: string) => void
+  onMessageShare?: (messageId: string) => void
 }

@@ -4,11 +4,11 @@ import * as React from 'react'
 import clsx from 'clsx'
 import { MarkdownRenderer } from '../markdown-renderer'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { CopyButton } from '../ui/copy-button'
 import { AIGeneratingIndicator } from './ai-generating-indicator'
+import { MessageActions } from './message-actions'
 import { ToolCallRenderer } from './tool-call-renderer'
 import type { MessageItemProps } from '../../core/types/component-types'
-import { extractTextFromMessage, hasCopyableText } from '../../core/utils/message-utils'
+import { useMessageActions } from '../../core/hooks/use-message-actions'
 
 export const MessageItem: React.FC<MessageItemProps> = ({
   uiMessage,
@@ -16,17 +16,27 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onToolResult,
   className,
   showAvatar = true,
-  isPending = false
+  isPending = false,
+  onMessageCopy,
+  onMessageRegenerate,
+  onMessageLike,
+  onMessageDislike,
+  onMessageShare,
 }) => {
   const isUser = uiMessage.role === 'user'
-  const [showCopyButton, setShowCopyButton] = React.useState(false)
-  const canCopy = !isUser && !isPending && hasCopyableText(uiMessage)
-  const messageText = extractTextFromMessage(uiMessage)
+  
+  const { actions } = useMessageActions(uiMessage, {
+    onCopy: onMessageCopy,
+    onRegenerate: onMessageRegenerate,
+    onLike: onMessageLike,
+    onDislike: onMessageDislike,
+    onShare: onMessageShare,
+  })
 
   return (
     <div
       className={clsx(
-        `flex w-full p-2 min-w-0`,
+        `flex w-full p-2 min-w-0 group`,
         isUser ? 'justify-end' : 'justify-start',
         className,
       )}
@@ -34,7 +44,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     >
       <div
         className={clsx(
-          'flex flex-col gap-2 min-w-0',
+          'flex flex-col gap-2 min-w-0 relative',
           isUser ? 'items-end w-auto' : 'items-start w-auto',
         )}
         style={{ maxWidth: '100%', overflowX: 'hidden' }}
@@ -55,28 +65,15 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             </AvatarFallback>
           </Avatar>
         )}
+        
         <div
-          className={`relative min-w-0 overflow-hidden rounded-lg px-3 py-4 ${
+          className={`min-w-0 overflow-hidden rounded-lg px-3 py-4 ${
             isUser
               ? 'bg-primary text-primary-foreground w-auto'
               : 'bg-muted text-foreground w-auto'
           }`}
           style={{ overflowX: 'hidden', maxWidth: '100%' }}
-          onMouseEnter={() => canCopy && setShowCopyButton(true)}
-          onMouseLeave={() => setShowCopyButton(false)}
         >
-          {/* 复制按钮 - 只在AI消息且悬停时显示 */}
-          {canCopy && showCopyButton && (
-            <div className="absolute top-2 right-2 z-10">
-              <CopyButton
-                text={messageText}
-                size="sm"
-                variant="ghost"
-                className="opacity-70 hover:opacity-100 bg-background/80 backdrop-blur-sm"
-              />
-            </div>
-          )}
-          
           <div className="[&>*:last-child]:mb-0">
             {isPending ? (
               <AIGeneratingIndicator />
@@ -105,6 +102,15 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             )}
           </div>
         </div>
+        
+        {!isUser && !isPending && actions.length > 0 && (
+          <div className="mt-1">
+            <MessageActions 
+              actions={actions}
+              showOnHover={false}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
