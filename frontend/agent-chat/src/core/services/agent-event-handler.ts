@@ -13,7 +13,7 @@ export class AgentEventHandler {
     // Track which tool calls have been emitted to executors to avoid duplicates
     private emittedToolCallIds = new Set<string>()
 
-    constructor(private readonly sessionManager: AgentSessionManager) {}
+    constructor(private readonly sessionManager: AgentSessionManager) { }
 
 
     reset() {
@@ -116,18 +116,14 @@ export class AgentEventHandler {
         const lastMessage = currentMessages[currentMessages.length - 1]
 
         if (lastMessage && lastMessage.role === 'assistant' && lastMessage.id === messageId) {
-            this.sessionManager.setMessages([
-                ...currentMessages.slice(0, -1),
-                this.updateTextPart(lastMessage, messageContent)
-            ])
+            this.sessionManager.updateMessage(this.updateTextPart(lastMessage, messageContent))
         } else {
-            this.sessionManager.setMessages([
-                ...currentMessages,
+            this.sessionManager.addMessages([
                 {
                     id: messageId!,
-                    role: 'assistant',
+                    role: 'assistant' as const,
                     parts: [{
-                        type: 'text',
+                        type: 'text' as const,
                         text: messageContent,
                     }],
                 }
@@ -161,16 +157,14 @@ export class AgentEventHandler {
         }
 
         if (lastMessage && lastMessage.role === 'assistant') {
-            this.sessionManager.setMessages([
-                ...currentMessages.slice(0, -1),
+            this.sessionManager.updateMessage(
                 {
                     ...lastMessage,
                     parts: [...(lastMessage.parts || []), invocationPart],
                 }
-            ])
+            )
         } else {
-            this.sessionManager.setMessages([
-                ...currentMessages,
+            this.sessionManager.addMessages([
                 {
                     id: v4(),
                     role: 'assistant',
@@ -212,13 +206,12 @@ export class AgentEventHandler {
             }
         }
 
-        this.sessionManager.setMessages([
-            ...currentMessages.slice(0, -1),
+        this.sessionManager.updateMessage(
             {
                 ...lastMessage,
                 parts: updatedParts,
             }
-        ])
+        )
     }
 
     private handleToolCallArgs(event: ToolCallArgsEvent) {
@@ -264,17 +257,15 @@ export class AgentEventHandler {
                         break
                     }
                 }
-                this.sessionManager.setMessages([
-                    ...currentMessages.slice(0, -1),
+                this.sessionManager.updateMessage(
                     {
                         ...lastMessage,
                         parts: updatedParts,
                     }
-                ])
+                )
             } else {
                 // Fallback: if no assistant message exists, create one
-                this.sessionManager.setMessages([
-                    ...currentMessages,
+                this.sessionManager.addMessages([
                     {
                         id: v4(),
                         role: 'assistant',

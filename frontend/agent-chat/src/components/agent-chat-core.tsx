@@ -8,6 +8,7 @@ import type {
 } from '../core/types/component-types'
 import '../styles/globals.css'
 import { ChatInterface } from './chat-interface'
+import { AgentSessionManagerContext } from './contexts'
 
 export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
   (
@@ -58,25 +59,27 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
 
     return (
       <div className={className}>
-        <ChatInterface
-          senderProps={senderProps}
-          uiMessages={messages}
-          toolRenderers={toolRenderers}
-          onToolResult={handleAddToolResult}
-          input={input}
-          onInputChange={setInput}
-          onSend={handleSend}
-          onSendDraft={handleSendDraft}
-          isAgentResponding={isAgentResponding}
-          onAbort={abortAgentRun}
-          promptsProps={promptsProps}
-          messageItemProps={messageItemProps}
-          aboveInputComponent={aboveInputComponent}
-          inputExtensions={inputExtensions}
-          onBeforeSend={onBeforeSend}
-          meta={meta}
-          onMetaChange={onMetaChange}
-        />
+        <AgentSessionManagerContext.Provider value={agentSessionManager}>
+          <ChatInterface
+            senderProps={senderProps}
+            uiMessages={messages}
+            toolRenderers={toolRenderers}
+            onToolResult={handleAddToolResult}
+            input={input}
+            onInputChange={setInput}
+            onSend={handleSend}
+            onSendDraft={handleSendDraft}
+            isAgentResponding={isAgentResponding}
+            onAbort={abortAgentRun}
+            promptsProps={promptsProps}
+            messageItemProps={messageItemProps}
+            aboveInputComponent={aboveInputComponent}
+            inputExtensions={inputExtensions}
+            onBeforeSend={onBeforeSend}
+            meta={meta}
+            onMetaChange={onMetaChange}
+          />  
+        </AgentSessionManagerContext.Provider>
       </div>
     )
   },

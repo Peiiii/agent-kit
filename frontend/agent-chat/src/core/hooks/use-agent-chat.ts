@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useValueFromBehaviorSubject } from '../hooks/use-value-from-behavior-subject'
+import { useValueFromBehaviorSubject, useValueFromObservable } from '../hooks/use-value-from-behavior-subject'
 import { AgentSessionManager } from '../services/agent-session-manager'
 import type { Context, IAgent, ToolDefinition, ToolExecutor, UIMessage, UseAgentChatProps, UseAgentChatReturn } from '../types'
 
@@ -28,7 +28,7 @@ export const useAgentSessionManager = (options: { agent: IAgent, getToolDefs: ()
 }
 
 export const useAgentSessionManagerState = (sessionManager: AgentSessionManager) => {
-  const messages = useValueFromBehaviorSubject(sessionManager.messages$)
+  const messages = useValueFromObservable(sessionManager.messages$, sessionManager.getMessages())
   const isAgentResponding = useValueFromBehaviorSubject(sessionManager.isAgentResponding$)
   const threadId = useValueFromBehaviorSubject(sessionManager.threadId$)
   return {
@@ -57,6 +57,7 @@ export function useAgentChat({
     removeMessages } = sessionManager
   const sessionManagerState = useAgentSessionManagerState(sessionManager)
   return {
+    sessionManager,
     ...sessionManagerState,
     sendMessage,
     addToolResult,

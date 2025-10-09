@@ -30,13 +30,22 @@ export class Disposable {
 }
 
 export class AgentSessionManager extends Disposable {
-  messages$ = new BehaviorSubject<UIMessage[]>([])
+  _messages$ = new BehaviorSubject<UIMessage[]>([])
+
+  messages$: Observable<UIMessage[]>
+  
 
   threadId$ = new BehaviorSubject<string | null>(null)
 
   isAgentResponding$ = new BehaviorSubject<boolean>(false)
 
   agentRunSubscriptionRef = createRef<Unsubscribable | null>()
+
+  addMessagesEvent$ = new Subject<{ messages: UIMessage[] }>()
+
+  updateMessageEvent$ = new Subject<{ message: UIMessage }>()
+
+  setMessagesEvent$ = new Subject<{ messages: UIMessage[] }>()
 
   public toolCall$ = new Subject<{ toolCall: ToolCall }>()
 
@@ -47,17 +56,19 @@ export class AgentSessionManager extends Disposable {
   }) {
     super()
     const { initialMessages = [] } = options || {}
-    this.messages$.next(initialMessages)
+    this._messages$.next(initialMessages)
+    this.messages$ = this._messages$.asObservable()
     this.addDisposable(this.connectToolExecutor())
   }
 
 
   getMessages = () => {
-    return this.messages$.getValue()
+    return this._messages$.getValue()
   }
 
   setMessages = (messages: UIMessage[]): void => {
-    this.messages$.next(messages)
+    this._messages$.next(messages)
+    this.setMessagesEvent$.next({ messages })
   }
 
   handleEvent = (event: AgentEvent) => {
@@ -66,7 +77,7 @@ export class AgentSessionManager extends Disposable {
 
 
   reset = () => {
-    this.messages$.next([])
+    this._messages$.next([])
     this.eventHandler.reset()
     this.threadId$.next(null)
     this.isAgentResponding$.next(false)
@@ -74,12 +85,18 @@ export class AgentSessionManager extends Disposable {
   }
 
   addMessages = (messages: UIMessage[]) => {
-    this.messages$.next([...this.getMessages(), ...messages])
+    this._messages$.next([...this.getMessages(), ...messages])
+    this.addMessagesEvent$.next({ messages })
   }
 
   removeMessages = (messageIds: string[]) => {
     if (messageIds.length === 0) return
-    this.messages$.next(this.getMessages().filter(msg => !messageIds.includes(msg.id)))
+    this._messages$.next(this.getMessages().filter(msg => !messageIds.includes(msg.id)))
+  }
+
+  updateMessage = (message: UIMessage) => {
+    this._messages$.next(this.getMessages().map(msg => msg.id === message.id ? message : msg))
+    this.updateMessageEvent$.next({ message })
   }
 
   /**
@@ -111,7 +128,7 @@ export class AgentSessionManager extends Disposable {
         return part
       }),
     }
-    this.messages$.next(this.getMessages().map(msg => msg.id === targetMessage.id ? newMessage : msg))
+    this.updateMessage(newMessage)
   }
 
   handleAgentResponse = (response: Observable<AgentEvent>) => {

@@ -88,6 +88,7 @@ export interface UseAgentChatProps {
 }
 
 export interface UseAgentChatReturn {
+  sessionManager: AgentSessionManager
   messages: UIMessage[]
   isAgentResponding: boolean
   threadId: string | null
