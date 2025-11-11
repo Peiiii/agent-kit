@@ -174,7 +174,7 @@ export function App() {
 
   const [activeActivityItem, setActiveActivityItem] = useState('explorer')
   const [isActivityBarExpanded, setIsActivityBarExpanded] = useState(false)
-  const [activeDemo, setActiveDemo] = useState<'todo' | 'window' | 'input'>('input')
+  const [activeDemo, setActiveDemo] = useState<'todo' | 'window' | 'input'>('window')
 
   // 定义系统指令和用户偏好
   const defaultInstructions = useMemo(

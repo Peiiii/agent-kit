@@ -1,5 +1,4 @@
 packages:
   - "packages/*"
-  - "frontend/*"
-  - "frontend/agent-chat/playground"
+  - "packages/agent-chat/playground"
   - "examples/*"
