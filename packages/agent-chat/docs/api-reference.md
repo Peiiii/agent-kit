@@ -79,12 +79,12 @@ function ChatApp() {
 }
 ```
 
-### AgentChatCore
+### AgentChat
 
 Core chat functionality without UI, for custom implementations.
 
 ```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
+import { AgentChat } from '@agent-labs/agent-chat'
 
 interface AgentChatCoreProps {
   agent: Agent
@@ -108,7 +108,7 @@ interface AgentChatCoreRenderProps {
 ```tsx
 function CustomChat() {
   return (
-    <AgentChatCore
+    <AgentChat
       agent={agent}
       tools={tools}
       contexts={contexts}
@@ -135,7 +135,7 @@ function CustomChat() {
           {error && <div>Error: {error.message}</div>}
         </div>
       )}
-    </AgentChatCore>
+    </AgentChat>
   )
 }
 ```
@@ -510,14 +510,14 @@ const uiMessages = convertMessagesToUIMessages(messages)
 
 ## Services
 
-### AgentSessionManager
+### AgentChatController
 
 Service for managing chat sessions and messages.
 
 ```tsx
-import { AgentSessionManager } from '@agent-labs/agent-chat'
+import { AgentChatController } from '@agent-labs/agent-chat'
 
-class AgentSessionManager {
+class AgentChatController {
   // Subscribe to message updates
   subscribeMessages(callback: (messages: Message[]) => void): Subscription
   
@@ -545,7 +545,7 @@ class AgentSessionManager {
 
 ```tsx
 function ChatService() {
-  const sessionManager = useMemo(() => new AgentSessionManager(), [])
+  const sessionManager = useMemo(() => new AgentChatController(), [])
   
   useEffect(() => {
     const subscription = sessionManager.subscribeMessages((messages) => {

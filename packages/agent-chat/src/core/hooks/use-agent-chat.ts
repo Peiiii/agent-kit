@@ -1,6 +1,6 @@
 import { useRef } from 'react'
-import { useValueFromBehaviorSubject, useValueFromObservable } from '../hooks/use-value-from-behavior-subject'
-import { AgentSessionManager } from '../services/agent-session-manager'
+import { useValueFromBehaviorSubject, useValueFromObservable } from './use-value-from-behavior-subject'
+import { AgentChatController } from '../services/agent-chat-controller'
 import type { Context, IAgent, ToolDefinition, ToolExecutor, UIMessage, UseAgentChatProps, UseAgentChatReturn } from '../types'
 
 
@@ -21,13 +21,13 @@ export const useAgentSessionManager = (options: { agent: IAgent, getToolDefs: ()
   const memoizedGetToolDefs = useMemoizedFn(getToolDefs)
   const memoizedGetContexts = useMemoizedFn(getContexts)
   const memoizedGetToolExecutor = useMemoizedFn(getToolExecutor)
-  const sessionManager = useRef(new AgentSessionManager({ agent, getToolDefs: memoizedGetToolDefs, getContexts: memoizedGetContexts, getToolExecutor: memoizedGetToolExecutor }, {
+  const sessionManager = useRef(new AgentChatController({ agent, getToolDefs: memoizedGetToolDefs, getContexts: memoizedGetContexts, getToolExecutor: memoizedGetToolExecutor }, {
     initialMessages
   }))
   return sessionManager.current
 }
 
-export const useAgentSessionManagerState = (sessionManager: AgentSessionManager) => {
+export const useAgentSessionManagerState = (sessionManager: AgentChatController) => {
   const messages = useValueFromObservable(sessionManager.messages$, sessionManager.getMessages())
   const isAgentResponding = useValueFromBehaviorSubject(sessionManager.isAgentResponding$)
   const threadId = useValueFromBehaviorSubject(sessionManager.threadId$)

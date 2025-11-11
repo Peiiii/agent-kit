@@ -1,4 +1,4 @@
-import { AgentChatCore, AgentChatRef, Tool, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import { AgentChat, AgentChatRef, Tool, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
 import { VSCodeLayout } from 'composite-kit'
 import {
   Bell,
@@ -46,7 +46,7 @@ function AgentChatWithContext({
   agentChatRef: React.RefObject<AgentChatRef | null>
 }) {
   const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
-  const agentSessionManager = useAgentSessionManager({ agent, getToolDefs: () => toolDefs, getContexts: () => [...allInstructions, { description: '待办事项列表', value: JSON.stringify(todoListContext) }], initialMessages: [], getToolExecutor: (name: string) => toolExecutors?.[name] })
+  const agentChatController = useAgentSessionManager({ agent, getToolDefs: () => toolDefs, getContexts: () => [...allInstructions, { description: '待办事项列表', value: JSON.stringify(todoListContext) }], initialMessages: [], getToolExecutor: (name: string) => toolExecutors?.[name] })
   const { state, addTodo, toggleTodo, deleteTodo, updateTodo } = useTodo()
   const todoListContext = useMemo(
     () => ({
@@ -75,9 +75,9 @@ function AgentChatWithContext({
   )
 
   return (
-    <AgentChatCore
+    <AgentChat
       ref={agentChatRef}
-      agentSessionManager={agentSessionManager}
+      agentChatController={agentChatController}
       toolRenderers={toolRenderers}
       className="flex-1 overflow-y-auto"
       promptsProps={{

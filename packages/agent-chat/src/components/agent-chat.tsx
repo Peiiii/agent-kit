@@ -10,10 +10,10 @@ import '../styles/globals.css'
 import { ChatInterface } from './chat-interface'
 import { AgentSessionManagerContext } from './contexts'
 
-export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
+export const AgentChat = React.forwardRef<AgentChatRef, AgentChatProps>(
   (
     {
-      agentSessionManager,
+      agentChatController,
       toolRenderers,
       className,
       senderProps,
@@ -29,8 +29,8 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
   ) => {
     const [input, setInput] = useState('')
 
-    const { messages, isAgentResponding } = useAgentSessionManagerState(agentSessionManager)
-    const { handleSendMessage, handleAddToolResult, reset, addMessages, abortAgentRun, handleAddMessages } = agentSessionManager
+    const { messages, isAgentResponding } = useAgentSessionManagerState(agentChatController)
+    const { handleSendMessage, handleAddToolResult, reset, addMessages, abortAgentRun, handleAddMessages } = agentChatController
 
     const handleSend = async () => {
       if (!isAgentResponding) {
@@ -59,7 +59,7 @@ export const AgentChatCore = React.forwardRef<AgentChatRef, AgentChatProps>(
 
     return (
       <div className={className}>
-        <AgentSessionManagerContext.Provider value={agentSessionManager}>
+        <AgentSessionManagerContext.Provider value={agentChatController}>
           <ChatInterface
             senderProps={senderProps}
             uiMessages={messages}

@@ -7,7 +7,7 @@ import type {
 } from '../core/types/component-types'
 
 import clsx from 'clsx'
-import { AgentChatCore } from './agent-chat-core'
+import { AgentChat } from './agent-chat'
 import { Button } from './ui/button'
 import { Window } from './window'
 
@@ -72,7 +72,7 @@ export const AgentChatWindow = React.forwardRef<AgentChatRef, AgentChatProps>(({
         </Button>,
       ]}
     >
-      <AgentChatCore
+      <AgentChat
         ref={(_instance) => {
           agentChatRef.current = _instance
           if (typeof ref === 'function') {

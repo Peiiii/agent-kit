@@ -2,7 +2,7 @@ import { v4 } from "uuid"
 import { EventType, ToolInvocationStatus, type AgentEvent, type TextDeltaEvent, type TextStartEvent, type ToolCallArgsDeltaEvent, type ToolCallArgsEvent, type ToolCallStartEvent } from "../types"
 import type { ToolInvocationUIPart, UIMessage } from "../types/ui-message"
 import { toolCallToToolInvocation } from "../utils"
-import { AgentSessionManager } from "./agent-session-manager"
+import { AgentChatController } from "./agent-chat-controller"
 
 export class AgentEventHandler {
     private currentMessageId?: string
@@ -13,7 +13,7 @@ export class AgentEventHandler {
     // Track which tool calls have been emitted to executors to avoid duplicates
     private emittedToolCallIds = new Set<string>()
 
-    constructor(private readonly sessionManager: AgentSessionManager) { }
+    constructor(private readonly sessionManager: AgentChatController) { }
 
 
     reset() {
@@ -52,7 +52,7 @@ export class AgentEventHandler {
 
     // 处理事件
     handleEvent(event: AgentEvent) {
-        console.log('[AgentSessionManager] event', event)
+        console.log('[AgentChatController] event', event)
 
         switch (event.type) {
             case EventType.RUN_STARTED:

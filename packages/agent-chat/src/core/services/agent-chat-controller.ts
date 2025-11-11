@@ -29,7 +29,7 @@ export class Disposable {
   }
 }
 
-export class AgentSessionManager extends Disposable {
+export class AgentChatController extends Disposable {
   _messages$ = new BehaviorSubject<UIMessage[]>([])
 
   messages$: Observable<UIMessage[]>
@@ -229,7 +229,7 @@ export class AgentSessionManager extends Disposable {
           this.addToolResult({ toolCallId: toolCall.id, result, status: ToolInvocationStatus.RESULT })
           this.runAgent()
         } catch (err) {
-          console.error('[AgentSessionManager] handleAddToolResult error', err)
+          console.error('[AgentChatController] handleAddToolResult error', err)
           this.addToolResult({ toolCallId: toolCall.id, error: err instanceof Error ? err.message : String(err), status: ToolInvocationStatus.ERROR })
           this.runAgent()
         }

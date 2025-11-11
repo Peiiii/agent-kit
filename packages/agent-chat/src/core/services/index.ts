@@ -1,2 +1,2 @@
-export * from './agent-session-manager'
+export * from './agent-chat-controller'
 export * from './agent-event-handler'

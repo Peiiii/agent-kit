@@ -65,7 +65,7 @@ const sessionManager = useAgentSessionManager({
 })
 
 return (
-  <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+  <AgentChatWindow agentChatController={sessionManager} toolRenderers={toolRenderers} />
 )
 ```
 

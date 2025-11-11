@@ -43,7 +43,7 @@ function App() {
 
 ```tsx
 import React from 'react'
-import { AgentChatCore, useAgentChat } from '@agent-labs/agent-chat'
+import { AgentChat, useAgentChat } from '@agent-labs/agent-chat'
 
 const agent = new HttpAgent({
   url: 'https://your-api-endpoint.com/chat'
@@ -356,7 +356,7 @@ const promptsProps = {
 ### 自定义消息输入
 
 ```tsx
-import { AgentChatCore, useAgentChat } from '@agent-labs/agent-chat'
+import { AgentChat, useAgentChat } from '@agent-labs/agent-chat'
 
 function CustomChatInterface() {
   const {

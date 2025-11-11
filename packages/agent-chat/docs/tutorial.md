@@ -277,16 +277,16 @@ function ChatApp() {
 }
 ```
 
-### AgentChatCore
+### AgentChat
 
 For more control over the chat functionality.
 
 ```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
+import { AgentChat } from '@agent-labs/agent-chat'
 
 function CustomChatApp() {
   return (
-    <AgentChatCore
+    <AgentChat
       agent={agent}
       tools={tools}
       contexts={contexts}
@@ -312,7 +312,7 @@ function CustomChatApp() {
           />
         </div>
       )}
-    </AgentChatCore>
+    </AgentChat>
   )
 }
 ```
@@ -494,7 +494,7 @@ interface AgentChatWindowProps {
 }
 ```
 
-#### AgentChatCore Props
+#### AgentChat Props
 ```tsx
 interface AgentChatCoreProps {
   agent: Agent
@@ -560,13 +560,13 @@ export default ChatApp
 
 ```tsx
 import React, { useState } from 'react'
-import { AgentChatCore } from '@agent-labs/agent-chat'
+import { AgentChat } from '@agent-labs/agent-chat'
 
 function CustomInputChat() {
   const [inputValue, setInputValue] = useState('')
   
   return (
-    <AgentChatCore
+    <AgentChat
       agent={agent}
       tools={tools}
       contexts={contexts}
@@ -607,7 +607,7 @@ function CustomInputChat() {
           </div>
         </div>
       )}
-    </AgentChatCore>
+    </AgentChat>
   )
 }
 ```

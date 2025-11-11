@@ -6,7 +6,7 @@
 - 安装
 - 快速开始（最简上手）
 - 推荐用法（完整能力）
-  - 构造 AgentSessionManager
+  - 构造 AgentChatController
   - 提供工具：定义、执行器、渲染器
   - 渲染 UI 并接通工具
 - API 摘要
@@ -49,7 +49,7 @@ export default function App() {
     getToolExecutor: (name) => toolExecutors[name],
   })
   return (
-    <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+    <AgentChatWindow agentChatController={sessionManager} toolRenderers={toolRenderers} />
   )
 }
 ```
@@ -98,7 +98,7 @@ export default function BackendOnlyDemo() {
     initialMessages: [],
     getToolExecutor: (name) => toolExecutors[name], // 这里不会被调用，因为无 execute
   })
-  return <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+  return <AgentChatWindow agentChatController={sessionManager} toolRenderers={toolRenderers} />
 }
 ```
 
@@ -197,7 +197,7 @@ import { useParseTools } from '@agent-labs/agent-chat'
 const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 ```
 
-### 3) 创建会话管理器（AgentSessionManager），并渲染 UI
+### 3) 创建会话管理器（AgentChatController），并渲染 UI
 
 ```tsx
 import { useAgentSessionManager, AgentChatWindow } from '@agent-labs/agent-chat'
@@ -212,7 +212,7 @@ const sessionManager = useAgentSessionManager({
 })
 
 return (
-  <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+  <AgentChatWindow agentChatController={sessionManager} toolRenderers={toolRenderers} />
 )
 ```
 
@@ -334,7 +334,7 @@ export default function FullToolsExample() {
     getToolExecutor: (name) => toolExecutors[name],
   })
   return (
-    <AgentChatWindow agentSessionManager={sessionManager} toolRenderers={toolRenderers} />
+    <AgentChatWindow agentChatController={sessionManager} toolRenderers={toolRenderers} />
   )
 }
 ```
@@ -403,8 +403,8 @@ const toolRenderers = {
 ## API 摘要
 
 ### 关键组件
-- `AgentChatWindow`: 聊天窗口（需传入 `agentSessionManager` 与 `toolRenderers`）
-- `AgentChatCore`: 去壳的聊天核心（同上）
+- `AgentChatWindow`: 聊天窗口（需传入 `agentChatController` 与 `toolRenderers`）
+- `AgentChat`: 去壳的聊天核心（同上）
 - `ChatInterface`: 仅包含消息列表与输入区（库内使用）
 
 ### 关键类型（简化）

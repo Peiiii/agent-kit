@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { AgentSessionManager } from '../services/agent-session-manager';
+import type { AgentChatController } from '../services/agent-chat-controller';
 import type { Context, IAgent, ToolDefinition, ToolExecutor, ToolRenderer, ToolResult } from './agent';
 import type { UIMessage } from "./ui-message";
 
@@ -53,7 +53,7 @@ export interface PromptsProps {
 }
 
 export interface AgentChatProps {
-  agentSessionManager: AgentSessionManager
+  agentChatController: AgentChatController
   toolRenderers: Record<string, ToolRenderer>
   className?: string
   senderProps?: SenderProps
@@ -88,7 +88,7 @@ export interface UseAgentChatProps {
 }
 
 export interface UseAgentChatReturn {
-  sessionManager: AgentSessionManager
+  sessionManager: AgentChatController
   messages: UIMessage[]
   isAgentResponding: boolean
   threadId: string | null

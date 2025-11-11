@@ -97,7 +97,7 @@ const tools = [createCalculatorTool()]
 ### 🎨 Flexible Components
 
 - **AgentChatWindow**: Complete chat interface with built-in UI
-- **AgentChatCore**: Core functionality for custom UI implementations
+- **AgentChat**: Core functionality for custom UI implementations
 - **Custom Tool Renderers**: Override default tool display
 
 ### 🚀 Performance Features

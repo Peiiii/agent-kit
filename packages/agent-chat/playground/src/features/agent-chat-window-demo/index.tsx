@@ -122,7 +122,7 @@ export function AgentChatWindowDemo() {
     const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 
     // 将模型选择通过上下文传给 Agent；库层不耦合供应商
-    const agentSessionManager = useAgentSessionManager({
+    const agentChatController = useAgentSessionManager({
         agent,
         getToolDefs: () => toolDefs,
         getContexts: () => [
@@ -246,7 +246,7 @@ export function AgentChatWindowDemo() {
             {/* Agent Chat Window 组件 */}
             <AgentChatWindow
                 ref={chatRef}
-                agentSessionManager={agentSessionManager}
+                agentChatController={agentChatController}
                 toolRenderers={toolRenderers}
                 className="z-50"
                 // 传入扩展与 meta 同步回调

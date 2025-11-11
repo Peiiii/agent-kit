@@ -2,18 +2,18 @@
 
 ## 概述
 
-现在 `AgentChatCore` 和 `AgentChatWindow` 组件支持在 MessageInput 上方添加自定义组件。这个功能允许开发者在聊天输入框上方添加快速操作按钮、状态指示器或其他交互元素。
+现在 `AgentChat` 和 `AgentChatWindow` 组件支持在 MessageInput 上方添加自定义组件。这个功能允许开发者在聊天输入框上方添加快速操作按钮、状态指示器或其他交互元素。
 
 ## 使用方法
 
 ### 基本用法
 
 ```tsx
-import { AgentChatCore } from '@agent-labs/agent-chat'
+import { AgentChat } from '@agent-labs/agent-chat'
 
 function MyChatApp() {
   return (
-    <AgentChatCore
+    <AgentChat
       agent={agent}
       tools={tools}
       aboveInputComponent={
@@ -29,7 +29,7 @@ function MyChatApp() {
 ### 高级用法 - 快速操作按钮
 
 ```tsx
-import { AgentChatCore, AgentChatRef } from '@agent-labs/agent-chat'
+import { AgentChat, AgentChatRef } from '@agent-labs/agent-chat'
 import { useRef } from 'react'
 
 function MyChatApp() {
@@ -75,7 +75,7 @@ function MyChatApp() {
   )
 
   return (
-    <AgentChatCore
+    <AgentChat
       ref={agentChatRef}
       agent={agent}
       tools={tools}
@@ -107,7 +107,7 @@ function StatusIndicator({ isConnected, lastActivity }) {
 }
 
 // 使用
-<AgentChatCore
+<AgentChat
   agent={agent}
   tools={tools}
   aboveInputComponent={<StatusIndicator isConnected={true} lastActivity="2分钟前" />}

@@ -1,5 +1,5 @@
 import { createContext } from "react"
-import type { AgentSessionManager } from "../core/services"
+import type { AgentChatController } from "../core/services"
 
-export const AgentSessionManagerContext = createContext<AgentSessionManager | null>(null)
+export const AgentSessionManagerContext = createContext<AgentChatController | null>(null)
 
