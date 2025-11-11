@@ -54,9 +54,9 @@ const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 ## 连接到会话与 UI
 
 ```tsx
-import { useAgentSessionManager, AgentChatWindow } from '@agent-labs/agent-chat'
+import { useAgentChatController, AgentChatWindow } from '@agent-labs/agent-chat'
 
-const sessionManager = useAgentSessionManager({
+const sessionManager = useAgentChatController({
   agent,
   getToolDefs: () => toolDefs,
   getContexts: () => [],

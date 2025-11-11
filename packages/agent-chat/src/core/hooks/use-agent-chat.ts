@@ -16,7 +16,7 @@ export const useMemoizedFn = <T extends ((...args: any[]) => any)>(fn: T) => {
   return ref.current!
 }
 
-export const useAgentSessionManager = (options: { agent: IAgent, getToolDefs: () => ToolDefinition[], getContexts: () => Context[], initialMessages: UIMessage[], getToolExecutor: (name: string) => ToolExecutor | undefined }) => {
+export const useAgentChatController = (options: { agent: IAgent, getToolDefs: () => ToolDefinition[], getContexts: () => Context[], initialMessages: UIMessage[], getToolExecutor: (name: string) => ToolExecutor | undefined }) => {
   const { agent, getToolDefs, getContexts, initialMessages, getToolExecutor } = options
   const memoizedGetToolDefs = useMemoizedFn(getToolDefs)
   const memoizedGetContexts = useMemoizedFn(getContexts)
@@ -27,7 +27,7 @@ export const useAgentSessionManager = (options: { agent: IAgent, getToolDefs: ()
   return sessionManager.current
 }
 
-export const useAgentSessionManagerState = (sessionManager: AgentChatController) => {
+export const useAgentChatControllerState = (sessionManager: AgentChatController) => {
   const messages = useValueFromObservable(sessionManager.messages$, sessionManager.getMessages())
   const isAgentResponding = useValueFromBehaviorSubject(sessionManager.isAgentResponding$)
   const threadId = useValueFromBehaviorSubject(sessionManager.threadId$)
@@ -46,7 +46,7 @@ export function useAgentChat({
   contexts = [],
   initialMessages = [],
 }: UseAgentChatProps): UseAgentChatReturn {
-  const sessionManager = useAgentSessionManager({ agent, getToolDefs: () => toolDefs, getContexts: () => contexts, initialMessages, getToolExecutor: (name: string) => toolExecutors?.[name] })
+  const sessionManager = useAgentChatController({ agent, getToolDefs: () => toolDefs, getContexts: () => contexts, initialMessages, getToolExecutor: (name: string) => toolExecutors?.[name] })
   const { reset,
     abortAgentRun,
     runAgent,
@@ -55,7 +55,7 @@ export function useAgentChat({
     handleSendMessage: sendMessage,
     setMessages,
     removeMessages } = sessionManager
-  const sessionManagerState = useAgentSessionManagerState(sessionManager)
+  const sessionManagerState = useAgentChatControllerState(sessionManager)
   return {
     sessionManager,
     ...sessionManagerState,

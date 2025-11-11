@@ -32,7 +32,7 @@ npm i @ag-ui/client
 下面演示如何用一个空工具集启动窗口版聊天：
 
 ```tsx
-import { AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import { AgentChatWindow, useAgentChatController, useParseTools } from '@agent-labs/agent-chat'
 import type { Tool } from '@agent-labs/agent-chat'
 import { HttpAgent } from '@ag-ui/client'
 
@@ -41,7 +41,7 @@ const tools: Tool[] = []
 
 export default function App() {
   const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
-  const sessionManager = useAgentSessionManager({
+  const sessionManager = useAgentChatController({
     agent,
     getToolDefs: () => toolDefs,
     getContexts: () => [],
@@ -70,7 +70,7 @@ export default function App() {
 1) 后端执行 Backend-Only（仅 render，不 execute）
 
 ```tsx
-import { AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import { AgentChatWindow, useAgentChatController, useParseTools } from '@agent-labs/agent-chat'
 import type { Tool } from '@agent-labs/agent-chat'
 import { HttpAgent } from '@ag-ui/client'
 
@@ -91,7 +91,7 @@ const tools: Tool[] = [
 
 export default function BackendOnlyDemo() {
   const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
-  const sessionManager = useAgentSessionManager({
+  const sessionManager = useAgentChatController({
     agent,
     getToolDefs: () => toolDefs,
     getContexts: () => [],
@@ -200,10 +200,10 @@ const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 ### 3) 创建会话管理器（AgentChatController），并渲染 UI
 
 ```tsx
-import { useAgentSessionManager, AgentChatWindow } from '@agent-labs/agent-chat'
+import { useAgentChatController, AgentChatWindow } from '@agent-labs/agent-chat'
 import { agent } from './agent'
 
-const sessionManager = useAgentSessionManager({
+const sessionManager = useAgentChatController({
   agent,                               // 你的 Agent（实现 IAgent）
   getToolDefs: () => toolDefs,         // 工具定义（供模型选择工具）
   getContexts: () => [],               // 上下文数组（可选）
@@ -218,11 +218,11 @@ return (
 
 ### 动态上下文管理（示例）
 
-推荐把 contexts 通过 `useAgentSessionManager` 的 `getContexts` 提供：
+推荐把 contexts 通过 `useAgentChatController` 的 `getContexts` 提供：
 
 ```tsx
 const [user, setUser] = useState({ name: '张三', role: 'dev' })
-const sessionManager = useAgentSessionManager({
+const sessionManager = useAgentChatController({
   agent,
   getToolDefs: () => toolDefs,
   getContexts: () => [
@@ -242,7 +242,7 @@ const sessionManager = useAgentSessionManager({
 
 ```tsx
 import * as React from 'react'
-import { AgentChatWindow, useAgentSessionManager, useParseTools } from '@agent-labs/agent-chat'
+import { AgentChatWindow, useAgentChatController, useParseTools } from '@agent-labs/agent-chat'
 import type { Tool } from '@agent-labs/agent-chat'
 import { HttpAgent } from '@ag-ui/client'
 
@@ -326,7 +326,7 @@ const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 
 // 3) 建立会话管理器并渲染窗口
 export default function FullToolsExample() {
-  const sessionManager = useAgentSessionManager({
+  const sessionManager = useAgentChatController({
     agent,
     getToolDefs: () => toolDefs,
     getContexts: () => [],
@@ -415,8 +415,8 @@ const toolRenderers = {
 
 ### 常用 Hooks
 - `useParseTools(tools: Tool[])`: `{ toolDefs, toolExecutors, toolRenderers }`
-- `useAgentSessionManager({ agent, getToolDefs, getContexts, initialMessages, getToolExecutor })`
-- `useAgentSessionManagerState(sessionManager)`: `{ messages, isAgentResponding, threadId }`
+- `useAgentChatController({ agent, getToolDefs, getContexts, initialMessages, getToolExecutor })`
+- `useAgentChatControllerState(sessionManager)`: `{ messages, isAgentResponding, threadId }`
 - `useAgentChat`: 更贴近数据面的封装（如不使用 UI 组件，可用它驱动自定义界面）
 
 ### addMessages API（通过 AgentChatRef 或 useAgentChat）

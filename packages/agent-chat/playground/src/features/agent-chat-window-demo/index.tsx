@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { AgentChatRef, AgentChatWindow, useAgentSessionManager, useParseTools, type ChatInputExtension } from '@agent-labs/agent-chat'
+import { AgentChatRef, AgentChatWindow, useAgentChatController, useParseTools, type ChatInputExtension } from '@agent-labs/agent-chat'
 import { Bot, MessageSquare, Settings, Users, Zap } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
@@ -50,6 +50,7 @@ export function AgentChatWindowDemo() {
         {
             description: '系统信息',
             value: JSON.stringify({
+               aiName: '小爱同学',
                 version: '1.0.0',
                 features: ['聊天', '工具调用', '上下文管理'],
                 lastUpdate: new Date().toISOString()
@@ -122,12 +123,13 @@ export function AgentChatWindowDemo() {
     const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 
     // 将模型选择通过上下文传给 Agent；库层不耦合供应商
-    const agentChatController = useAgentSessionManager({
+    const agentChatController = useAgentChatController({
         agent,
         getToolDefs: () => toolDefs,
         getContexts: () => [
             ...baseContexts,
             { description: 'model', value: modelId },
+            { description: '工具调用注意事项', value: '禁止批量调用工具，每次只能调用一个' },
         ],
         initialMessages: [],
         getToolExecutor: (name: string) => toolExecutors?.[name]

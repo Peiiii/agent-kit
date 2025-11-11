@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useImperativeHandle, useState } from 'react'
-import { useAgentSessionManagerState } from '../core/hooks/use-agent-chat'
+import { useAgentChatControllerState } from '../core/hooks/use-agent-chat'
 import type {
   AgentChatProps,
   AgentChatRef,
@@ -29,7 +29,7 @@ export const AgentChat = React.forwardRef<AgentChatRef, AgentChatProps>(
   ) => {
     const [input, setInput] = useState('')
 
-    const { messages, isAgentResponding } = useAgentSessionManagerState(agentChatController)
+    const { messages, isAgentResponding } = useAgentChatControllerState(agentChatController)
     const { handleSendMessage, handleAddToolResult, reset, addMessages, abortAgentRun, handleAddMessages } = agentChatController
 
     const handleSend = async () => {
