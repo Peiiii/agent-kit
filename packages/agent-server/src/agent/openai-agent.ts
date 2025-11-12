@@ -14,6 +14,8 @@ import { TextMessageHandler } from './handlers/text-message.handler';
 import { ToolCallHandler } from './handlers/tool-call.handler';
 import { StreamProcessor } from './stream-processor';
 import { EventData } from './types';
+import { toAgentEvents$ } from './streams/rx-agent-pipeline';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 
 export interface OpenAIAgentOptions {
   apiKey: string;
@@ -128,11 +130,64 @@ export class OpenAIAgent {
         tools,
       });
 
-      // 处理流
-      const processor = new StreamProcessor(encoder, inputData);
-      processor.addHandler('text', new TextMessageHandler(encoder));
-      processor.addHandler('tool', new ToolCallHandler(encoder));
-      yield* processor.process(stream);
+      // 新的单链路流式转换：将原始 chunk 流转为 Agent 事件流
+      const events$ = toAgentEvents$(stream, inputData, { /* messageId 由管道生成 */ });
+      // 逐个事件进行编码输出
+      // 使用 for-await bridge 订阅 Observable（lastValueFrom 不会逐个推送）
+      const abort = new AbortController();
+      const iterator = (async function* () {
+        let resolve: ((v: IteratorResult<string>) => void) | null = null;
+        let reject: ((e: any) => void) | null = null;
+        let done = false;
+        const q: Array<string> = [];
+
+        const sub = events$.subscribe({
+          next: (evt) => {
+            const encoded = encoder.encode(evt);
+            // EventEncoder.encode 可能返回 Promise<string> | string
+            Promise.resolve(encoded).then((s) => {
+              if (resolve) {
+                resolve({ value: s, done: false });
+                resolve = null;
+              } else {
+                q.push(s);
+              }
+            }).catch(err => {
+              if (reject) reject(err);
+            });
+          },
+          error: (err) => {
+            if (reject) reject(err);
+          },
+          complete: () => {
+            done = true;
+            if (resolve) resolve({ value: undefined as any, done: true });
+          }
+        });
+
+        try {
+          while (true) {
+            if (q.length > 0) {
+              const v = q.shift()!;
+              yield v;
+              continue;
+            }
+            if (done) break;
+            const v = await new Promise<IteratorResult<string>>((res, rej) => {
+              resolve = res;
+              reject = rej;
+            });
+            if (v.done) break;
+            yield v.value;
+          }
+        } finally {
+          sub.unsubscribe();
+        }
+      })();
+
+      for await (const s of iterator) {
+        yield s;
+      }
     } catch (error) {
       yield* this.handleError(error as Error, encoder);
     }
