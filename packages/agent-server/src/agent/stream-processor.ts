@@ -4,7 +4,7 @@ import { EventEncoder } from '@ag-ui/encoder';
 import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 import { TextMessageHandler } from './handlers/text-message.handler';
-import { EventData, StreamProcessor as IStreamProcessor, StreamContext, StreamHandler } from './types';
+import { EventData, StreamProcessor as IStreamProcessor, StreamContext, StreamHandler, ToolCallState } from './types';
 
 export class StreamProcessor implements IStreamProcessor {
   private handlers: Map<string, StreamHandler> = new Map();
@@ -16,20 +16,24 @@ export class StreamProcessor implements IStreamProcessor {
   ) {
     this.context = {
       messageId: uuidv4(),
-      toolCallId: '',
       isMessageStarted: false,
-      isToolCallStarted: false,
       fullResponse: '',
-      toolCallArgs: '',
-      toolCallName: '',
-      getSnapshot: () => ({
-        last_response: this.context.fullResponse,
-        last_tool_call: this.context.isToolCallStarted ? {
-          name: this.context.toolCallName,
-          arguments: this.context.toolCallArgs
-        } : null,
-        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
-      })
+      toolCalls: new Map<number, ToolCallState>(),
+      lastToolCallIndex: undefined,
+      getSnapshot: () => {
+        const lastIdx = this.context.lastToolCallIndex;
+        const last = lastIdx !== undefined ? this.context.toolCalls.get(lastIdx) : undefined;
+        return {
+          last_response: this.context.fullResponse,
+          last_tool_call: last
+            ? {
+                name: last.name,
+                arguments: last.arguments,
+              }
+            : null,
+          usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+        };
+      },
     };
   }
 
@@ -40,10 +44,22 @@ export class StreamProcessor implements IStreamProcessor {
   async *process(stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>): AsyncGenerator<string, void, unknown> {
     try {
       for await (const chunk of stream) {
-        const type = this.getChunkType(chunk);
-        const handler = this.handlers.get(type);
-        if (handler) {
-          yield* handler.handle(chunk, this.context);
+        // A single chunk may contain both text delta and multiple tool_calls deltas
+        const hasText = !!chunk.choices?.[0]?.delta?.content;
+        const hasTools = Array.isArray(chunk.choices?.[0]?.delta?.tool_calls) && chunk.choices[0].delta.tool_calls.length > 0;
+
+        if (hasText) {
+          const textHandler = this.handlers.get('text');
+          if (textHandler) {
+            yield* textHandler.handle(chunk, this.context);
+          }
+        }
+
+        if (hasTools) {
+          const toolHandler = this.handlers.get('tool');
+          if (toolHandler) {
+            yield* toolHandler.handle(chunk, this.context);
+          }
         }
       }
 
@@ -53,42 +69,31 @@ export class StreamProcessor implements IStreamProcessor {
       }
 
       // 发送状态快照
+      const aggregatedToolCalls = Array.from(this.context.toolCalls.values()).map(tc => ({
+        id: tc.id,
+        type: 'function' as const,
+        function: {
+          name: tc.name,
+          arguments: tc.arguments,
+        },
+      }));
+
       const event: EventData = {
         type: EventType.STATE_SNAPSHOT,
         snapshot: this.context.getSnapshot(),
         content: this.context.fullResponse,
-        toolCalls: this.context.isToolCallStarted ? [{
-          id: this.context.toolCallId,
-          type: 'function',
-          function: {
-            name: this.context.toolCallName,
-            arguments: this.context.toolCallArgs
-          }
-        }] : undefined,
+        toolCalls: aggregatedToolCalls.length ? aggregatedToolCalls : undefined,
         messages: [{
           id: this.context.messageId,
           role: 'assistant',
           content: this.context.fullResponse,
-          toolCalls: this.context.isToolCallStarted ? [{
-            id: this.context.toolCallId,
-            type: 'function',
-            function: {
-              name: this.context.toolCallName,
-              arguments: this.context.toolCallArgs
-            }
-          }] : undefined
-        }]
+          toolCalls: aggregatedToolCalls.length ? aggregatedToolCalls : undefined,
+        }],
       };
       yield this.encoder.encode(event);
     } catch (error) {
       yield* this.handleError(error as Error);
     }
-  }
-
-  private getChunkType(chunk: any): string {
-    if (chunk.choices[0].delta.tool_calls) return 'tool';
-    if (chunk.choices[0].delta.content) return 'text';
-    return 'unknown';
   }
 
   async *handleError(error: Error): AsyncGenerator<string, void, unknown> {
