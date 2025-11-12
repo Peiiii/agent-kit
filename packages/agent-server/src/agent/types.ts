@@ -1,13 +1,20 @@
 import { EventType } from '@ag-ui/core';
 
+export interface ToolCallState {
+  id: string;
+  name: string;
+  arguments: string;
+  started: boolean;
+}
+
 export interface StreamContext {
   messageId: string;
-  toolCallId: string;
   isMessageStarted: boolean;
-  isToolCallStarted: boolean;
   fullResponse: string;
-  toolCallArgs: string;
-  toolCallName: string;
+  // Track multiple tool calls concurrently by OpenAI tool_call index
+  toolCalls: Map<number, ToolCallState>;
+  // Keep reference to last updated tool call index for snapshot convenience
+  lastToolCallIndex?: number;
   getSnapshot(): StateSnapshot;
 }
 
