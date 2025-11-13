@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "strict": true,
+    "stripInternal": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"]
+}
+

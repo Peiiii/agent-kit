@@ -260,6 +260,19 @@ importers:
         specifier: ^6.3.5
         version: 6.3.5(@types/node@22.15.31)(jiti@2.4.2)(lightningcss@1.30.2)(tsx@4.20.3)(yaml@2.8.0)
 
+  packages/agent-logic:
+    dependencies:
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+    devDependencies:
+      tsdown:
+        specifier: ^0.12.7
+        version: 0.12.7(typescript@5.8.3)
+      typescript:
+        specifier: ^5.3.2
+        version: 5.8.3
+
   packages/agent-server:
     dependencies:
       '@ag-ui/client':
@@ -335,6 +348,22 @@ importers:
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(@microsoft/api-extractor@7.52.8(@types/node@20.19.0))(jiti@2.4.2)(postcss@8.5.6)(tsx@4.20.3)(typescript@5.8.3)(yaml@2.8.0)
+      tsx:
+        specifier: ^4.19.4
+        version: 4.20.3
+      typescript:
+        specifier: ^5.3.2
+        version: 5.8.3
+
+  packages/agent-toolkit:
+    dependencies:
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+    devDependencies:
+      tsdown:
+        specifier: ^0.12.7
+        version: 0.12.7(typescript@5.8.3)
       tsx:
         specifier: ^4.19.4
         version: 4.20.3
@@ -10651,7 +10680,7 @@ snapshots:
       rolldown-plugin-dts: 0.13.11(rolldown@1.0.0-beta.11-commit.f051675)(typescript@5.8.3)
       semver: 7.7.2
       tinyexec: 1.0.1
-      tinyglobby: 0.2.14
+      tinyglobby: 0.2.15
       unconfig: 7.3.2
     optionalDependencies:
       typescript: 5.8.3

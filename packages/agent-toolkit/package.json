@@ -1,0 +1,39 @@
+{
+  "name": "@agent-labs/agent-toolkit",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Pure logic toolkit for agent streaming, tool orchestration, and argument accumulation.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "echo 'no lint config yet'",
+    "test": "node --version",
+    "examples:streams:fake": "tsx examples/streams/openai-to-agent-event.example.ts"
+  },
+  "dependencies": {
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "tsdown": "^0.12.7",
+    "typescript": "^5.3.2",
+    "tsx": "^4.19.4"
+  },
+  "keywords": [
+    "agent",
+    "streaming",
+    "tooling",
+    "rxjs"
+  ],
+  "author": "Agent Labs",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}
