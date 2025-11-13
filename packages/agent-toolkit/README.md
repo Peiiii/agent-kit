@@ -1,11 +1,18 @@
 # @agent-labs/agent-toolkit
 
-Pure logic toolkit for agent streaming, tool orchestration, and argument accumulation.
+A growing set of agent utilities. Today it ships a single utility to convert OpenAI ChatCompletion chunk streams into AgentEvent streams; more agent-focused helpers will join here over time.
 
-What it provides
-- JSON args accumulator: tolerant to partial/incomplete chunks
-- Tool registry/executor: define tools, register, execute with timeout/abort
-- Streaming adapters: convert provider chunk streams to core agent events via RxJS
+Scope (now and next)
+- Now (v0.1.x)
+  - `openAIChunksToAgentEvents$`: AsyncIterable<chunk> → Observable<AgentEvent>
+    - Text: `TEXT_START` → many `TEXT_DELTA` → `TEXT_END`
+    - Tools: per tool_call `TOOL_CALL_START` → `TOOL_CALL_ARGS_DELTA` → `TOOL_CALL_END`
+    - Supports parallel tool_calls (tracked by `index`), handles id-late by backfilling the first delta
+- Next (roadmap)
+  - Provider-agnostic chunk normalizers (OpenAI-compatible and others)
+  - JSON argument streaming helpers (accumulate/validate partial args)
+  - Tool orchestration helpers (scheduling, dedupe, retries)
+  - Message/thread utilities for multi-step agent runs
 
 Install
 
@@ -13,32 +20,50 @@ Install
 pnpm add @agent-labs/agent-toolkit
 ```
 
-Basic usage
+Quick Start
 
 ```ts
-import { ArgsAccumulator, ToolRegistry, defineTool, runTool } from '@agent-labs/agent-toolkit'
+import { openAIChunksToAgentEvents$ } from '@agent-labs/agent-toolkit'
 
-// Define tool
-const reg = new ToolRegistry()
-reg.register(defineTool<{ x: number, y: number }, number>({
-  name: 'add',
-  execute: ({ x, y }) => x + y
-}))
-
-// Execute
-const result = await runTool(name => reg.get(name), { id: '1', name: 'add', args: { x: 1, y: 2 } })
+const events$ = openAIChunksToAgentEvents$(openAIAsyncIterable, { messageId: 'msg-1' })
+const sub = events$.subscribe(evt => console.log('[AgentEvent]', evt))
 ```
 
-Streaming (OpenAI adapter)
+Run Example
+
+```bash
+pnpm -F @agent-labs/agent-toolkit run examples:streams:fake
+```
+
+API
 
 ```ts
-import { toCoreEvents$ } from '@agent-labs/agent-toolkit'
-
-const events$ = toCoreEvents$(openAIAsyncIterable, { messageId: 'msg-1' })
-const sub = events$.subscribe(evt => console.log(evt))
+openAIChunksToAgentEvents$(
+  stream: AsyncIterable<OpenAIChatChunk>,
+  options: { messageId: string }
+): Observable<AgentEvent>
 ```
+
+Behavior & Guarantees
+- Realtime: reducer-only pipeline; no buffering on the main path.
+- Id-late: if tool_call id arrives after args, we emit a backfilled first ARGS_DELTA so the UI can reconstruct valid JSON by END.
+- Finish: TOOL_CALL_END only when `finish_reason === 'tool_calls'`.
+- Parallelism: tool_calls are tracked independently by their `index`.
+
+Contributing New Utilities
+- Place code under `src/` with a clear folder (e.g. `src/streams/`, `src/tools/`)
+- Export from `src/index.ts`
+- Add a runnable example in `examples/` and a short section in this README
+- Keep APIs small and transport-agnostic; prefer typed helpers over framework bindings
+
+Develop & Publish
+- Build locally: `pnpm -F @agent-labs/agent-toolkit build`
+- Run example: `pnpm -F @agent-labs/agent-toolkit run examples:streams:fake`
+- Release (maintainers):
+  1) Bump version in `package.json`
+  2) `pnpm -F @agent-labs/agent-toolkit build`
+  3) `pnpm -F @agent-labs/agent-toolkit publish --access public`
 
 Notes
-- This package is UI/server agnostic. Adapt events to your runtime easily.
-- Built with TypeScript + RxJS, no DOM/Express dependencies.
-
+- UI/server agnostic; works in Node and modern bundlers.
+- Implemented in TypeScript + RxJS; no DOM/Express dependencies.
