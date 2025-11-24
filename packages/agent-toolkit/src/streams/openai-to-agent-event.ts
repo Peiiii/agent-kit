@@ -1,5 +1,5 @@
-import { from, of } from 'rxjs'
-import { catchError, finalize, mergeMap, scan } from 'rxjs/operators'
+import { from, Subscribable, of } from 'rxjs';
+import { catchError, finalize, mergeMap, scan } from 'rxjs/operators';
 
 // AgentEvent shape compatible with @agent-labs/agent-chat (runtime-only contract)
 export const AgentEventType = {
@@ -104,10 +104,10 @@ function reduceChunk(state: ReduceState, chunk: OpenAIChatChunk): ReduceState {
   return state
 }
 
-export function openAIChunksToAgentEvents$(
+export function convertOpenAIChunksToAgentEventObservable(
   stream: AsyncIterable<OpenAIChatChunk>,
   options: { messageId: string }
-) {
+): Subscribable<AgentEvent> {
   const initial: ReduceState = {
     messageId: options.messageId,
     textStarted: false,

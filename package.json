@@ -9,6 +9,8 @@
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "clean": "pnpm -r clean",
+    "toolkit:build": "pnpm -F @agent-labs/agent-toolkit build",
+    "toolkit:release": "pnpm -F @agent-labs/agent-toolkit release",
     "dev:chat": "pnpm --filter @agent-labs/agent-chat dev",
     "playground": "pnpm --filter @agent-labs/agent-chat playground",
     "dev:server": "pnpm --filter @agent-labs/ag-ui-server dev",
@@ -25,5 +27,8 @@
     "typescript"
   ],
   "author": "Agent Labs",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "bumpp": "^10.1.1"
+  }
 }
