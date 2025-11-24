@@ -1,4 +1,4 @@
-import { from, Subscribable, of } from 'rxjs';
+import { from, Subscribable, of, Observable } from 'rxjs';
 import { catchError, finalize, mergeMap, scan } from 'rxjs/operators';
 
 // AgentEvent shape compatible with @agent-labs/agent-chat (runtime-only contract)
@@ -106,7 +106,7 @@ function reduceChunk(state: ReduceState, chunk: OpenAIChatChunk): ReduceState {
 
 export function convertOpenAIChunksToAgentEventObservable(
   stream: AsyncIterable<OpenAIChatChunk>,
-  options: { messageId: string }
+  options: { messageId: string; threadId?: string }
 ): Subscribable<AgentEvent> {
   const initial: ReduceState = {
     messageId: options.messageId,
@@ -116,11 +116,42 @@ export function convertOpenAIChunksToAgentEventObservable(
     stepEvents: [],
   }
 
-  return from(stream).pipe(
+  const base$ = from(stream).pipe(
     scan((acc, chunk) => reduceChunk(acc, chunk), initial),
     mergeMap(s => from(s.stepEvents)),
-    catchError(err => of({ type: AgentEventType.RUN_ERROR, error: String(err?.message || err) } as AgentEvent)),
-    finalize(() => { /* noop */ })
+    catchError(err =>
+      of({
+        type: AgentEventType.RUN_ERROR,
+        error: String((err as any)?.message || err),
+        threadId: options.threadId,
+      } as AgentEvent)
+    ),
+    finalize(() => {
+      // noop
+    })
   )
-}
 
+  // Wrap base$ to add RUN_STARTED / RUN_FINISHED boundaries.
+  return new Observable<AgentEvent>(subscriber => {
+    // Run start
+    subscriber.next({
+      type: AgentEventType.RUN_STARTED,
+      threadId: options.threadId,
+    } as AgentEvent)
+
+    const sub = base$.subscribe({
+      next: evt => subscriber.next(evt),
+      error: err => subscriber.error(err),
+      complete: () => {
+        // Run finished
+        subscriber.next({
+          type: AgentEventType.RUN_FINISHED,
+          threadId: options.threadId,
+        } as AgentEvent)
+        subscriber.complete()
+      },
+    })
+
+    return () => sub.unsubscribe()
+  })
+}
