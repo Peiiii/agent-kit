@@ -7,6 +7,7 @@ import {
 import { useMemo, useRef } from 'react'
 import './App.css'
 import { OpenAIBrowserAgent } from './lib/openai-browser-agent'
+import { useDemoTools } from './tools'
 
 const DEFAULT_CONTEXTS = [
   {
@@ -51,7 +52,8 @@ function ChatApp({ apiKey, model }: { apiKey: string; model: string }) {
   const contexts = useMemo(() => DEFAULT_CONTEXTS, [])
   const chatRef = useRef<AgentChatRef | null>(null)
 
-  const { toolDefs, toolExecutors, toolRenderers } = useParseTools([])
+  const tools = useDemoTools()
+  const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 
   const agent = useMemo(
     () =>

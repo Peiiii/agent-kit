@@ -12,16 +12,16 @@ export const Prompts = ({ promptsProps }: { promptsProps: PromptsProps }) => {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div className="flex flex-col gap-2">
         {items.map((item) => (
           <Button
             key={item.id}
-            variant="outline"
-            size="sm"
+            variant="ghost"
             className={cn(
-              "h-auto p-3 text-left justify-start hover:bg-accent/50 transition-all duration-200",
-              "group hover:shadow-sm hover:border-primary/20 hover:scale-[1.02]",
-              "focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/40"
+              "group w-full h-auto justify-start text-left py-2.5 px-4 mb-1",
+              "hover:bg-accent/70 hover:text-primary transition-all duration-200",
+              "active:scale-[0.98]",
+              "whitespace-normal break-words border-none"
             )}
             onClick={() => onItemClick?.(item)}
             onKeyDown={(e) => {
@@ -34,7 +34,7 @@ export const Prompts = ({ promptsProps }: { promptsProps: PromptsProps }) => {
             tabIndex={0}
             aria-label={`选择提示: ${item.prompt}`}
           >
-            <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-200 leading-relaxed">
+            <span className="text-sm font-medium text-foreground/70 group-hover:text-primary transition-colors duration-200 leading-relaxed">
               {item.prompt}
             </span>
           </Button>
