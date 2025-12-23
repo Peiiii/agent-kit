@@ -86,8 +86,12 @@ function reduceChunk(state: ReduceState, chunk: OpenAIChatChunk): ReduceState {
     state.toolCalls.set(idx, st)
   }
 
+  const finishReason = choice?.finish_reason
+  const isToolFinish = finishReason === 'tool_calls'
+  const shouldEndText = finishReason === 'stop' || finishReason === 'length' || finishReason === 'content_filter'
+
   // Finish: only when tool_calls finish, end all started tool calls
-  if (choice?.finish_reason === 'tool_calls') {
+  if (isToolFinish) {
     if (state.textStarted && !state.textEnded) {
       push(evts, { type: AgentEventType.TEXT_END, messageId: state.messageId })
       state.textEnded = true
@@ -98,6 +102,11 @@ function reduceChunk(state: ReduceState, chunk: OpenAIChatChunk): ReduceState {
         st.ended = true
       }
     }
+  }
+  // Text-only completions
+  if (shouldEndText && state.textStarted && !state.textEnded) {
+    push(evts, { type: AgentEventType.TEXT_END, messageId: state.messageId })
+    state.textEnded = true
   }
 
   state.stepEvents = evts
@@ -119,10 +128,10 @@ export function convertOpenAIChunksToAgentEventObservable(
   const base$ = from(stream).pipe(
     scan((acc, chunk) => reduceChunk(acc, chunk), initial),
     mergeMap(s => from(s.stepEvents)),
-    catchError(err =>
+    catchError((err: unknown) =>
       of({
         type: AgentEventType.RUN_ERROR,
-        error: String((err as any)?.message || err),
+        error: err instanceof Error ? err.message : String(err),
         threadId: options.threadId,
       } as AgentEvent)
     ),
@@ -155,3 +164,6 @@ export function convertOpenAIChunksToAgentEventObservable(
     return () => sub.unsubscribe()
   })
 }
+
+// Backward-compatible alias for stream conversions
+export const openAIChunksToAgentEvents$ = convertOpenAIChunksToAgentEventObservable
