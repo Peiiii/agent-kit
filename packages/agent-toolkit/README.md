@@ -20,6 +20,12 @@ Install
 pnpm add @agent-labs/agent-toolkit
 ```
 
+Optional (browser OpenAI agent)
+
+```bash
+pnpm add @agent-labs/agent-toolkit openai @agent-labs/agent-chat
+```
+
 Quick Start
 
 ```ts
@@ -27,6 +33,18 @@ import { openAIChunksToAgentEvents$ } from '@agent-labs/agent-toolkit'
 
 const events$ = openAIChunksToAgentEvents$(openAIAsyncIterable, { messageId: 'msg-1' })
 const sub = events$.subscribe(evt => console.log('[AgentEvent]', evt))
+```
+
+Browser Agent (OpenAI SDK)
+
+```ts
+import { createOpenAIChatAgent } from '@agent-labs/agent-toolkit'
+
+const agent = createOpenAIChatAgent({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  model: import.meta.env.VITE_OPENAI_MODEL,
+  baseUrl: import.meta.env.VITE_OPENAI_BASE_URL,
+})
 ```
 
 Run Example
@@ -40,7 +58,7 @@ API
 ```ts
 openAIChunksToAgentEvents$(
   stream: AsyncIterable<OpenAIChatChunk>,
-  options: { messageId: string }
+  options: { messageId: string; threadId?: string }
 ): Observable<AgentEvent>
 ```
 
@@ -49,6 +67,7 @@ Behavior & Guarantees
 - Id-late: if tool_call id arrives after args, we emit a backfilled first ARGS_DELTA so the UI can reconstruct valid JSON by END.
 - Finish: TOOL_CALL_END only when `finish_reason === 'tool_calls'`.
 - Parallelism: tool_calls are tracked independently by their `index`.
+- Abort: abort-like errors are treated as a normal completion (no `RUN_ERROR`).
 
 Contributing New Utilities
 - Place code under `src/` with a clear folder (e.g. `src/streams/`, `src/tools/`)

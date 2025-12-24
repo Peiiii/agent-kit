@@ -1,4 +1,4 @@
-import { from, Subscribable, of, Observable } from 'rxjs';
+import { from, Subscribable, of, Observable, EMPTY } from 'rxjs';
 import { catchError, finalize, mergeMap, scan } from 'rxjs/operators';
 
 // AgentEvent shape compatible with @agent-labs/agent-chat (runtime-only contract)
@@ -47,6 +47,27 @@ interface ReduceState {
 }
 
 function push<T>(arr: T[], e?: T) { if (e) arr.push(e) }
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function errorName(err: unknown): string | undefined {
+  if (!isRecord(err)) return undefined
+  const name = err['name']
+  return typeof name === 'string' ? name : undefined
+}
+
+function isAbortLikeError(err: unknown): boolean {
+  const name = errorName(err)
+  return name === 'AbortError' || name === 'APIUserAbortError'
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (isRecord(err) && typeof err['message'] === 'string') return err['message']
+  return String(err)
+}
 
 function reduceChunk(state: ReduceState, chunk: OpenAIChatChunk): ReduceState {
   const evts: AgentEvent[] = []
@@ -128,13 +149,14 @@ export function convertOpenAIChunksToAgentEventObservable(
   const base$ = from(stream).pipe(
     scan((acc, chunk) => reduceChunk(acc, chunk), initial),
     mergeMap(s => from(s.stepEvents)),
-    catchError((err: unknown) =>
-      of({
+    catchError((err: unknown) => {
+      if (isAbortLikeError(err)) return EMPTY
+      return of({
         type: AgentEventType.RUN_ERROR,
-        error: err instanceof Error ? err.message : String(err),
+        error: errorMessage(err),
         threadId: options.threadId,
       } as AgentEvent)
-    ),
+    }),
     finalize(() => {
       // noop
     })

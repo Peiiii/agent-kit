@@ -6,8 +6,8 @@ import {
 } from '@agent-labs/agent-chat'
 import { useMemo, useRef } from 'react'
 import './App.css'
-import { OpenAIBrowserAgent } from './lib/openai-browser-agent'
 import { useDemoTools } from './tools'
+import { createOpenAIChatAgent } from '@agent-labs/agent-toolkit'
 
 const DEFAULT_CONTEXTS = [
   {
@@ -25,8 +25,6 @@ const DEFAULT_CONTEXTS = [
     }),
   },
 ]
-
-const SYSTEM_PROMPT = 'You are a helpful assistant that runs entirely in the browser. Use the provided context to answer user questions in Chinese when appropriate.'
 
 function MissingApiKeyNotice({ model }: { model: string }) {
   return (
@@ -55,16 +53,10 @@ function ChatApp({ apiKey, model }: { apiKey: string; model: string }) {
   const tools = useDemoTools()
   const { toolDefs, toolExecutors, toolRenderers } = useParseTools(tools)
 
-  const agent = useMemo(
-    () =>
-      new OpenAIBrowserAgent({
-        apiKey,
-        model,
-        systemPrompt: SYSTEM_PROMPT,
-        baseUrl: import.meta.env.VITE_OPENAI_BASE_URL?.toString() || undefined,
-      }),
-    [apiKey, model],
-  )
+  const agent = useMemo(() => {
+    const baseUrl = import.meta.env.VITE_OPENAI_BASE_URL?.toString() || undefined
+    return createOpenAIChatAgent({ apiKey, model, baseUrl })
+  }, [apiKey, model])
 
   const agentChatController = useAgentChatController({
     agent,
@@ -108,6 +100,9 @@ function ChatApp({ apiKey, model }: { apiKey: string; model: string }) {
                 { id: 'hello', prompt: '请用一句话介绍一下你自己。' },
                 { id: 'context', prompt: '根据上下文，告诉我当前用户信息。' },
                 { id: 'code', prompt: '用 JavaScript 写一个求和函数。' },
+                { id: 'weather', prompt: '查询工具：请帮我查一下杭州的天气。' },
+                { id: 'calc', prompt: '计算器工具：计算 12*(3+4)/2 的结果。' },
+                { id: 'reminder', prompt: '提醒工具：为“提交周报”确认优先级。' },
               ],
               onItemClick: (item: { id: string; prompt: string }) => {
                 chatRef.current?.addMessages(
