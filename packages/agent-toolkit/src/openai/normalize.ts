@@ -22,16 +22,23 @@ export type ChatCompletionChunkLike = {
   choices?: ChoiceLike[] | null
 }
 
+type FinishReason = 'stop' | 'length' | 'tool_calls' | 'content_filter'
+
+function normalizeFinishReason(value: string | null | undefined): FinishReason | null | undefined {
+  if (!value) return undefined
+  if (value === 'function_call') return 'tool_calls'
+  const validReasons: FinishReason[] = ['stop', 'length', 'tool_calls', 'content_filter']
+  return validReasons.includes(value as FinishReason) ? (value as FinishReason) : undefined
+}
+
 export async function* normalizeChatCompletionStream(
   stream: AsyncIterable<ChatCompletionChunkLike>
 ): AsyncGenerator<OpenAIChatChunk> {
   for await (const chunk of stream) {
     const choices = (chunk.choices ?? []).map(choice => {
-      const finishReasonRaw = choice.finish_reason ?? undefined
-      const finishReason = normalizeFinishReason(finishReasonRaw)
-
+      const finishReason = normalizeFinishReason(choice.finish_reason)
       const delta = choice.delta ?? undefined
-      const content = delta?.content ?? undefined
+
       const toolCalls = (delta?.tool_calls ?? []).map(tc => ({
         id: tc.id ?? undefined,
         index: tc.index,
@@ -44,7 +51,7 @@ export async function* normalizeChatCompletionStream(
 
       return {
         delta: {
-          content: content ?? undefined,
+          content: delta?.content ?? undefined,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         },
         finish_reason: finishReason,
@@ -53,11 +60,4 @@ export async function* normalizeChatCompletionStream(
 
     yield { choices }
   }
-}
-
-function normalizeFinishReason(value: string | undefined): 'stop' | 'length' | 'tool_calls' | 'content_filter' | null | undefined {
-  if (!value) return undefined
-  if (value === 'function_call') return 'tool_calls'
-  if (value === 'stop' || value === 'length' || value === 'tool_calls' || value === 'content_filter') return value
-  return undefined
 }

@@ -1,4 +1,5 @@
 export * from './types'
+export * from './utils'
 export * from './serialize'
 export * from './normalize'
 export * from './agent'

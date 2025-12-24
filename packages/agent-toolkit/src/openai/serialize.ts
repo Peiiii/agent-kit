@@ -1,14 +1,11 @@
 import type { ContextLike, OpenAIChatMessage, OpenAIToolCall, OpenAIToolDefinition, ToolDefinitionLike, ToolInvocationLike, UIMessageLike } from './types'
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
+import { isRecord } from './utils'
 
 function isTextPart(part: unknown): part is { type: 'text'; text: string } {
   return isRecord(part) && part.type === 'text' && typeof part.text === 'string'
 }
 
-function isToolInvocation(part: unknown): part is { toolInvocation: ToolInvocationLike } {
+function isToolInvocationPart(part: unknown): part is { type: 'tool-invocation'; toolInvocation: ToolInvocationLike } {
   if (!isRecord(part)) return false
   if (part.type !== 'tool-invocation') return false
   const inv = part.toolInvocation
@@ -32,7 +29,7 @@ export function mapToolDefinitionsToOpenAITools(tools: ToolDefinitionLike[]): Op
   }))
 }
 
-function messageText(msg: UIMessageLike): string {
+function extractMessageText(msg: UIMessageLike): string {
   return msg.parts
     .filter(isTextPart)
     .map(p => p.text)
@@ -40,15 +37,20 @@ function messageText(msg: UIMessageLike): string {
     .join('\n\n')
 }
 
-function extractToolCalls(msg: UIMessageLike): { calls: OpenAIToolCall[]; toolResults: OpenAIChatMessage[] } {
+interface ExtractedToolCalls {
+  calls: OpenAIToolCall[]
+  toolResults: OpenAIChatMessage[]
+}
+
+function extractToolCalls(msg: UIMessageLike): ExtractedToolCalls {
   const callsById = new Map<string, OpenAIToolCall>()
   const toolResults: OpenAIChatMessage[] = []
 
   for (const part of msg.parts) {
-    if (!isToolInvocation(part)) continue
+    if (!isToolInvocationPart(part)) continue
     const inv = part.toolInvocation
 
-    const ensureCall = () => {
+    const registerToolCall = () => {
       if (!inv.toolCallId || !inv.toolName) return
       if (callsById.has(inv.toolCallId)) return
       callsById.set(inv.toolCallId, {
@@ -58,17 +60,19 @@ function extractToolCalls(msg: UIMessageLike): { calls: OpenAIToolCall[]; toolRe
       })
     }
 
-    if (inv.status === 'result') {
-      // Tool result must correspond to a preceding assistant tool_calls message.
-      // If the UI only preserved the RESULT state, synthesize the tool_calls entry.
-      ensureCall()
-      toolResults.push({
-        role: 'tool',
-        tool_call_id: inv.toolCallId,
-        content: JSON.stringify(inv.result ?? { success: true }),
-      })
-    } else if (inv.status === 'call' || inv.status === 'partial-call') {
-      ensureCall()
+    switch (inv.status) {
+      case 'result':
+        registerToolCall()
+        toolResults.push({
+          role: 'tool',
+          tool_call_id: inv.toolCallId,
+          content: JSON.stringify(inv.result ?? { success: true }),
+        })
+        break
+      case 'call':
+      case 'partial-call':
+        registerToolCall()
+        break
     }
   }
 
@@ -79,36 +83,37 @@ export function serializeUIMessagesToOpenAIChatMessages(params: {
   messages: UIMessageLike[]
   context?: ContextLike[]
 }): OpenAIChatMessage[] {
-  const out: OpenAIChatMessage[] = []
+  const result: OpenAIChatMessage[] = []
 
   const contextText = params.context?.map(c => `${c.description}: ${c.value}`).join('\n')
-  if (contextText && contextText.trim().length > 0) {
-    out.push({ role: 'system', content: contextText })
+  if (contextText?.trim()) {
+    result.push({ role: 'system', content: contextText })
   }
 
   for (const msg of params.messages) {
     if (msg.role === 'data') continue
 
-    const text = messageText(msg)
+    const text = extractMessageText(msg)
 
     if (msg.role === 'assistant') {
       const { calls, toolResults } = extractToolCalls(msg)
-      if (text.trim().length > 0 || calls.length > 0 || toolResults.length > 0) {
-        out.push({
+      const hasContent = text.trim().length > 0 || calls.length > 0
+      if (hasContent) {
+        result.push({
           role: 'assistant',
           content: text,
           ...(calls.length > 0 ? { tool_calls: calls } : {}),
         })
       }
-      out.push(...toolResults)
+      result.push(...toolResults)
       continue
     }
 
     const role = msg.role === 'system' ? 'system' : 'user'
-    if (text.trim().length > 0) {
-      out.push({ role, content: text })
+    if (text.trim()) {
+      result.push({ role, content: text })
     }
   }
 
-  return out
+  return result
 }
