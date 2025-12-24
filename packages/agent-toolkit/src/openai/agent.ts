@@ -1,7 +1,7 @@
 import type { IAgent, RunAgentInput } from '@agent-labs/agent-chat'
 import OpenAI from 'openai'
 import { Observable, type Subscription, type Unsubscribable } from 'rxjs'
-import { convertOpenAIChunksToAgentEventObservable, type AgentEvent as ToolkitAgentEvent } from '../streams/openai-to-agent-event'
+import { AgentEventType, convertOpenAIChunksToAgentEventObservable, type AgentEvent as ToolkitAgentEvent } from '../streams/openai-to-agent-event'
 import { normalizeChatCompletionStream } from './normalize'
 import { mapToolDefinitionsToOpenAITools, serializeUIMessagesToOpenAIChatMessages } from './serialize'
 import { errorMessage, isAbortLikeError } from './utils'
@@ -53,12 +53,12 @@ export function createOpenAIChatAgent(options: OpenAIChatAgentOptions): IAgent {
       let innerSub: Subscription | Unsubscribable | null = null
 
       const finishAsAborted = () => {
-        subscriber.next({ type: 'RUN_FINISHED', threadId })
+        subscriber.next({ type: AgentEventType.RUN_FINISHED, threadId })
         subscriber.complete()
       }
 
       const finishAsError = (err: unknown) => {
-        subscriber.next({ type: 'RUN_ERROR', threadId, error: errorMessage(err) })
+        subscriber.next({ type: AgentEventType.RUN_ERROR, threadId, error: errorMessage(err) })
         subscriber.complete()
       }
 
