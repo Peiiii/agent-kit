@@ -1,6 +1,6 @@
 {
   "name": "@agent-labs/agent-toolkit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "Pure logic toolkit for agent streaming, tool orchestration, and argument accumulation.",
   "type": "module",
