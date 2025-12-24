@@ -41,28 +41,38 @@ function messageText(msg: UIMessageLike): string {
 }
 
 function extractToolCalls(msg: UIMessageLike): { calls: OpenAIToolCall[]; toolResults: OpenAIChatMessage[] } {
-  const calls: OpenAIToolCall[] = []
+  const callsById = new Map<string, OpenAIToolCall>()
   const toolResults: OpenAIChatMessage[] = []
 
   for (const part of msg.parts) {
     if (!isToolInvocation(part)) continue
     const inv = part.toolInvocation
+
+    const ensureCall = () => {
+      if (!inv.toolCallId || !inv.toolName) return
+      if (callsById.has(inv.toolCallId)) return
+      callsById.set(inv.toolCallId, {
+        id: inv.toolCallId,
+        type: 'function',
+        function: { name: inv.toolName, arguments: inv.args },
+      })
+    }
+
     if (inv.status === 'result') {
+      // Tool result must correspond to a preceding assistant tool_calls message.
+      // If the UI only preserved the RESULT state, synthesize the tool_calls entry.
+      ensureCall()
       toolResults.push({
         role: 'tool',
         tool_call_id: inv.toolCallId,
         content: JSON.stringify(inv.result ?? { success: true }),
       })
     } else if (inv.status === 'call' || inv.status === 'partial-call') {
-      calls.push({
-        id: inv.toolCallId,
-        type: 'function',
-        function: { name: inv.toolName, arguments: inv.args },
-      })
+      ensureCall()
     }
   }
 
-  return { calls, toolResults }
+  return { calls: Array.from(callsById.values()), toolResults }
 }
 
 export function serializeUIMessagesToOpenAIChatMessages(params: {
@@ -83,7 +93,7 @@ export function serializeUIMessagesToOpenAIChatMessages(params: {
 
     if (msg.role === 'assistant') {
       const { calls, toolResults } = extractToolCalls(msg)
-      if (text.trim().length > 0 || calls.length > 0) {
+      if (text.trim().length > 0 || calls.length > 0 || toolResults.length > 0) {
         out.push({
           role: 'assistant',
           content: text,
