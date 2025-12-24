@@ -1,5 +1,6 @@
 import { from, Subscribable, of, Observable, EMPTY } from 'rxjs';
 import { catchError, finalize, mergeMap, scan } from 'rxjs/operators';
+import { errorMessage, isAbortLikeError } from '../openai/utils';
 
 // AgentEvent shape compatible with @agent-labs/agent-chat (runtime-only contract)
 export const AgentEventType = {
@@ -48,26 +49,6 @@ interface ReduceState {
 
 function push<T>(arr: T[], e?: T) { if (e) arr.push(e) }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-function errorName(err: unknown): string | undefined {
-  if (!isRecord(err)) return undefined
-  const name = err['name']
-  return typeof name === 'string' ? name : undefined
-}
-
-function isAbortLikeError(err: unknown): boolean {
-  const name = errorName(err)
-  return name === 'AbortError' || name === 'APIUserAbortError'
-}
-
-function errorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message
-  if (isRecord(err) && typeof err['message'] === 'string') return err['message']
-  return String(err)
-}
 
 function reduceChunk(state: ReduceState, chunk: OpenAIChatChunk): ReduceState {
   const evts: AgentEvent[] = []

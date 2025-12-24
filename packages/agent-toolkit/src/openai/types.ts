@@ -1,22 +1,13 @@
-export type OpenAIToolCall = {
-  id: string
-  type: 'function'
-  function: { name: string; arguments: string }
-}
+import type OpenAI from 'openai'
 
-export type OpenAIChatMessage =
-  | { role: 'system' | 'user' | 'assistant'; content: string; tool_calls?: OpenAIToolCall[] }
-  | { role: 'tool'; content: string; tool_call_id: string }
+export type OpenAIToolCall = OpenAI.Chat.ChatCompletionMessageToolCall
+export type OpenAIChatMessage = OpenAI.Chat.ChatCompletionMessageParam
+export type OpenAIToolDefinition = OpenAI.Chat.ChatCompletionTool
 
 export type ToolDefinitionLike = {
   name: string
   description?: string
   parameters?: unknown
-}
-
-export type OpenAIToolDefinition = {
-  type: 'function'
-  function: { name: string; description?: string; parameters: Record<string, unknown> }
 }
 
 export type ContextLike = { description: string; value: string }

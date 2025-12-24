@@ -1,8 +1,10 @@
 import type { IAgent, RunAgentInput } from '@agent-labs/agent-chat'
+import OpenAI from 'openai'
 import { Observable, type Subscription, type Unsubscribable } from 'rxjs'
 import { convertOpenAIChunksToAgentEventObservable, type AgentEvent as ToolkitAgentEvent } from '../streams/openai-to-agent-event'
 import { normalizeChatCompletionStream } from './normalize'
 import { mapToolDefinitionsToOpenAITools, serializeUIMessagesToOpenAIChatMessages } from './serialize'
+import { errorMessage, isAbortLikeError } from './utils'
 
 export type OpenAIChatAgentOptions = {
   apiKey: string
@@ -10,66 +12,15 @@ export type OpenAIChatAgentOptions = {
   baseUrl?: string
 }
 
-type OpenAIClientLike = {
-  chat: {
-    completions: {
-      create: (
-        params: {
-          model: string
-          stream: true
-          messages: unknown
-          tools?: unknown
-          tool_choice?: 'auto'
-        },
-        opts: { signal: AbortSignal }
-      ) => Promise<AsyncIterable<unknown>>
-    }
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-function errorName(err: unknown): string | undefined {
-  if (!isRecord(err)) return undefined
-  const name = err['name']
-  return typeof name === 'string' ? name : undefined
-}
-
-function isAbortLikeError(err: unknown): boolean {
-  const name = errorName(err)
-  return name === 'AbortError' || name === 'APIUserAbortError'
-}
-
-function errorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message
-  if (isRecord(err) && typeof err['message'] === 'string') return err['message']
-  return String(err)
-}
-
-async function createOpenAIClient(options: { apiKey: string; baseURL: string }): Promise<OpenAIClientLike> {
-  const mod = (await import('openai')) as unknown
-  if (!isRecord(mod) || !('default' in mod)) {
-    throw new Error('Failed to load OpenAI SDK (missing default export).')
-  }
-  const OpenAI = (mod as { default: unknown }).default
-  if (typeof OpenAI !== 'function') {
-    throw new Error('Failed to load OpenAI SDK (default export is not a constructor).')
-  }
-
-  const client = new (OpenAI as unknown as new (opts: Record<string, unknown>) => OpenAIClientLike)({
-    apiKey: options.apiKey,
-    baseURL: options.baseURL,
-    dangerouslyAllowBrowser: true,
-  })
-
-  return client
-}
-
 export function createOpenAIChatAgent(options: OpenAIChatAgentOptions): IAgent {
   const model = options.model ?? 'gpt-4o-mini'
   const baseURL = (options.baseUrl ?? 'https://api.openai.com/v1').replace(/\/$/, '')
+
+  const client = new OpenAI({
+    apiKey: options.apiKey,
+    baseURL,
+    dangerouslyAllowBrowser: true,
+  })
 
   let abortController: AbortController | null = null
 
@@ -111,30 +62,27 @@ export function createOpenAIChatAgent(options: OpenAIChatAgentOptions): IAgent {
         subscriber.complete()
       }
 
-      createOpenAIClient({ apiKey: options.apiKey, baseURL })
-        .then(client =>
-          client.chat.completions.create(
-            {
-              model,
-              stream: true,
-              messages,
-              tools,
-              tool_choice: tools ? 'auto' : undefined,
-            },
-            { signal: controller.signal },
-          ),
-        )
-        .then(stream => {
+      client.chat.completions.create(
+        {
+          model,
+          stream: true,
+          messages,
+          tools,
+          tool_choice: tools ? 'auto' : undefined,
+        },
+        { signal: controller.signal },
+      )
+        .then((stream) => {
           innerSub = convertOpenAIChunksToAgentEventObservable(
             normalizeChatCompletionStream(stream as AsyncIterable<any>),
             { messageId, threadId },
           ).subscribe({
             next: evt => subscriber.next(evt),
-            error: err => (isAbortLikeError(err) ? finishAsAborted() : finishAsError(err)),
+            error: (err: unknown) => (isAbortLikeError(err) ? finishAsAborted() : finishAsError(err)),
             complete: () => subscriber.complete(),
           })
         })
-        .catch(err => {
+        .catch((err: unknown) => {
           if (isAbortLikeError(err)) finishAsAborted()
           else finishAsError(err)
         })
@@ -148,4 +96,5 @@ export function createOpenAIChatAgent(options: OpenAIChatAgentOptions): IAgent {
 
   return { run, abortRun }
 }
+
 
