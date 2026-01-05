@@ -24,7 +24,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onMessageShare,
 }) => {
   const isUser = uiMessage.role === 'user'
-  
+
   const { actions } = useMessageActions(uiMessage, {
     onCopy: onMessageCopy,
     onRegenerate: onMessageRegenerate,
@@ -53,9 +53,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           <Avatar className="h-10 w-10 shrink-0">
             <AvatarImage src="" alt={isUser ? 'User' : 'Assistant'} />
             <AvatarFallback
-              className={`${
-                isUser ? 'bg-primary' : 'bg-primary'
-              } text-primary-foreground`}
+              className={`${isUser ? 'bg-primary' : 'bg-primary'
+                } text-primary-foreground`}
             >
               {isUser ? (
                 <User className="h-5 w-5" />
@@ -65,13 +64,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             </AvatarFallback>
           </Avatar>
         )}
-        
+
         <div
-          className={`min-w-0 overflow-hidden rounded-lg px-3 py-4 ${
-            isUser
-              ? 'bg-primary text-primary-foreground w-auto'
-              : 'bg-muted text-foreground w-auto'
-          }`}
+          className={`min-w-0 overflow-hidden ${isUser
+            ? 'rounded-lg px-3 py-4 bg-muted text-foreground w-auto'
+            : 'text-foreground w-auto py-1'
+            }`}
           style={{ overflowX: 'hidden', maxWidth: '100%' }}
         >
           <div className="[&>*:last-child]:mb-0">
@@ -102,10 +100,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             )}
           </div>
         </div>
-        
+
         {!isUser && !isPending && actions.length > 0 && (
           <div className="mt-1">
-            <MessageActions 
+            <MessageActions
               actions={actions}
               showOnHover={false}
             />
