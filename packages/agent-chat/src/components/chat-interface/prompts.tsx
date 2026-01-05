@@ -11,17 +11,19 @@ export const Prompts = ({ promptsProps }: { promptsProps: PromptsProps }) => {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-2">
+    <div>
+      <div className="flex flex-col">
         {items.map((item) => (
           <Button
             key={item.id}
             variant="ghost"
             className={cn(
-              "group w-full h-auto justify-start text-left py-2.5 px-4 mb-1",
-              "hover:bg-accent/70 hover:text-primary transition-all duration-200",
+              "group w-full h-auto justify-start text-left py-1.5 px-3",
+              "rounded-lg border border-transparent",
+              "hover:bg-muted hover:border-border hover:shadow-sm",
+              "transition-all duration-200 ease-out",
               "active:scale-[0.98]",
-              "whitespace-normal break-words border-none"
+              "whitespace-normal break-words"
             )}
             onClick={() => onItemClick?.(item)}
             onKeyDown={(e) => {
